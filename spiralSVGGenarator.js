@@ -1,5 +1,36 @@
 const fs = require('fs');
 
+const CONFIG = {
+  // "single-pole" or "multi-pole"
+  variantMode: "multi-pole",
+
+  // Grid and Symmetry Layout Configuration
+  layout: {
+    totalBranches: 5,         // Total spiral arms / structural symmetry axis
+    maxRings: 6,              // Depth layers (How many rings wrap inward)
+    globalScale: 180,         // Overall design magnification size
+    globalRotation: 0,        // Camera spin orientation angle (0 = base alignment)
+    subdivisionLimit: 0.05    // Precision length step for linear smoothing
+  },
+
+  // Target Print Palette Hex Array
+  colorPalette: [
+    "#e62b12", // Layer 1: Red
+    "#f5c107", // Layer 2: Gold
+    "#2aa10d", // Layer 3: Green
+    "#000000", // Layer 4: Black
+    "#0000FF", // Layer 5: Blue
+    "#FFFFFF" // Layer 6: White
+  ],
+
+  // Artboard Panel Sizing Constraints
+  canvas: {
+    width: "1200px",
+    height: "1200px",
+    viewBox: "-600 -600 1200 1200"
+  }
+};
+
 /**
  * Linear subdivision function
  */
@@ -123,10 +154,8 @@ function generateSvgPath(points, fillColor) {
  * Master Generator Function
  */
 function generateEscherTessellation() {
-  const variantMode   = "single-pole";  // TOGGLE: Choose "single-pole" or "multi-pole"
-  const totalBranches = 4
   // This is the square's height, don't set it manually. Calculate it automatically
-  const cellHeight = (Math.PI * 2) / totalBranches;
+  const cellHeight = (Math.PI * 2) / CONFIG.layout.totalBranches;
 
   // Square motif
   // const baseMotifPoints = [
@@ -150,57 +179,57 @@ function generateEscherTessellation() {
   // Keeps your deep wave depth fixed while adapting the vertical position perfectly
   // const baseMotifPoints = [
   //   { x: 0.0, y: 0.0 },                        // Bottom-Left
-  //   { x: 0.5, y: 0.5 },                        // Bottom-Middle (pushed up)
+  //   { x: 0.5, y: 0.5 },                        // Bottom-Middle (Pushed up)
   //   { x: 1.0, y: 0.0 },                        // Bottom-Right
-  //   { x: 1.55, y: cellHeight / 2 },            // Right-Middle Wave (Deep horizontal offset restored!)
+  //   { x: 1.55, y: cellHeight / 2 },            // Right-Middle Wave (Deep hook)
   //   { x: 1.0, y: cellHeight },                 // Top-Right
-  //   { x: 0.5, y: cellHeight + 0.5 },           // Top-Middle (pushed up)
+  //   { x: 0.5, y: cellHeight + 0.5 },           // Top-Middle (Pushed up matching curve)
   //   { x: 0.0, y: cellHeight },                 // Top-Left
-  //   { x: 0.55, y: cellHeight / 2 }             // Left-Middle Wave (Deep horizontal pocket restored!)
+  //   { x: 0.55, y: cellHeight / 2 }             // Left-Middle Wave (Matching deep pocket)
   // ];
 
 
-  const smoothMotif = subdividePath(baseMotifPoints, 0.05);
-
-  // Amount of layers/rings
-  const maxRings = 4;
-  // Final image scale
-  const globalScale = 180;
-   // Set to 0 to keep the base alignment clear for editing
-  const globalRotation = 0;
-
-
-  // Color palette
-  const colorPalette = [
-    "#e62b12", // Red
-    "#f5c107", // Gold
-    "#2aa10d", // Green
-    "#000000"  // Black
-  ];
+  const smoothMotif = subdividePath(baseMotifPoints, CONFIG.layout.subdivisionLimit);
 
   let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
-  svgContent += `<svg\n  width="1200px"\n  height="1200px"\n  viewBox="-600 -600 1200 1200"\n  version="1.1"\n  xmlns="http://www.w3.org/2000/svg">\n`;
+  svgContent += `<svg\n  width="${CONFIG.canvas.width}"\n  height="${CONFIG.canvas.height}"\n  viewBox="${CONFIG.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://w3.org/2000/svg">\n`;
+
+  // Instantiate clean color grouping registers
+  const groupedPaths = {};
+  CONFIG.colorPalette.forEach(color => {
+    groupedPaths[color] = [];
+  });
 
   // Render wallpaper grid across rings and structural arms
-  for (let ring = 0; ring < maxRings; ring++) {
-    for (let branch = 0; branch < totalBranches; branch++) {
-      const colorIndex = (branch + ring) % colorPalette.length;
-      const currentFill = colorPalette[colorIndex];
+  for (let ring = 0; ring < CONFIG.layout.maxRings; ring++) {
+    for (let branch = 0; branch < CONFIG.layout.totalBranches; branch++) {
+      const colorIndex = (branch + ring) % CONFIG.colorPalette.length;
+      const currentFill = CONFIG.colorPalette[colorIndex];
 
       const transformedPoints = smoothMotif.map(p => {
-        const gridSpace = applyWallpaperSymmetry(p, -ring, branch, totalBranches);
+        const gridSpace = applyWallpaperSymmetry(p, -ring, branch, CONFIG.layout.totalBranches);
 
         // Map space based on selected function variant
-        if (variantMode === "single-pole") {
-          return forwardSinglePoleSpiral(gridSpace, globalScale, globalRotation);
+        if (CONFIG.variantMode === "single-pole") {
+          return forwardSinglePoleSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
         } else {
-          return forwardMultiPoleHyperbolic(gridSpace, globalScale, globalRotation);
+          return forwardMultiPoleHyperbolic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
         }
       });
 
-      svgContent += generateSvgPath(transformedPoints, currentFill);
+      const pathString = generateSvgPath(transformedPoints, currentFill);
+      groupedPaths[currentFill].push(pathString);
+
     }
   }
+
+  // Group colors for easy editing
+  CONFIG.colorPalette.forEach((color, index) => {
+    const cleanId = color.replace('#', '');
+    svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${color}">\n`;
+    svgContent += groupedPaths[color].join('');
+    svgContent += `  </g>\n`;
+  });
 
   svgContent += `</svg>\n`;
   return svgContent;

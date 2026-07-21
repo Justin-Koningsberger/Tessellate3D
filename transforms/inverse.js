@@ -3,7 +3,7 @@
  * Reverses trigonometric folding and normalization to calculate backward
  * from final screen coordinates (X, Y) to the original flat wallpaper grid space.
  */
-function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier) {
+function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier, totalBranches) {
   // Prevent division by zero if scale is unconfigured
   if (scale === 0) return { x: 0, y: 0 };
 
@@ -26,7 +26,7 @@ function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultip
   }
 
   // 3. Invert the Multi-Pole Trigonometric Folding Layer
-  const scalingFactor = 0.002;
+  const scalingFactor = (Math.PI * 2) / (totalBranches * 600);
   const targetX = rx / (scale * (0.25 + approxFactor * 0.5));
   const targetY = ry / (scale * (0.25 + approxFactor * 0.5));
 
@@ -55,7 +55,7 @@ function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultip
  * DYNAMIC INVERSE ROUTER ENGINE
  * Automatically maps a screen coordinate backward using the active variant mode.
  */
-function inverseWarp(screenPoint, CONFIG) {
+function inverseWarp(screenPoint, CONFIG, totalBranches) {
   const scale = CONFIG.layout.globalScale;
   const angleOffset = CONFIG.layout.globalRotation;
   const decayMultiplier = CONFIG.layout.decayMultiplier;

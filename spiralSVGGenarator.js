@@ -125,7 +125,7 @@ function generateEscherTessellation() {
         // INVERSE VALIDATION HOOK: Tests the mathematics on the tile vertices if debugging is on
         if (CONFIG.useInverseDebugging && p.x === 0 && p.y === 0) {
           // Pass the generated point to our unified inverse router for validation
-          const originalGridOrigin = inverseWarp(finalPoint, CONFIG);
+          const originalGridOrigin = inverseWarp(finalPoint, CONFIG, totalBranches);
           // originalGridOrigin.x and .y hold the safely mapped back coordinates
         }
 

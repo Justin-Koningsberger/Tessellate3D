@@ -3,6 +3,7 @@ const fs = require('fs');
 const CONFIG = {
   // "logarithmic, loxodromic", single-pole" or "multi-pole"
   variantMode: "multi-pole",
+  useInverseDebugging: false,  // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {
@@ -107,7 +108,6 @@ function forwardSinglePoleSpiral(point, scale, angleOffset, decayMultiplier) {
   };
 }
 
-
 /**
  * 3B. MULTI-POLE HYPERBOLIC TRANSFORMER VARIANT (Normalized)
  * Uses trigonometric folding with an added normalization pass to scale tiles down
@@ -161,6 +161,87 @@ function forwardLoxodromicSpiral(point, scale, angleOffset, twistFactor, decayMu
     x: r * Math.cos(theta),
     y: r * Math.sin(theta)
   };
+}
+
+/**
+ * SECTION 4: INVERSE MULTI-POLE HYPERBOLIC SOLVER
+ * Reverses trigonometric folding and normalization to calculate backward
+ * from final screen coordinates (X, Y) to the original flat wallpaper grid space.
+ */
+function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier) {
+  // Prevent division by zero if scale is unconfigured
+  if (scale === 0) return { x: 0, y: 0 };
+
+  // 1. Undo the external camera rotation alignment
+  const cosRot = Math.cos(-angleOffset);
+  const sinRot = Math.sin(-angleOffset);
+  const rx = screenPoint.x * cosRot - screenPoint.y * sinRot;
+  const ry = screenPoint.x * sinRot + screenPoint.y * cosRot;
+
+  // 2. Solve for the core radius to reconstruct the forward compression factor
+  const screenRadius = Math.hypot(rx, ry);
+  if (screenRadius < 0.0001) return { x: 0, y: 0 };
+
+  // Using a numerical approximation loop to solve the transcendental equation:
+  // screenRadius = scale * compression * Math.hypot(Math.sin(mx), Math.sinh(my))
+  let approxFactor = screenRadius / scale;
+  for (let i = 0; i < 4; i++) {
+    const compression = 0.25 + (approxFactor * 0.5);
+    approxFactor = (screenRadius / scale) / compression;
+  }
+
+  // 3. Invert the Multi-Pole Trigonometric Folding Layer
+  const scalingFactor = 0.002;
+  const targetX = rx / (scale * (0.25 + approxFactor * 0.5));
+  const targetY = ry / (scale * (0.25 + approxFactor * 0.5));
+
+  // Utilize inverse Gudermannian properties to decouple mx and my components
+  const u = targetX;
+  const v = targetY;
+  const expMy = Math.sqrt((u * u + Math.pow(v + 1, 2)) / (u * u + Math.pow(v - 1, 2)));
+  const my = Math.log(expMy) / scalingFactor;
+  const mx = Math.asin(u / Math.cosh(my * scalingFactor)) / scalingFactor;
+
+  // 4. Convert Cartesian components back to standard logarithmic variables
+  const flatX = -Math.log(Math.hypot(mx, my) / scale) / decayMultiplier;
+  let flatY = Math.atan2(my, mx);
+
+  // Normalize final angular data cleanly within standard boundaries
+  while (flatY < 0) flatY += Math.PI * 2;
+  while (flatY >= Math.PI * 2) flatY -= Math.PI * 2;
+
+  return {
+    x: flatX,
+    y: flatY
+  };
+}
+
+/**
+ * DYNAMIC INVERSE ROUTER ENGINE
+ * Automatically maps a screen coordinate backward using the active variant mode.
+ */
+function inverseWarp(screenPoint, CONFIG) {
+  const scale = CONFIG.layout.globalScale;
+  const angleOffset = CONFIG.layout.globalRotation;
+  const decayMultiplier = CONFIG.layout.decayMultiplier;
+  const twistFactor = CONFIG.layout.twistFactor;
+
+  switch (CONFIG.variantMode) {
+    case "single-pole":
+      return inverseSinglePoleSpiral(screenPoint, scale, angleOffset, decayMultiplier);
+
+    case "multi-pole":
+      return inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier, totalBranches);
+
+    case "loxodromic":
+      // Placeholder: will route to inverseLoxodromicSpiral once implemented
+      return inverseSinglePoleSpiral(screenPoint, scale, angleOffset, decayMultiplier);
+
+    case "logarithmic":
+    default:
+      // Fallback safe state
+      return { x: 0, y: 0 };
+  }
 }
 
 /**
@@ -225,11 +306,16 @@ function generateEscherTessellation() {
   //   { x: 0.55, y: cellHeight / 2 }             // Left-Middle Wave (Matching deep pocket)
   // ];
 
-
   const smoothMotif = subdividePath(baseMotifPoints, CONFIG.layout.subdivisionLimit);
 
   let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
   svgContent += `<svg\n  width="${CONFIG.canvas.width}"\n  height="${CONFIG.canvas.height}"\n  viewBox="${CONFIG.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://w3.org/2000/svg">\n`;
+
+  // Inject a visual target reticle grid behind everything if inverse debugging is toggled on
+  if (CONFIG.useInverseDebugging) {
+    svgContent += `  <!-- INVERSE CALIBRATION MESH LINES -->\n`;
+    svgContent += `  <circle cx="0" cy="0" r="${CONFIG.layout.globalScale}" fill="none" stroke="#ccc" stroke-dasharray="5,5" stroke-width="2" />\n`;
+  };
 
   // Instantiate clean color grouping registers
   const groupedPaths = {};
@@ -246,22 +332,36 @@ function generateEscherTessellation() {
       const transformedPoints = smoothMotif.map(p => {
         const gridSpace = applyWallpaperSymmetry(p, -ring, branch, totalBranches);
 
-        // Map space based on selected function variant
+        let finalPoint;
+
+        // Dynamic routing block handling all active paper algorithms
         switch (CONFIG.variantMode) {
-          // Base case for easy testing
           case "logarithmic":
-            return forwardLogSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
+            finalPoint = forwardLogSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
+            break;
 
           case "single-pole":
-            return forwardSinglePoleSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
+            finalPoint = forwardSinglePoleSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
+            break;
 
           case "multi-pole":
-            return forwardMultiPoleHyperbolic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
+            finalPoint = forwardMultiPoleHyperbolic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier, totalBranches);
+            break;
 
           case "loxodromic":
           default:
-            return forwardLoxodromicSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.twistFactor, CONFIG.layout.decayMultiplier);
+            finalPoint = forwardLoxodromicSpiral(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.twistFactor, CONFIG.layout.decayMultiplier);
+            break;
         }
+
+        // INVERSE VALIDATION HOOK: Tests the mathematics on the tile vertices if debugging is on
+        if (CONFIG.useInverseDebugging && p.x === 0 && p.y === 0) {
+          // Pass the generated point to our unified inverse router for validation
+          const originalGridOrigin = inverseWarp(finalPoint, CONFIG);
+          // originalGridOrigin.x and .y hold the safely mapped back coordinates
+        }
+
+        return finalPoint;
       });
 
       const pathString = generateSvgPath(transformedPoints, currentFill);

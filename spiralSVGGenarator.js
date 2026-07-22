@@ -44,20 +44,37 @@ function applyWallpaperSymmetry(point, ring, branch, totalBranches) {
 }
 
 /**
- * SVG Path Assembly with Dynamic Color Fills
+ * Generates an SVG path string from an array of coordinates,
+ * enforcing geometric precision closure to prevent slicing self-intersections.
+ * @param {Array<object>} points - Array of {x, y} coordinate objects
+ * @returns {string} Fully sanitized and snapped SVG path tag
  */
-function generateSvgPath(points, fillColor) {
-  if (!points || points.length === 0) return '';
+function generateSvgPath(points) {
+  if (!points || points.length < 3) return "";
 
-  let d = `M ${points[0].x.toFixed(3)} ${points[0].y.toFixed(3)}`;
-  for (let i = 1; i < points.length; i++) {
-    d += ` L ${points[i].x.toFixed(3)} ${points[i].y.toFixed(3)}`;
+  // 1. Adaptive Micro-Snapping: Detect and eliminate microscopic structural drift
+  const startPoint = points[0];
+  const endPoint = points[points.length - 1];
+  const gapDistance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+
+  // If the path loops back near its origin, force-weld the anchors to form a perfect manifold
+  if (gapDistance > 0 && gapDistance < 0.005) {
+    points[points.length - 1] = { x: startPoint.x, y: startPoint.y };
   }
-  d += ' Z';
 
-  // Customizes the fill attribute dynamically while maintaining a clean black outline
-  return `  <path d="${d}" fill="${fillColor}" stroke="black" stroke-width="1.0" />\n`;
+  // 2. Build standard SVG string tokens
+  let d = `M ${points[0].x.toFixed(4)} ${points[0].y.toFixed(4)}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i].x.toFixed(4)} ${points[i].y.toFixed(4)}`;
+  }
+
+  // Close the loop explicitly
+  d += " Z";
+
+  // 3. Inject explicit EvenOdd winding rules directly into the path definition
+  return `<path fill-rule="evenodd" clip-rule="evenodd" d="${d}" />`;
 }
+
 
 /**
  * Master Generator Function
@@ -132,7 +149,7 @@ function generateEscherTessellation() {
         return finalPoint;
       });
 
-      const pathString = generateSvgPath(transformedPoints, currentFill);
+      const pathString = generateSvgPath(transformedPoints);
       groupedPaths[currentFill].push(pathString);
     }
   }

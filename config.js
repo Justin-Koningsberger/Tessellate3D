@@ -2,7 +2,7 @@ const CONFIG = {
   // "logarithmic, loxodromic", single-pole" or "multi-pole"
   variantMode: "multi-pole",
   baseMotif: "chevron",
-  useInverseDebugging: false,  // True enables absolute canvas tracking via inverse math
+  useInverseDebugging: true,  // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {

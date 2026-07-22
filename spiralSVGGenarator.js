@@ -155,3 +155,11 @@ if (typeof require !== 'undefined' && require.main === module) {
   fs.writeFileSync('escher_output.svg', resultSvg, 'utf8');
   console.log('Successfully written colored file: escher_output.svg');
 }
+
+// Expose core functions for automated test verification
+module.exports = {
+  subdividePath,
+  applyWallpaperSymmetry,
+  generateSvgPath,
+  generateEscherTessellation
+};

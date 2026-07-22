@@ -25,19 +25,28 @@ function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultip
     approxFactor = (screenRadius / scale) / compression;
   }
 
-  // 3. Invert the Multi-Pole Trigonometric Folding Layer
-  const scalingFactor = (Math.PI * 2) / (totalBranches * 600);
+  // 3. Mirror the Forward Self-Normalizing Scaling Factor
+  // approxFactor * scale matches the forward 'r' value exactly
+  const r = scale * approxFactor;
+  const normalizationThreshold = scale * 1.5;
+  const scalingFactor = 0.002 * (normalizationThreshold / Math.max(normalizationThreshold, r));
+
+  // 4. Invert the Multi-Pole Trigonometric Folding Layer
   const targetX = rx / (scale * (0.25 + approxFactor * 0.5));
   const targetY = ry / (scale * (0.25 + approxFactor * 0.5));
 
   // Utilize inverse Gudermannian properties to decouple mx and my components
   const u = targetX;
   const v = targetY;
-  const expMy = Math.sqrt((u * u + Math.pow(v + 1, 2)) / (u * u + Math.pow(v - 1, 2)));
-  const my = Math.log(expMy) / scalingFactor;
-  const mx = Math.asin(u / Math.cosh(my * scalingFactor)) / scalingFactor;
 
-  // 4. Convert Cartesian components back to standard logarithmic variables
+  // Guard against division by zero inside the square root bounds
+  const denominator = u * u + Math.pow(v - 1, 2);
+  const expMy = denominator < 0.0001 ? 1 : Math.sqrt((u * u + Math.pow(v + 1, 2)) / denominator);
+
+  const my = Math.log(expMy) / scalingFactor;
+  const mx = Math.asin(Math.max(-1, Math.min(1, u / Math.cosh(my * scalingFactor)))) / scalingFactor;
+
+  // 5. Convert Cartesian components back to standard logarithmic variables
   const flatX = -Math.log(Math.hypot(mx, my) / scale) / decayMultiplier;
   let flatY = Math.atan2(my, mx);
 

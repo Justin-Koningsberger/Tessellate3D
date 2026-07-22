@@ -48,15 +48,16 @@ module.exports = {
     const mx = r * Math.cos(theta);
     const my = r * Math.sin(theta);
 
-    // 3. Multi-Pole Trigonometric Folding Layer
-    // Lowering the scalingFactor (from 0.005 to 0.002) keeps the tiles tightly grouped
-    const scalingFactor = 0.002;
+    // 3. Self-normalizing scaling factor based on input magnitude
+    // Automatically drops below 0.002 if coordinate expansion explodes
+    const normalizationThreshold = scale * 1.5;
+    const scalingFactor = 0.002 * (normalizationThreshold / Math.max(normalizationThreshold, r));
+
+    // 4. Multi-Pole Trigonometric Folding Layer
     let finalX = scale * Math.sin(mx * scalingFactor) * Math.cosh(my * scalingFactor);
     let finalY = scale * Math.cos(mx * scalingFactor) * Math.sinh(my * scalingFactor);
 
-    // 4. Normalization Factor
-    // Compress the expansion scale dynamically based on the current radius factor
-    // This keeps the tiles small enough to pack edge-to-edge without colliding
+    // 5. Normalization Factor
     const compression = 0.25 + (factor * 0.5);
     finalX *= compression;
     finalY *= compression;

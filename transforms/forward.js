@@ -81,6 +81,7 @@ module.exports = {
     // 2. Section 3.3 Complex Rotation Injection:
     // We modify theta by adding a structural phase shift proportional to grid position.
     // This smoothly curls the paths without introducing destructive area shear.
+    // Twist is injected as a linear phase shift based on depth (point.x).
     const theta = point.y + angleOffset + (point.x * twistFactor);
 
     return {

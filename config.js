@@ -1,20 +1,21 @@
 const CONFIG = {
   // "logarithmic, loxodromic", single-pole" or "multi-pole"
-  variantMode: "multi-pole",
-  baseMotif: "chevron",
+  variantMode: "loxodromic",
+  baseMotif: "square",
   useInverseDebugging: true,  // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {
-    totalBranches: 11,         // Total spiral arms / structural symmetry axis
-    maxRings: 9,              // Depth layers (How many rings wrap inward)
+    totalBranches: 5,         // Total spiral arms / structural symmetry axis
+    maxRings: 13,             // Depth layers (How many rings wrap inward)
     globalScale: 180,         // Overall design magnification size
     globalRotation: 0,        // Camera spin orientation angle (0 = base alignment)
     subdivisionLimit: 0.05,   // Precision length step for linear smoothing
     decayMultiplier: 0.35,    // Controls how fast tiles shrink as they descend inward.
     // Set to 1.0 to close up the wide center hole completely!
-    twistFactor: 0.45         // 0.0 = straight rays (pure single-pole). Positive/Negative values
+    twistFactor: 0.45,        // 0.0 = straight rays (pure single-pole). Positive/Negative values
     // introduce clockwise or counter-clockwise logarithmic nautilus twists.
+    staggerFactor: 0.0        // Set to 0.0 for classic side-by-side concentric tiling
   },
 
   // Target Print Palette Hex Array

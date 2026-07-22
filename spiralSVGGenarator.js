@@ -32,13 +32,23 @@ function subdividePath(points, maxSegmentLength) {
 }
 
 /**
- * 2. Wallpaper Symmetry Engine
+ * 2. Wallpaper Symmetry Engine (With Helical Spiral Shift Support)
  */
 function applyWallpaperSymmetry(point, ring, branch, totalBranches) {
   const tileWidth = 1.0;
   const tileHeight = (Math.PI * 2) / totalBranches; 
+
+  // Safely look up configuration property parameters
+  const stagger = CONFIG.layout.staggerFactor !== undefined ? CONFIG.layout.staggerFactor : 0.0;
+
+  // SNAP FILTER: Force layout calculations to use clean, stable 0 or 1 grids
+  const cleanStagger = stagger >= 0.5 ? 1.0 : 0.0;
+
+  // Calculate continuous displacement offset across active branch counts
+  const helicalOffset = branch * (tileWidth / totalBranches) * cleanStagger;
+
   return {
-    x: point.x + (ring * tileWidth),
+    x: point.x + (ring * tileWidth) - helicalOffset,
     y: point.y + (branch * tileHeight)
   };
 }
@@ -108,18 +118,27 @@ function generateEscherTessellation() {
     groupedPaths[color] = [];
   });
 
-  // Render wallpaper grid across rings and structural arms
+    // Render wallpaper grid across rings and structural arms
   for (let ring = 0; ring < CONFIG.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
       const colorIndex = (branch + ring) % activeColors.length;
       const currentFill = activeColors[colorIndex];
 
-      const transformedPoints = smoothMotif.map(p => {
-        const gridSpace = applyWallpaperSymmetry(p, -ring, branch, totalBranches);
+      // AUTOMATIC AFFINE SHEAR MATRIX GENERATION
+      const stagger = CONFIG.layout.staggerFactor !== undefined ? CONFIG.layout.staggerFactor : 0.0;
+      const cleanStagger = stagger >= 0.5 ? 1.0 : 0.0;
+      const shearSlope = (1.0 / totalBranches) * cleanStagger;
 
+      const transformedPoints = smoothMotif.map(p => {
+        // Apply the horizontal affine shear tracking matrix to your base shape vertices
+        const shearedPoint = {
+          x: p.x + (p.y / cellHeight) * shearSlope,
+          y: p.y
+        };
+
+        const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches);
         let finalPoint;
 
-        // Dynamic routing block handling all active paper algorithms
         switch (CONFIG.variantMode) {
           case "logarithmic":
             finalPoint = forward.logarithmic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
@@ -130,7 +149,7 @@ function generateEscherTessellation() {
             break;
 
           case "multi-pole":
-            finalPoint = forward.multiPole(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier, totalBranches);
+            finalPoint = forward.multiPole(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
             break;
 
           case "loxodromic":
@@ -139,11 +158,8 @@ function generateEscherTessellation() {
             break;
         }
 
-        // INVERSE VALIDATION HOOK: Tests the mathematics on the tile vertices if debugging is on
         if (CONFIG.useInverseDebugging && p.x === 0 && p.y === 0) {
-          // Pass the generated point to our unified inverse router for validation
-          const originalGridOrigin = inverseWarp(finalPoint, CONFIG, totalBranches);
-          // originalGridOrigin.x and .y hold the safely mapped back coordinates
+          inverseWarp(finalPoint, CONFIG);
         }
 
         return finalPoint;

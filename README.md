@@ -1,8 +1,8 @@
-# Escher-Style Spiral Vector Engine 🌀
+# Tessellate3D - Escher-Style Spiral Vector Engine 🌀
 
 I have been creating tessellation SVGs for about two months now to print with my 3D printer. Throughout this journey, I found that the traditional workflow—using Inkscape to auto-trace or completely redraw a single tile inside a complex tessellation—was far too tedious and error-prone.
 
-To solve this, I wanted to bring the entire pipeline back into the pure mathematical domain while keeping the door wide open for artistic flourishes, ultimately giving the user absolute control over their final physical and vector outputs.
+To solve this, I built **Tessellate3D** to bring the entire pipeline back into the pure mathematical domain. The goal is to enforce mathematical perfection at the tile boundaries while keeping the door wide open for artistic flourishes, ultimately giving the user absolute, granular control over their final vector and 3D printed physical manufacturing outputs.
 
 During my research, I found the paper *"Generation of advanced Escher-like spiral tessellations"* (Ouyang et al., 2022). Their work is a massive source of inspiration for this engine, providing a beautiful mathematical framework for cyclic symmetry groups ($G_k(M, N)$) and conformal transformations. While their paper focuses on leveraging fragment shaders for high-resolution graphics and canvas rendering, it inspired me to adapt those same elegant equations into a native vector workflow.
 
@@ -44,7 +44,7 @@ This engine implements a **Forward Mapping** pipeline based on those concepts. I
   * *Purpose:* Translates flat grid positions into spiral space.
   * *Math:* Complex function $w = e^z$, mapping rectangular strips seamlessly into a swirling logarithmic layout.
 * **`[Multi-Component Asset Parser & Detail Separator]`**
-  * *Purpose:* Supports internal geometric details (eyes, scales).
+  * *Purpose[*] Supports internal geometric details (eyes, scales).
   * *Strategy:* Isolates non-boundary segments from base fills and overlays them separately as a stroke container.
 * **`[Color Cycler & Validator]`**
   * *Purpose:* Colors tiles diagonally via index modulo rules, formats standard XML schema prologues, and introduces explicit line breaks (`\n`) to prevent parser overflow.

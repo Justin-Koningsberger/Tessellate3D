@@ -3,7 +3,7 @@ const CONFIG = {
   variantMode: "loxodromic",
   // "square", "chevron", "chevron2", "sinewave", "squarewave", "puzzle", "detailedSquare"
   baseMotif: "detailedSquare",
-  useInverseDebugging: true,  // True enables absolute canvas tracking via inverse math
+  useInverseDebugging: false,  // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {

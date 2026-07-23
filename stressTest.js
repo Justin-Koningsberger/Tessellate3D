@@ -1,6 +1,6 @@
 const assert = require("assert");
 const forward = require("./transforms/forward");
-const { applyWallpaperSymmetry } = require("./spiralSVGGenarator");
+const { applyWallpaperSymmetry } = require("./spiralSVGGenerator");
 
 // -------------------------------------------------------------------------
 // MASTER CONFIGURATION & GLOBAL CONTROLS

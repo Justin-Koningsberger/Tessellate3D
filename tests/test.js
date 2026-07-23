@@ -1,5 +1,5 @@
 const assert = require("assert");
-const forward = require("./transforms/forward");
+const forward = require("../transforms/forward");
 
 const MOCK_SCALE = 180;
 const MOCK_ROTATION = 0;

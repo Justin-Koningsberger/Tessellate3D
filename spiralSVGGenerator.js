@@ -101,7 +101,16 @@ function generateEscherTessellation() {
     activeColors.push(CONFIG.colorPalette[i % CONFIG.colorPalette.length]);
   }
 
-  const smoothMotif = subdividePath(baseMotifs[CONFIG.baseMotif](cellHeight), CONFIG.layout.subdivisionLimit);
+  // --- UPDATED SUBDIVISION LAYER HANDLING ---
+  // Support multi-component motifs (e.g. boundary plus internal eyes, scales, wings)
+  // by normalizing everything to a nested array format so details are processed independently.
+  const rawMotifData = baseMotifs[CONFIG.baseMotif](cellHeight);
+  const motifComponents = Array.isArray(rawMotifData[0]) ? rawMotifData : [rawMotifData];
+
+  // Subdivide each vector component independently
+  const smoothComponents = motifComponents.map(comp =>
+    subdividePath(comp, CONFIG.layout.subdivisionLimit)
+  );
 
   let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
   svgContent += `<svg\n  width="${CONFIG.canvas.width}"\n  height="${CONFIG.canvas.height}"\n  viewBox="${CONFIG.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://w3.org/2000/svg">\n`;
@@ -118,55 +127,69 @@ function generateEscherTessellation() {
     groupedPaths[color] = [];
   });
 
-    // Render wallpaper grid across rings and structural arms
+  // INTERNAL DETAIL TRACKER: Stores decorative paths to layer them separately on top
+  const detailPaths = [];
+
+  // Render wallpaper grid across rings and structural arms
   for (let ring = 0; ring < CONFIG.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
       const colorIndex = (branch + ring) % activeColors.length;
       const currentFill = activeColors[colorIndex];
 
-      // AUTOMATIC AFFINE SHEAR MATRIX GENERATION
       const stagger = CONFIG.layout.staggerFactor !== undefined ? CONFIG.layout.staggerFactor : 0.0;
       const cleanStagger = stagger >= 0.5 ? 1.0 : 0.0;
+      // AUTOMATIC AFFINE SHEAR MATRIX GENERATION
       const shearSlope = (1.0 / totalBranches) * cleanStagger;
 
-      const transformedPoints = smoothMotif.map(p => {
-        // Apply the horizontal affine shear tracking matrix to your base shape vertices
-        const shearedPoint = {
-          x: p.x + (p.y / cellHeight) * shearSlope,
-          y: p.y
-        };
+      // Track all separate path fragments for this specific tile
+      let continuousTilePathString = "";
 
-        const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches);
-        let finalPoint;
+      // Loop through each sub-path component inside the motif (Boundary, Eyes, Scales, etc.)
+      smoothComponents.forEach((componentPoints, compIndex) => {
+        const transformedPoints = componentPoints.map(p => {
+          const shearedPoint = {
+            x: p.x + (p.y / cellHeight) * shearSlope,
+            y: p.y
+          };
 
-        switch (CONFIG.variantMode) {
-          case "logarithmic":
-            finalPoint = forward.logarithmic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
-            break;
+          const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches);
+          let finalPoint;
 
-          case "single-pole":
-            finalPoint = forward.singlePole(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
-            break;
+          switch (CONFIG.variantMode) {
+            case "logarithmic":
+              finalPoint = forward.logarithmic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation);
+              break;
+            case "single-pole":
+              finalPoint = forward.singlePole(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
+              break;
+            case "multi-pole":
+              finalPoint = forward.multiPole(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
+              break;
+            case "loxodromic":
+            default:
+              finalPoint = forward.loxodromic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.twistFactor, CONFIG.layout.decayMultiplier);
+              break;
+          }
 
-          case "multi-pole":
-            finalPoint = forward.multiPole(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.decayMultiplier);
-            break;
+          if (CONFIG.useInverseDebugging && p.x === 0 && p.y === 0) {
+            inverseWarp(finalPoint, CONFIG);
+          }
 
-          case "loxodromic":
-          default:
-            finalPoint = forward.loxodromic(gridSpace, CONFIG.layout.globalScale, CONFIG.layout.globalRotation, CONFIG.layout.twistFactor, CONFIG.layout.decayMultiplier);
-            break;
+          return finalPoint;
+        });
+
+        // Generate the SVG segment out of this transformed sub-path fragment
+        const segmentStr = generateSvgPath(transformedPoints);
+        if (compIndex === 0) {
+          continuousTilePathString += segmentStr; // Comp 0 is always the main solid background tile
+        } else {
+          // Comp > 0 are decorations; isolate them from base fills to colorize later
+          detailPaths.push(segmentStr);
         }
-
-        if (CONFIG.useInverseDebugging && p.x === 0 && p.y === 0) {
-          inverseWarp(finalPoint, CONFIG);
-        }
-
-        return finalPoint;
       });
 
-      const pathString = generateSvgPath(transformedPoints);
-      groupedPaths[currentFill].push(pathString);
+      // Push the unified structural tile (Boundary + Internal details combined) into the color group
+      groupedPaths[currentFill].push(continuousTilePathString);
     }
   }
 
@@ -178,6 +201,13 @@ function generateEscherTessellation() {
     svgContent += groupedPaths[color].join('');
     svgContent += `  </g>\n`;
   });
+
+  // SERIALIZE DECORATIVE LAYERS: Render all internal details using a neutral grey stroke overlay
+  if (detailPaths.length > 0) {
+    svgContent += `  <g id="escher_internal_details" fill="none" stroke="#808080" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">\n`;
+    svgContent += detailPaths.join('');
+    svgContent += `  </g>\n`;
+  }
 
   svgContent += `</svg>\n`;
   return svgContent;

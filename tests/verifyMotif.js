@@ -1,9 +1,12 @@
-const baseMotifs = require('./baseMotifs.js');
+const baseMotifs = require('../baseMotifs.js');
 
 function validateMotif(name, func) {
     console.log(`Checking [${name}]...`);
     const testHeight = 0.8; // Simulated cellHeight from spiral engine
-    const points = func(testHeight);
+    const rawData = func(testHeight);
+
+    // IF it's a multi-path array, grab the first nested array (the outer boundary)
+    const points = Array.isArray(rawData[0]) ? rawData[0] : rawData;
 
     if (!Array.isArray(points) || points.length === 0) {
         console.error(`❌ Error: ${name} did not return a valid array of points.`);

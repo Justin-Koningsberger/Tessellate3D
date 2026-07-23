@@ -6,6 +6,31 @@ module.exports = {
     { x: 1.0, y: cellHeight },
     { x: 0.0, y: cellHeight }
   ],
+  // Simple square motif with internal Escher-style decorative details
+  detailedSquare: (cellHeight) => [
+    // The first item is ALWAYS the outer boundary (must pass verifyMotif.js)
+    [
+      { x: 0.0, y: 0.0 },                   // Top-Left start
+      { x: 1.0, y: 0.0 },                   // Top-Right
+      { x: 1.0, y: cellHeight },            // Bottom-Right
+      { x: 0.0, y: cellHeight },            // Bottom-Left
+      { x: 0.0, y: cellHeight }             // Explicit closer for validator
+    ],
+    // Subsequent items are internal decorations (The Escher "Eye & Scale" Lines)
+    [
+      { x: 0.2, y: cellHeight * 0.2 },      // Internal Detail A: An "Eye" box
+      { x: 0.3, y: cellHeight * 0.2 },
+      { x: 0.3, y: cellHeight * 0.3 },
+      { x: 0.2, y: cellHeight * 0.3 },
+      { x: 0.2, y: cellHeight * 0.2 }       // Close the eye loop
+    ],
+    [
+      { x: 0.4, y: cellHeight * 0.5 },      // Internal Detail B: A decorative curve
+      { x: 0.6, y: cellHeight * 0.7 },
+      { x: 0.8, y: cellHeight * 0.5 }
+    ]
+  ],
+
   // Chevron base motif
   chevron: (cellHeight) => [
     { x: 0.0, y: 0.0 },                  // Bottom-Left

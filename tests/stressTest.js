@@ -1,6 +1,6 @@
 const assert = require("assert");
-const forward = require("./transforms/forward");
-const { applyWallpaperSymmetry } = require("./spiralSVGGenerator");
+const forward = require("../transforms/forward");
+const { applyWallpaperSymmetry } = require("../spiralSVGGenerator");
 
 // -------------------------------------------------------------------------
 // MASTER CONFIGURATION & GLOBAL CONTROLS
@@ -94,7 +94,7 @@ function evaluateVariantExtended(name, branches, scale, rotation, decay, twist) 
 
     // Bidirectional Verification Check
     if (name === "single-pole" || name === "loxodromic" || name === "multi-pole") {
-      const inverseWarp = require("./transforms/inverse");
+      const inverseWarp = require("../transforms/inverse");
       const dummyConfig = {
         variantMode: name,
         layout: { globalScale: scale, globalRotation: rotation, decayMultiplier: decay, twistFactor: twist }

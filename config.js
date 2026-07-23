@@ -1,14 +1,14 @@
 const CONFIG = {
   // "logarithmic, loxodromic", single-pole" or "multi-pole"
   variantMode: "loxodromic",
-  // "square", "chevron", "chevron2", "sinewave", "squarewave", "puzzle"
-  baseMotif: "puzzle",
+  // "square", "chevron", "chevron2", "sinewave", "squarewave", "puzzle", "detailedSquare"
+  baseMotif: "detailedSquare",
   useInverseDebugging: true,  // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {
     totalBranches: 5,         // Total spiral arms / structural symmetry axis
-    maxRings: 13,             // Depth layers (How many rings wrap inward)
+    maxRings: 6,              // Depth layers (How many rings wrap inward)
     globalScale: 180,         // Overall design magnification size
     globalRotation: 0,        // Camera spin orientation angle (0 = base alignment)
     subdivisionLimit: 0.05,   // Precision length step for linear smoothing

@@ -1,7 +1,8 @@
 const CONFIG = {
   // "logarithmic, loxodromic", single-pole" or "multi-pole"
   variantMode: "loxodromic",
-  baseMotif: "square",
+  // "square", "chevron", "chevron2", "sinewave", "squarewave", "puzzle"
+  baseMotif: "puzzle",
   useInverseDebugging: true,  // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration

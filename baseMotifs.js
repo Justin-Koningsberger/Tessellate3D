@@ -58,20 +58,20 @@ module.exports = {
     { x: 0.0,   y: cellHeight }             // Bottom-Left
   ],
 
-  // Escher Jigsaw Puzzle Tab (4-way lock)
+  // Proportioned Jigsaw Puzzle Tab preventing Bijectivity Distortion Faults
   puzzle: (cellHeight) => [
     { x: 0.0,   y: 0.0 },
-    { x: 0.5,   y: -0.25 },                 // Top interlocking bubble
+    { x: 0.5,   y: -cellHeight * 0.3 },     // Top bubble scaled to height
     { x: 1.0,   y: 0.0 },                   // Top-Right corner
-    { x: 1.25,  y: cellHeight * 0.25 },     // Right side out-ward hook start
-    { x: 1.45,  y: cellHeight * 0.5 },      // Right side bulb apex
-    { x: 1.25,  y: cellHeight * 0.75 },     // Right side hook neck
+    { x: 1.0,   y: cellHeight * 0.25 },     // Keep X locked to 1.0 wall
+    { x: 1.2,   y: cellHeight * 0.5 },      // Controlled rightward protrusion
+    { x: 1.0,   y: cellHeight * 0.75 },     // Right side hook neck return
     { x: 1.0,   y: cellHeight },            // Bottom-Right corner
-    { x: 0.5,   y: cellHeight - 0.25 },     // Bottom interlocking bubble cavity
+    { x: 0.5,   y: cellHeight - cellHeight * 0.3 }, // Matching bottom bubble cavity
     { x: 0.0,   y: cellHeight },            // Bottom-Left corner anchor point
-    { x: 0.25,  y: cellHeight * 0.75 },     // Left side complementary cavity neck
-    { x: 0.45,  y: cellHeight * 0.5 },      // Left side cavity apex
-    { x: 0.25,  y: cellHeight * 0.25 },     // Left side cavity entry
-    { x: 0.0,   y: cellHeight }             // Explicit Bottom-Left path closer for the validator
+    { x: 0.0,   y: cellHeight * 0.75 },     // Keep X locked to 0.0 wall
+    { x: 0.2,   y: cellHeight * 0.5 },      // Matching internal left cavity
+    { x: 0.0,   y: cellHeight * 0.25 },     // Left side cavity entry
+    { x: 0.0,   y: cellHeight }             // Explicit Bottom-Left path closer
   ]
 };

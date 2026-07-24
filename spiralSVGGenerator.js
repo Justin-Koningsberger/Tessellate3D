@@ -85,6 +85,57 @@ function generateSvgPath(points) {
   return `<path fill-rule="evenodd" clip-rule="evenodd" d="${d}" />`;
 }
 
+/**
+ * Global Coordinate Normalization Module
+ * Scales and centers a raw array of spiral path string definitions
+ * to fit cleanly within a standard manufacturing/editor canvas limit.
+ */
+function normalizeSpiralCanvas(compiledPathObjects, targetDimensions = 500) {
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+
+    // 1. Scan phase: Parse out raw coordinates to find absolute geometric bounds
+    compiledPathObjects.forEach(path => {
+        // Capture all numeric coordinate sets in the SVG string
+        const coordPairs = path.d.match(/[-+]?[0-9]*\.?[0-9]+/g);
+        if (!coordPairs) return;
+
+        for (let i = 0; i < coordPairs.length; i += 2) {
+            const x = parseFloat(coordPairs[i]);
+            const y = parseFloat(coordPairs[i+1]);
+
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        }
+    });
+
+    const currentWidth = maxX - minX;
+    const currentHeight = maxY - minY;
+
+    // Safety check for empty or zero-area path configurations
+    if (currentWidth === 0 || currentHeight === 0) return compiledPathObjects;
+
+    // 2. Calculate scaling factor to cleanly fit the largest dimension
+    const scaleFactor = targetDimensions / Math.max(currentWidth, currentHeight);
+
+    // Calculate translation vector to center the design completely around (0,0)
+    const centerX = minX + (currentWidth / 2);
+    const centerY = minY + (currentHeight / 2);
+
+    // 3. Transformation pass: Apply normalized matrices back to the SVG path tokens
+    return compiledPathObjects.map(path => {
+        const normalizedD = path.d.replace(/([-+]?[0-9]*\.?[0-9]+)\s+([-+]?[0-9]*\.?[0-9]+)/g, (match, xStr, yStr) => {
+            // Center the coordinate point, then scale it uniformly
+            const nx = ((parseFloat(xStr) - centerX) * scaleFactor).toFixed(4);
+            const ny = ((parseFloat(yStr) - centerY) * scaleFactor).toFixed(4);
+            return `${nx} ${ny}`;
+        });
+
+        return { ...path, d: normalizedD };
+    });
+}
 
 /**
  * Master Generator Function
@@ -112,23 +163,15 @@ function generateEscherTessellation() {
     subdividePath(comp, CONFIG.layout.subdivisionLimit)
   );
 
-  let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
-  svgContent += `<svg\n  width="${CONFIG.canvas.width}"\n  height="${CONFIG.canvas.height}"\n  viewBox="${CONFIG.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://w3.org/2000/svg">\n`;
-
   // Inject a visual target reticle grid behind everything if inverse debugging is toggled on
+  let calibrationSvg = "";
   if (CONFIG.useInverseDebugging) {
-    svgContent += `  <!-- INVERSE CALIBRATION MESH LINES -->\n`;
-    svgContent += `  <circle cx="0" cy="0" r="${CONFIG.layout.globalScale}" fill="none" stroke="#ccc" stroke-dasharray="5,5" stroke-width="2" />\n`;
+    calibrationSvg += `  <!-- INVERSE CALIBRATION MESH LINES -->\n`;
+    calibrationSvg += `  <circle cx="0" cy="0" r="${CONFIG.layout.globalScale}" fill="none" stroke="#ccc" stroke-dasharray="5,5" stroke-width="2" />\n`;
   };
 
-  // Instantiate clean color grouping registers
-  const groupedPaths = {};
-  activeColors.forEach(color => {
-    groupedPaths[color] = [];
-  });
-
-  // INTERNAL DETAIL TRACKER: Stores decorative paths to layer them separately on top
-  const detailPaths = [];
+  // Raw array collector to hold un-normalized paths and metadata
+  const rawPathObjects = [];
 
   // Render wallpaper grid across rings and structural arms
   for (let ring = 0; ring < CONFIG.layout.maxRings; ring++) {
@@ -180,18 +223,35 @@ function generateEscherTessellation() {
 
         // Generate the SVG segment out of this transformed sub-path fragment
         const segmentStr = generateSvgPath(transformedPoints);
-        if (compIndex === 0) {
-          continuousTilePathString += segmentStr; // Comp 0 is always the main solid background tile
-        } else {
-          // Comp > 0 are decorations; isolate them from base fills to colorize later
-          detailPaths.push(segmentStr);
-        }
+        rawPathObjects.push({
+          d: segmentStr,
+          compIndex: compIndex,
+          color: currentFill
+        });
       });
-
-      // Push the unified structural tile (Boundary + Internal details combined) into the color group
-      groupedPaths[currentFill].push(continuousTilePathString);
     }
   }
+
+  // RUN THE NORMALIZATION PASS
+  // Constrain full compilation output safely within a standard 1000x1000 box
+  const normalizedPaths = normalizeSpiralCanvas(rawPathObjects, 1000);
+
+  // Group results back into drawing layers
+  const groupedPaths = {};
+  activeColors.forEach(color => { groupedPaths[color] = []; });
+  const detailPaths = [];
+
+  normalizedPaths.forEach(path => {
+    if (path.compIndex === 0) {
+      groupedPaths[path.color].push(path.d + " Z");
+    } else {
+      detailPaths.push(path.d);
+    }
+  });
+
+  let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
+  svgContent += `<svg\n  width="${CONFIG.canvas.width}"\n  height="${CONFIG.canvas.height}"\n  viewBox="${CONFIG.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://www.w3.org/2000/svg">\n`;
+  svgContent += calibrationSvg;
 
   // SERIALIZE DYNAMIC ACTIVE LAYER GROUPS ONLY
   activeColors.forEach((color, index) => {

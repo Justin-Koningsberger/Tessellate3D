@@ -7,7 +7,7 @@ const MOCK_DECAY = 1.0;
 const MOCK_TWIST = 0.45;
 const MOCK_BRANCHES = 5;
 
-// Set to exactly 0.005 to keep precision boundaries sharp
+// Set to exactly 0.001 to keep precision boundaries sharp
 const EPSILON = 0.001;
 
 function assertCloseTo(actual, expected, message) {

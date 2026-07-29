@@ -1,9 +1,14 @@
-module.exports = {
+import { Point2D } from '../tessellationEngine.js';
 
+export const forward = {
   /**
    * Conformal Warp Function: Logarithmic Spiral (w = e^z)
+   *
+   * This mapping uses standard w = e^z (radiating uniform grid layout paths
+   * directly into an organic outer spiral space) rather than compressing down
+   * via a traditional complex natural log w = ln(z).
    */
-  logarithmic: (point, scale, angleOffset) => {
+  logarithmic: (point: Point2D, scale: number, angleOffset: number): Point2D => {
     const r = Math.exp(point.x) * scale;
     const theta = point.y + angleOffset;
 
@@ -17,8 +22,12 @@ module.exports = {
    * 3A. SINGLE-POLE LOG-PERIODIC SPIRAL VARIANT
    * Core math adapted from Section 3 of the paper. This keeps tiles structurally
    * identical while cleanly scaling them down toward a central focal pole.
+   *
+   * Input coordinates act as dedicated structural grid rings. Map depths
+   * are controlled via an e^(-x) decay multiplication layer, preventing
+   * catastrophic mathematical singularity collapses.
    */
-  singlePole: (point, scale, angleOffset, decayMultiplier) => {
+  singlePole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
     // 1. Calculate an inverted exponential decay radius based on the grid ring
     // This scales the tiles down smoothly toward the center without shearing them into arcs
     const factor = Math.exp(-point.x * decayMultiplier);
@@ -38,7 +47,7 @@ module.exports = {
    * Uses trigonometric folding with an added normalization pass to scale tiles down
    * perfectly, preventing shapes from expanding too fast and overlapping.
    */
-   multiPole: (point, scale, angleOffset, decayMultiplier) => {
+  multiPole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
     // 1. Core log-periodic scaling factor
     const factor = Math.exp(-point.x * decayMultiplier);
     const r = scale * factor;
@@ -73,7 +82,7 @@ module.exports = {
    * Couples the exponential decay directly with a rotational phase shift.
    * This curves the tile grids smoothly into interlocking whirlpool spirals.
    */
-  loxodromic: (point, scale, angleOffset, twistFactor, decayMultiplier) => {
+  loxodromic: (point: Point2D, scale: number, angleOffset: number, twistFactor: number, decayMultiplier: number): Point2D => {
     // 1. Core log-periodic scaling factor mapping grid depth
     const factor = Math.exp(-point.x * decayMultiplier);
     const r = scale * factor;

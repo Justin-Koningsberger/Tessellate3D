@@ -1,13 +1,16 @@
-module.exports = {
+import { Point2D } from './tessellationEngine.js';
+
+export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Point2D[]> = {
   // Square motif
-  square: (cellHeight) => [
+  square: (cellHeight: number): Point2D[] => [
     { x: 0.0, y: 0.0 },
     { x: 1.0, y: 0.0 },
     { x: 1.0, y: cellHeight },
     { x: 0.0, y: cellHeight }
   ],
+
   // Simple square motif with internal Escher-style decorative details
-  detailedSquare: (cellHeight) => [
+  detailedSquare: (cellHeight: number): Point2D[][] => [
     // The first item is ALWAYS the outer boundary (must pass verifyMotif.js)
     [
       { x: 0.0, y: 0.0 },                   // Top-Left start
@@ -32,7 +35,7 @@ module.exports = {
   ],
 
   // Chevron base motif
-  chevron: (cellHeight) => [
+  chevron: (cellHeight: number): Point2D[] => [
     { x: 0.0, y: 0.0 },                  // Bottom-Left
     { x: 0.5, y: 0.5 },                  // Bottom-Middle (pushed up)
     { x: 1.0, y: 0.0 },                  // Bottom-Right
@@ -42,7 +45,7 @@ module.exports = {
   ],
 
   // Chevron base motif with sharp, deep interlocking features
-  chevron2: (cellHeight) => [
+  chevron2: (cellHeight: number): Point2D[] => [
     { x: 0.0, y: 0.0 },                   // Top-Left corner start
     { x: 0.5, y: 0.5 },                   // Top-Middle protruding crest (Pushed up)
     { x: 1.0, y: 0.0 },                   // Top-Right corner
@@ -55,7 +58,7 @@ module.exports = {
   ],
 
   // Smooth Sine Wavelet
-  sinewave: (cellHeight) => [
+  sinewave: (cellHeight: number): Point2D[] => [
     { x: 0.0,   y: 0.0 },
     { x: 0.25,  y: -0.2 },                 // Top dip down/up simulation
     { x: 0.75,  y: 0.2 },                  // Crest/peak of the top curve
@@ -68,7 +71,7 @@ module.exports = {
   ],
 
   // Castle Battlement / Square Wave Motif
-  squarewave: (cellHeight) => [
+  squarewave: (cellHeight: number): Point2D[] => [
     { x: 0.0,   y: 0.0 },
     { x: 0.4,   y: 0.0 },                   // Narrower base wall
     { x: 0.4,   y: -cellHeight * 0.4 },     // Taller step height
@@ -84,7 +87,7 @@ module.exports = {
   ],
 
   // Proportioned Jigsaw Puzzle Tab preventing Bijectivity Distortion Faults
-  puzzle: (cellHeight) => [
+  puzzle: (cellHeight: number): Point2D[] => [
     { x: 0.0,   y: 0.0 },
     { x: 0.5,   y: -cellHeight * 0.3 },     // Top bubble scaled to height
     { x: 1.0,   y: 0.0 },                   // Top-Right corner

@@ -1,0 +1,30 @@
+{
+  "name": "tessellate-3d",
+  "version": "1.0.0",
+  "description": "Mathematical forward-mapping vector and 3D manufacturing engine.",
+  "main": "dist/tessellationEngine.js",
+  "type": "module",
+  "scripts": {
+    "dev": "ts-node --esm src/index.ts",
+    "test:motifs": "ts-node --esm src/tests/validateMotif.test.ts",
+    "test:transforms": "ts-node --esm src/tests/validateTransforms.test.ts",
+    "test:fuzz": "ts-node --esm src/tests/fuzzEngine.test.ts",
+    "test": "npm run test:motifs && npm run test:transforms && npm run test:fuzz",
+    "build": "tsc"
+  },
+  "keywords": [
+    "conformal-mapping",
+    "escher",
+    "tessellation",
+    "3d-printing",
+    "stl"
+  ],
+  "author": "Justin Koningsberger",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}

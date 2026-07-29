@@ -1,9 +1,17 @@
+import { Point2D, EngineConfig } from '../tessellationEngine.js';
+
 /**
  * SECTION 4: INVERSE SINGLE-POLE SOLVER
  * Reverses exponential polar coordinate expansion to resolve original flat
  * wallpaper positions backward from mapped target plane dimensions.
  */
-function inverseSinglePole(screenPoint, scale, angleOffset, decayMultiplier, totalBranches) {
+export function inverseSinglePole(
+  screenPoint: Point2D,
+  scale: number,
+  angleOffset: number,
+  decayMultiplier: number,
+  totalBranches?: number
+): Point2D {
   if (scale === 0) return { x: 0, y: 0 };
 
   // 1. Undo global canvas camera rotation alignment
@@ -16,13 +24,13 @@ function inverseSinglePole(screenPoint, scale, angleOffset, decayMultiplier, tot
   if (screenRadius < 0.0001) return { x: 0, y: 0 };
 
   // 2. Extract outward polar mapping components
-  let thetaM = Math.atan2(ry, rx);
+  const thetaM = Math.atan2(ry, rx);
 
   // Reverse the exponential step: scale * Math.exp(r)
-  let logScale = Math.log(screenRadius / scale);
+  const logScale = Math.log(screenRadius / scale);
 
   // 3. Reverse the branch frequency scaling layer
-  let flatY = thetaM / (totalBranches || 1);
+  const flatY = thetaM / (totalBranches || 1);
 
   // 4. Reconstruct original uncompressed input radius tracking bounds
   // Estimates factor configurations using the active layout limits from forward.js
@@ -47,7 +55,13 @@ function inverseSinglePole(screenPoint, scale, angleOffset, decayMultiplier, tot
  * Reverses trigonometric folding and normalization to calculate backward
  * from final screen coordinates (X, Y) to the original flat wallpaper grid space.
  */
-function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier, totalBranches) {
+export function inverseMultiPoleHyperbolic(
+  screenPoint: Point2D,
+  scale: number,
+  angleOffset: number,
+  decayMultiplier: number,
+  totalBranches?: number
+): Point2D {
   // Prevent division by zero if scale is unconfigured
   if (scale === 0) return { x: 0, y: 0 };
 
@@ -119,8 +133,19 @@ function inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultip
  * SECTION 4: INVERSE LOXODROMIC TWIST SOLVER
  * Un-spirals coupled loxodromic coordinates by solving the underlying
  * linear matrix system using log-polar spatial components.
+ *
+ * MATHEMATICAL ARCHITECTURE INSIGHT: THE INVERSE LOXODROMIC TWIST IDENTITY
+ * Your solver utilizes a clean linear matrix mapping shortcut. Because flatX 
+ * depends entirely on logR, you solve it first, then pull the exact x parameter 
+ * out to decouple and un-twist the phase tracking bounds of flatY seamlessly.
  */
-function inverseLoxodromic(screenPoint, scale, angleOffset, twistFactor, decayMultiplier) {
+export function inverseLoxodromic(
+  screenPoint: Point2D,
+  scale: number,
+  angleOffset: number,
+  twistFactor: number,
+  decayMultiplier: number
+): Point2D {
   if (scale === 0) return { x: 0, y: 0 };
 
   // 1. Undo global canvas rotation alignment
@@ -159,17 +184,18 @@ function inverseLoxodromic(screenPoint, scale, angleOffset, twistFactor, decayMu
  * DYNAMIC INVERSE ROUTER ENGINE
  * Automatically maps a screen coordinate backward using the active variant mode.
  */
-function inverseWarp(screenPoint, CONFIG, totalBranches) {
-  const scale = CONFIG.layout.globalScale;
-  const angleOffset = CONFIG.layout.globalRotation;
-  const decayMultiplier = CONFIG.layout.decayMultiplier;
-  const twistFactor = CONFIG.layout.twistFactor;
+export function inverseWarp(screenPoint: Point2D, config: EngineConfig, totalBranches?: number): Point2D {
+  const scale = config.layout.globalScale;
+  const angleOffset = config.layout.globalRotation;
+  const decayMultiplier = config.layout.decayMultiplier;
+  const twistFactor = config.layout.twistFactor;
+  const branches = totalBranches ?? config.layout.totalBranches;
 
-  switch (CONFIG.variantMode) {
+  switch (config.variantMode) {
     case "single-pole":
-      return inverseSinglePole(screenPoint, scale, angleOffset, decayMultiplier, totalBranches);
+      return inverseSinglePole(screenPoint, scale, angleOffset, decayMultiplier, branches);
     case "multi-pole":
-      return inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier, totalBranches);
+      return inverseMultiPoleHyperbolic(screenPoint, scale, angleOffset, decayMultiplier, branches);
     case "loxodromic":
       return inverseLoxodromic(screenPoint, scale, angleOffset, twistFactor, decayMultiplier);
     default:
@@ -177,5 +203,3 @@ function inverseWarp(screenPoint, CONFIG, totalBranches) {
       return { x: 0, y: 0 };
   }
 }
-
-module.exports = inverseWarp;

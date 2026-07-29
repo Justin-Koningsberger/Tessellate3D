@@ -1,21 +1,19 @@
-const CONFIG = {
-  // "logarithmic, loxodromic", single-pole" or "multi-pole"
+import { EngineConfig } from './tessellationEngine.js';
+
+export const CONFIG: EngineConfig = {
   variantMode: "loxodromic",
-  // "square", "chevron", "chevron2", "sinewave", "squarewave", "puzzle", "detailedSquare"
-  baseMotif: "detailedSquare",
-  useInverseDebugging: false,  // True enables absolute canvas tracking via inverse math
+  baseMotif: "squarewave",
+  useInverseDebugging: false, // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {
-    totalBranches: 5,         // Total spiral arms / structural symmetry axis
+    totalBranches: 4,         // Total spiral arms / structural symmetry axis
     maxRings: 6,              // Depth layers (How many rings wrap inward)
     globalScale: 180,         // Overall design magnification size
     globalRotation: 0,        // Camera spin orientation angle (0 = base alignment)
     subdivisionLimit: 0.05,   // Precision length step for linear smoothing
-    decayMultiplier: 0.35,    // Controls how fast tiles shrink as they descend inward.
-    // Set to 1.0 to close up the wide center hole completely!
-    twistFactor: 0.45,        // 0.0 = straight rays (pure single-pole). Positive/Negative values
-    // introduce clockwise or counter-clockwise logarithmic nautilus twists.
+    decayMultiplier: 0.35,    // Controls how fast tiles shrink as they descend inward. Set to 1.0 to close up the wide center hole completely!
+    twistFactor: 0.45,        // With Loxodromic mode: 0.0 = straight rays (pure single-pole). Positive/Negative values introduce clockwise or counter-clockwise logarithmic nautilus twists.
     staggerFactor: 0.0        // Set to 0.0 for classic side-by-side concentric tiling
   },
 
@@ -32,7 +30,6 @@ const CONFIG = {
     "#EC4899", // layer 9: Magenta
     "#FFFFFF", // Layer 10: White
     "#345fff"  // Layer 11: random
-
   ],
 
   // Artboard Panel Sizing Constraints
@@ -42,5 +39,3 @@ const CONFIG = {
     viewBox: "-600 -600 1200 1200"
   }
 };
-
-module.exports = CONFIG;

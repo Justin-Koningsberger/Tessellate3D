@@ -1,4 +1,4 @@
-# Tessellate3D - Escher-Style Spiral Vector Engine 🌀
+# Tessellate3D - Escher-Style Spiral Vector Engine ![Loxodromic Chevron Tessellation](./src/assets/hero-tessellation.svg)
 
 I have been creating tessellation SVGs for about two months now to print with my 3D printer. Throughout this journey, I found that the traditional workflow—using Inkscape to auto-trace or completely redraw a single tile inside a complex tessellation—was far too tedious and error-prone.
 
@@ -31,10 +31,10 @@ There is also a deep structural link between 3D printing and classical relief pr
 
 ---
 
-## Current Stable Pipeline Components (Logarithmic Spiral Stage)
+## Stable Pipeline Components (Phase 1 Conformal Architecture Core)
 
 * **`[Base Motif]`**
-  * *Definition:* Point array mapping an interlocking square/chevron shape.
+  * *Definition:* Statically typed, resolution-independent vector matrices supporting multi-component elements (outer boundaries and fine internal accent contours).
 * **`[Subdivision Engine (subdividePath)]`**
   * *Purpose:* Injects extra vertices along long straight path edges.
   * *Why:* Conformal mappings bend straight lines into smooth curves. Without subdivision, the output paths would warp as straight, jagged chords instead of fluid spiral segments.
@@ -45,14 +45,15 @@ There is also a deep structural link between 3D printing and classical relief pr
   * *Purpose:* Aligns tiling vertices perfectly across layout lanes.
   * *Why:* Eliminates rounding drift and structural gap tearing.
 * **`[Conformal Warper (forwardLogSpiral)]`**
-  * *Purpose:* Translates flat grid positions into spiral space.
-  * *Math:* Complex function $w = e^z$, mapping rectangular strips seamlessly into a swirling logarithmic layout.
-* **`[ ] [Multi-Component Asset Parser & Detail Separator]`**
-  * *Status:* IN PROGRESS / BUG-FIXING
-  * *Purpose:* Supports internal geometric details (eyes, scales).
-  * *Strategy:* Isolates non-boundary segments from base fills and overlays them separately as a stroke container.
+  * *Purpose:* Translates flat grid positions into four specialized conformal projection variations: `logarithmic` ($w = e^z$), `single-pole` (exponential decay), `multi-pole` (trigonometric hyperbolic split), and `loxodromic` (torsional complex phase twists).
+* **`[Exact Transcendental Factor Recovery Solver]`**
+  * *Purpose:* Performs exact backward grid tracking via reverse algebraic transformations.
+  * *Strategy:* Leverages localized fixed-point iteration loops and decoupled matrix mappings to isolate u,v coordinates from screen space without runtime mathematical singularity collapses.
+* **`[Multi-Component Asset Parser & Detail Separator]`**
+  * *Status:* COMPLETE
+  * *Purpose:* Safely distinguishes master interlocking solid tile boundary fills (`compIndex === 0`) from non-boundary artistic gray strokes (`compIndex > 0`), isolating them completely to prevent slicing self-intersections.
 * **`[Color Cycler & Validator]`**
-  * *Purpose:* Colors tiles diagonally via index modulo rules, formats standard XML schema prologues, and introduces explicit line breaks (`\n`) to prevent parser overflow.
+  * *Purpose:* Colors tiles diagonally via index modulo rules, locks geometric precision via adaptive micro-snapping weld points, and enforces strict W3C XML standard namespaces (`xmlns="http://w3.org/2000/svg"`) to guarantee flawless vector loading.
   * *Grouping Output:* Organizes arrays of mapped coordinates dynamically into structured collections sorted by color parameters.
 
 ---
@@ -76,12 +77,11 @@ There is also a deep structural link between 3D printing and classical relief pr
 
 ## Project Suite Execution Scripts
 
-Execute these scripts from your terminal environment to run the suite, using your system environment variables to seamlessly toggle execution paths between local testing profiles and your cloud backend servers:
+This project is compiled under a modern, strict `NodeNext` ECMAScript specification framework. Execute these scripts using your npm workspace lifecycle tooling from the repository's root directory:
 
-1. **`[TypeScript Transition Target]`**
-   * *Status:* ACTIVE REFACTOR
-   * *Purpose:* Migrating all core mathematical transformations, array configurations, and string builders into strictly typed `.ts` models.
-2. **Master Generation Engine:** `node spiralSVGGenerator.js`
-3. **Automated Validation Suite:** `node tests/verifyMotif.js`
-4. **Progressive Stress Test:** `node tests/stressTest.js`
-5. **Headless Project Assembler:** `node server/compile3DProject.js` *(Runs web request parsing, ASCII text-to-STL extrusions, and dynamic PrusaSlicer CLI merging)*
+1. **Local Compiler Test Runner:** `npm run dev` *(Evaluates local configuration layers at `src/config.ts` and outputs test slices into the root directory)*
+2. **Master Verification Test Suite:** `npm test` *(Triggers and strings together all validation engines in series)*
+3. **Motif Boundary Constraint Test:** `npm run test:motifs` *(Performs rigorous micro-micron closure checks over your base motif libraries)*
+4. **Mathematical Regression Test:** `npm run test:transforms` *(Asserts forward coordinate vectors against exact algebraic checkpoints)*
+5. **Engine Telemetry Fuzzer:** `npm run test:fuzz` *(Runs a deep dual-progression random sweep across varying depth limits and ring layers)*
+6. **Headless Project Assembler:** `node dist/server/compile3DProject.js` *(In development for Phase 2 manufacturing)*

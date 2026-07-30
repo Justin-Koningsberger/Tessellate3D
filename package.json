@@ -5,11 +5,13 @@
   "main": "dist/tessellationEngine.js",
   "type": "module",
   "scripts": {
-    "dev": "ts-node --esm src/index.ts",
-    "test:motifs": "ts-node --esm src/tests/validateMotif.test.ts",
-    "test:transforms": "ts-node --esm src/tests/validateTransforms.test.ts",
-    "test:fuzz": "ts-node --esm src/tests/fuzzEngine.test.ts",
-    "test": "npm run test:motifs && npm run test:transforms && npm run test:fuzz",
+    "dev:ui": "vite",
+    "dev": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
+    "test:motifs": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/validateMotif.test.ts",
+    "test:transforms": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/validateTransforms.test.ts",
+    "test:fuzz": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/fuzzEngine.test.ts",
+    "test:zip": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/zipUtils.test.ts",
+    "test": "npm run test:motifs && npm run test:transforms && npm run test:fuzz && npm run test:zip",
     "build": "tsc"
   },
   "keywords": [
@@ -25,6 +27,10 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vite": "^5.4.21"
+  },
+  "engines": {
+    "node": ">=20.0.0 <21.0.0"
   }
 }

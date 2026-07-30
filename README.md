@@ -53,7 +53,7 @@ There is also a deep structural link between 3D printing and classical relief pr
   * *Status:* COMPLETE
   * *Purpose:* Safely distinguishes master interlocking solid tile boundary fills (`compIndex === 0`) from non-boundary artistic gray strokes (`compIndex > 0`), isolating them completely to prevent slicing self-intersections.
 * **`[Color Cycler & Validator]`**
-  * *Purpose:* Colors tiles diagonally via index modulo rules, locks geometric precision via adaptive micro-snapping weld points, and enforces strict W3C XML standard namespaces (`xmlns="http://w3.org/2000/svg"`) to guarantee flawless vector loading.
+  * *Purpose:* Colors tiles diagonally via index modulo rules, locks geometric precision via adaptive micro-snapping weld points.
   * *Grouping Output:* Organizes arrays of mapped coordinates dynamically into structured collections sorted by color parameters.
 
 ---
@@ -75,13 +75,27 @@ There is also a deep structural link between 3D printing and classical relief pr
 
 ---
 
+## Prerequisites & Local Validation Environment
+
+This project utilizes advanced ESM features and native testing frameworks.
+To run this workspace engine locally, ensure your environment meets these constraints:
+
+* **Node.js:** Runtime `v20.x.x` is required (Tested extensively on Node `v20.20.2`).
++* **Environment Management:** If you have multiple versions active, use [nvm](https://github.com/creationix/nvm) to initialize the target state before executing packages:
+  ```bash
+  nvm use 20
+  npm install
+  npm run dev:ui
+  ```
+
 ## Project Suite Execution Scripts
 
 This project is compiled under a modern, strict `NodeNext` ECMAScript specification framework. Execute these scripts using your npm workspace lifecycle tooling from the repository's root directory:
 
 1. **Local Compiler Test Runner:** `npm run dev` *(Evaluates local configuration layers at `src/config.ts` and outputs test slices into the root directory)*
-2. **Master Verification Test Suite:** `npm test` *(Triggers and strings together all validation engines in series)*
+2. **Master Verification Test Suite:** `npm test` *(Triggers and strings together all tests in series)*
 3. **Motif Boundary Constraint Test:** `npm run test:motifs` *(Performs rigorous micro-micron closure checks over your base motif libraries)*
 4. **Mathematical Regression Test:** `npm run test:transforms` *(Asserts forward coordinate vectors against exact algebraic checkpoints)*
 5. **Engine Telemetry Fuzzer:** `npm run test:fuzz` *(Runs a deep dual-progression random sweep across varying depth limits and ring layers)*
-6. **Headless Project Assembler:** `node dist/server/compile3DProject.js` *(In development for Phase 2 manufacturing)*
+6. **ZIP Binary Signature Test:** `npm run test:zip` *(Validates PKWARE local file headers, byte offsets, and CRC32 integrity checks)*
+7. **Headless Project Assembler:** `node dist/server/compile3DProject.js` *(In development for Phase 2 manufacturing)*

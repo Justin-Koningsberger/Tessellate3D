@@ -15,7 +15,6 @@ dist/
 escher_output.svg
 examples/
 research/
-index.html
 
 # ==========================================
 # 4. System & Editor Cache Files

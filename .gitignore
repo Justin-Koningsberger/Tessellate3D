@@ -2,7 +2,6 @@
 # 1. Dependency Tree
 # ==========================================
 node_modules/
-package-lock.json
 
 # ==========================================
 # 2. Build Outputs

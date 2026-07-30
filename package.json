@@ -12,7 +12,8 @@
     "test:fuzz": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/fuzzEngine.test.ts",
     "test:zip": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/zipUtils.test.ts",
     "test": "npm run test:motifs && npm run test:transforms && npm run test:fuzz && npm run test:zip",
-    "build": "tsc"
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "keywords": [
     "conformal-mapping",

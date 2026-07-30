@@ -1,5 +1,7 @@
 # Tessellate3D - Escher-Style Spiral Vector Engine ![Loxodromic Chevron Tessellation](./src/assets/hero-tessellation.svg)
 
+**Live Demo:** [tessellate3d.github.io](https://justin-koningsberger.github.io/Tessellate3D/) 🚀
+
 I have been creating tessellation SVGs for about two months now to print with my 3D printer. Throughout this journey, I found that the traditional workflow—using Inkscape to auto-trace or completely redraw a single tile inside a complex tessellation—was far too tedious and error-prone.
 
 To solve this, I built **Tessellate3D** to bring the entire pipeline back into the pure mathematical domain. The goal is to enforce mathematical perfection at the tile boundaries while keeping the door wide open for artistic flourishes, ultimately giving the user absolute, granular control over their final vector and 3D printed physical manufacturing outputs.

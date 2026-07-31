@@ -8,6 +8,12 @@ This is a little passion project, the focus is on maintaining exceptional mathem
 
 ---
 
+## 💻 Technical Requirements
+
+* **Node.js Runtime**: This project requires **Node.js v24** or higher. Please ensure your local environment matches this spec before running `npm install`.
+
+---
+
 ## 🚀 Branching & Pull Requests
 
 * Avoid committing experimental sandbox motifs or unverified math models directly to `main`.

@@ -5,7 +5,7 @@ This document outlines the architectural milestones, mathematical features, and 
 ---
 
 ## 🏁 PHASE 1: Core Precision, Linear Framework & TypeScript Migration `[COMPLETE]`
-* **Strict NodeNext ES Module Architecture:** Migrated all core transformation modules, matrix loops, and layout engines into stateless, strongly typed TypeScript files (`.ts`) targeting cutting-edge ECMAScript module specifications.
+* **Strict NodeNext ES Module & Node 24 Architecture:** Migrated all core transformation modules, matrix loops, and layout engines into stateless, strongly typed TypeScript files (`.ts`) targeting modern ECMAScript specifications natively on the **Node.js v24** runtime.
 * **Horizontal Affine Shear Matrix:** Implemented dynamic transformation loops inside `tessellationEngine.ts` to ensure seamless alignment along structural symmetry axes.
 * **Binary Snap Validation:** Integrated strict `0.0` or `1.0` boundary enforcement filters in `applyWallpaperSymmetry` using explicit `EngineConfig` parameters to eliminate rounding drift.
 * **Loop Continuity Automation:** Patched motif coordinate boundaries by enforcing explicit bottom-left closure anchors (`{x: 0.0, y: cellHeight}`).

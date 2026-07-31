@@ -82,10 +82,10 @@ There is also a deep structural link between 3D printing and classical relief pr
 This project utilizes advanced ESM features and native testing frameworks.
 To run this workspace engine locally, ensure your environment meets these constraints:
 
-* **Node.js:** Runtime `v20.x.x` is required (Tested extensively on Node `v20.20.2`).
-+* **Environment Management:** If you have multiple versions active, use [nvm](https://github.com/creationix/nvm) to initialize the target state before executing packages:
+* **Node.js:** Runtime `v24.x.x` is required (Native execution spec).
+* **Environment Management:** If you have multiple versions active, use [nvm](https://github.com/creationix/nvm) to initialize the target state before executing packages:
   ```bash
-  nvm use 20
+  nvm use 24
   npm install
   npm run dev:ui
   ```

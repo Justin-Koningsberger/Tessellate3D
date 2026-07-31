@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { CONFIG } from './config.js';
-import { generateEscherTessellation } from './tessellationEngine.js';
+import { CONFIG } from './config.ts';
+import { generateEscherTessellation } from './tessellationEngine.ts';
 
 /**
  * Executes a local compilation pipeline to evaluate lattice outputs manually.

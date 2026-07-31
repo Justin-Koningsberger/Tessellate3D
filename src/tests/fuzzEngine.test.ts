@@ -1,7 +1,8 @@
 import { strict as assert } from 'assert';
-import { Point2D, EngineConfig, applyWallpaperSymmetry } from '../tessellationEngine.js';
-import { forward } from '../transforms/forward.js';
-import { inverseWarp } from '../transforms/inverse.js';
+import type { Point2D, EngineConfig } from '../tessellationEngine.ts';
+import { applyWallpaperSymmetry } from '../tessellationEngine.ts';
+import { forward } from '../transforms/forward.ts';
+import { inverseWarp } from '../transforms/inverse.ts';
 
 // -------------------------------------------------------------------------
 // MASTER CONFIGURATION & GLOBAL CONTROLS

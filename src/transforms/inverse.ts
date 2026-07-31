@@ -1,4 +1,4 @@
-import { Point2D, EngineConfig } from '../tessellationEngine.js';
+import type { Point2D, EngineConfig } from '../tessellationEngine.ts';
 
 /**
  * SECTION 4: INVERSE SINGLE-POLE SOLVER

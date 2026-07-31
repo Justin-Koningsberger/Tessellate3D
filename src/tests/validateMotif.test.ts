@@ -1,5 +1,5 @@
-import { Point2D } from '../tessellationEngine.js';
-import { baseMotifs } from '../baseMotifs.js';
+import type { Point2D } from '../tessellationEngine.ts';
+import { baseMotifs } from '../baseMotifs.ts';
 
 /**
  * Validates a single design motif configuration against physical tile matching limits.

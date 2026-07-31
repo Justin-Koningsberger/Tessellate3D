@@ -1,4 +1,4 @@
-import { Point2D } from '../tessellationEngine.js';
+import type { Point2D } from '../tessellationEngine.ts';
 
 export const forward = {
   /**

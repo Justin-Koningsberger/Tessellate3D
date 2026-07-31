@@ -1,6 +1,7 @@
-import { createUncompressedZip } from './zipUtils.js';
-import { CONFIG } from './config.js';
-import { EngineConfig, generateEscherTessellation } from './tessellationEngine.js';
+import { createUncompressedZip } from './zipUtils.ts';
+import { CONFIG } from './config.ts';
+import type { EngineConfig } from './tessellationEngine.ts';
+import { generateEscherTessellation } from './tessellationEngine.ts';
 
 /**
  * CORE STUDIO FRONTEND CONTROLLER

@@ -1,4 +1,4 @@
-import { EngineConfig } from './tessellationEngine.js';
+import type { EngineConfig } from './tessellationEngine.ts';
 
 export const CONFIG: EngineConfig = {
   variantMode: "loxodromic",

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
-import { baseMotifs } from './baseMotifs.js';
-import { forward } from './transforms/forward.js';
-import { inverseWarp } from './transforms/inverse.js';
+import { baseMotifs } from './baseMotifs.ts';
+import { forward } from './transforms/forward.ts';
+import { inverseWarp } from './transforms/inverse.ts';
 
 export interface Point2D {
   x: number;

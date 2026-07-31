@@ -1,6 +1,6 @@
 import * as assert from 'node:assert';
 import { test, describe } from 'node:test';
-import { createUncompressedZip } from '../zipUtils.js';
+import { createUncompressedZip } from '../zipUtils.ts';
 
 describe('ZipUtils Engine Tests', () => {
   test('should compile a valid binary ZIP structure from virtual file inputs', async () => {

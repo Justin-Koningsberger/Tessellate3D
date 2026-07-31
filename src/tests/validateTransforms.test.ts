@@ -1,5 +1,5 @@
 import { strict as assert } from 'assert';
-import { forward } from '../transforms/forward.js';
+import { forward } from '../transforms/forward.ts';
 
 const MOCK_SCALE = 180;
 const MOCK_ROTATION = 0;

@@ -6,13 +6,14 @@
   "type": "module",
   "scripts": {
     "dev:ui": "vite",
-    "dev": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/index.ts",
-    "test:motifs": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/validateMotif.test.ts",
-    "test:transforms": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/validateTransforms.test.ts",
-    "test:fuzz": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/fuzzEngine.test.ts",
-    "test:zip": "node --no-warnings=ExperimentalWarning --loader ts-node/esm src/tests/zipUtils.test.ts",
-    "test": "npm run test:motifs && npm run test:transforms && npm run test:fuzz && npm run test:zip",
-    "build": "tsc && vite build",
+    "dev": "node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:motifs": "node src/tests/validateMotif.test.ts",
+    "test:transforms": "node src/tests/validateTransforms.test.ts",
+    "test:fuzz": "node src/tests/fuzzEngine.test.ts",
+    "test:zip": "node src/tests/zipUtils.test.ts",
+    "test": "npm run typecheck && npm run test:motifs && npm run test:transforms && npm run test:fuzz && npm run test:zip",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "keywords": [
@@ -26,12 +27,11 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "@types/node": "^20.11.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0",
     "vite": "^5.4.21"
   },
   "engines": {
-    "node": ">=20.0.0 <21.0.0"
+    "node": ">=24.0.0"
   }
 }

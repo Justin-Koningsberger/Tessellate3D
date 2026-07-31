@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     maxRingsVal: document.getElementById('maxRings-val') as HTMLSpanElement,
     globalRotation: document.getElementById('globalRotation') as HTMLInputElement,
     globalRotationVal: document.getElementById('globalRotation-val') as HTMLSpanElement,
-    subdivisionLimit: document.getElementById('subdivisionLimit') as HTMLInputElement,
     decayMultiplier: document.getElementById('decayMultiplier') as HTMLInputElement,
     decayMultiplierVal: document.getElementById('decayMultiplier-val') as HTMLSpanElement,
     twistFactor: document.getElementById('twistFactor') as HTMLInputElement,
@@ -54,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
       maxRings: parseInt(els.maxRings.value, 10),
       globalScale: 1.0, // Hardcoded engine baseline value to satisfy strict configuration types
       globalRotation: parseFloat(els.globalRotation.value),
-      subdivisionLimit: parseFloat(els.subdivisionLimit.value),
+      subdivisionLimit: 0.05, // Hardcoded engine baseline value to satisfy strict configuration types
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
       staggerFactor: parseFloat(els.staggerFactor.value)
@@ -90,32 +89,49 @@ document.addEventListener('DOMContentLoaded', () => {
       const row = document.createElement('div');
       row.style.display = 'flex';
       row.style.alignItems = 'center';
-      row.style.gap = '8px';
+      row.style.justifyContent = 'space-between';
+      row.style.width = '100%';
+      row.style.padding = '4px 0';
+
+      const pickerLabel = document.createElement('label');
+      pickerLabel.style.display = 'flex';
+      pickerLabel.style.flexDirection = 'row';
+      pickerLabel.style.flexWrap = 'nowrap';
+      pickerLabel.style.alignItems = 'center';
+      pickerLabel.style.gap = '12px';
+      pickerLabel.style.cursor = 'pointer';
 
       // Color Picker Native Input
       const picker = document.createElement('input');
       picker.type = 'color';
       picker.value = colorHex;
       picker.style.padding = '0';
-      picker.style.width = '36px';
+      picker.style.width = '42px';
       picker.style.height = '28px';
       picker.style.cursor = 'pointer';
+      picker.style.border = 'none';
 
       picker.addEventListener('input', (e) => {
         const target = e.target as HTMLInputElement;
         currentConfig.colorPalette[index] = target.value;
-        label.textContent = target.value.toUpperCase();
-        // Regenerate the engine ONLY when users release the click
-        picker.addEventListener('change', () => {
-        });
+        labelText.textContent = target.value.toUpperCase();
       });
 
-      // Hex Value Text Label
-      const label = document.createElement('span');
-      label.textContent = colorHex.toUpperCase();
-      label.style.fontFamily = 'monospace';
-      label.style.fontSize = '12px';
-      label.style.width = '64px';
+      // Regenerate the engine ONLY when users release the click
+      picker.addEventListener('change', () => {
+        updateEnginePipeline();
+      });
+
+      // Label hex value text
+      const labelText = document.createElement('span');
+      labelText.textContent = colorHex.toUpperCase();
+      labelText.style.fontFamily = 'monospace';
+      labelText.style.fontSize = '13px';
+
+      // Assemble the picker interactive section
+      pickerLabel.appendChild(picker);
+      pickerLabel.appendChild(labelText);
+      pickerLabel.title = "Change color";
 
       // Color Removal Button
       const btnDelete = document.createElement('button');
@@ -123,20 +139,26 @@ document.addEventListener('DOMContentLoaded', () => {
       btnDelete.innerHTML = '❌';
       btnDelete.style.background = 'none';
       btnDelete.style.border = 'none';
-      btnDelete.style.cursor = 'pointer';
-      btnDelete.style.padding = '4px';
+      btnDelete.style.padding = '6px';
+
+      // Enforce a strict minimum floor of 2 colors for pattern contrast
+      const paletteAtMinimum = currentConfig.colorPalette.length <= 2;
+
+      // Visual alert/disabled state configuration
+      btnDelete.disabled = paletteAtMinimum;
+      btnDelete.style.cursor = paletteAtMinimum ? 'not-allowed' : 'pointer';
+      btnDelete.style.opacity = paletteAtMinimum ? '0.3' : '1';
+      btnDelete.title = paletteAtMinimum ? `Cannot delete: Minimum of ${currentConfig.layout.totalBranches} colors (same as # of branches) required.` : 'Delete color';
 
       btnDelete.addEventListener('click', () => {
-        // Enforce a strict minimum of 1 color to prevent slicing domain division crashes
-        if (currentConfig.colorPalette.length > 1) {
+        if (!paletteAtMinimum) {
           currentConfig.colorPalette.splice(index, 1);
           renderPaletteUI();
           updateEnginePipeline();
         }
       });
 
-      row.appendChild(picker);
-      row.appendChild(label);
+      row.appendChild(pickerLabel);
       row.appendChild(btnDelete);
       els.paletteContainer.appendChild(row);
     });
@@ -146,7 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (els.btnAddColor) {
     els.btnAddColor.addEventListener('click', (e) => {
       e.preventDefault(); // Stop default event propagation form cycles
-      const randomHex = `#${(Math.random() * 0xFFFFFF << 0).toString(16).padStart(6, '0')}`;
+
+      // Generate a valid 24-bit integer, convert to hex, and pad to exactly 6 characters
+      const randomHex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+
       currentConfig.colorPalette.push(randomHex);
       renderPaletteUI();
       updateEnginePipeline();

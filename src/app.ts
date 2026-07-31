@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const currentConfig: EngineConfig = structuredClone(CONFIG);
   let cachedActiveSvgString: string | null = null; // High-performance text cache
 
-
   // Explicitly target element structures across the canvas grid panel
   const els = {
     variantMode: document.getElementById('variantMode') as HTMLSelectElement,

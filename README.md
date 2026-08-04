@@ -1,4 +1,8 @@
-# Tessellate3D - Escher-Style Spiral Vector Engine ![Loxodromic Chevron Tessellation](./src/assets/hero-tessellation.svg)
+# Tessellate3D - Escher-Style Spiral Vector Engine 
+
+<p align="center">
+  <img src="./src/assets/hero-tessellation.svg" width="50%" alt="Loxodromic Square wave Tessellation" />
+</p>
 
 **Live Demo:** [tessellate3d.github.io](https://justin-koningsberger.github.io/Tessellate3D/) 🚀
 

@@ -7,6 +7,7 @@ node_modules/
 # 2. Build Outputs
 # ==========================================
 dist/
+.vite/
 
 # ==========================================
 # 3. Local Test Iterations & Scratchpads

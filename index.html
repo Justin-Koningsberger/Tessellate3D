@@ -41,8 +41,8 @@
       <label>
         <span>Transform Variant Mode</span>
         <select id="variantMode">
-          <option value="loxodromic">Loxodromic Twist</option>
           <option value="logarithmic">Logarithmic Spiral</option>
+          <option value="loxodromic" selected>Loxodromic Twist</option>
           <option value="single-pole">Single-Pole Decay</option>
           <option value="multi-pole">Multi-Pole Hyperbolic</option>
         </select>
@@ -56,7 +56,7 @@
           <option value="square">Square</option>
           <option value="detailedSquare">Detailed Square</option>
           <option value="sinewave">Sine Wavelet</option>
-          <option value="squarewave">Square Wave / Battlement</option>
+          <option value="squarewave" selected>Square Wave / Battlement</option>
           <option value="puzzle">Jigsaw Puzzle Tab</option>
         </select>
       </label>
@@ -83,14 +83,16 @@
         <input type="range" id="globalRotation" min="0" max="6.28" step="0.01" value="0" />
       </label>
 
+      <!-- TODO: hide for Logarithic variant mode -->
       <label>
         <span>Inward Scale Decay Multiplier: <span id="decayMultiplier-val">0.35</span></span>
         <input type="range" id="decayMultiplier" min="0.1" max="2.0" step="0.01" value="0.35" />
       </label>
 
+      <!-- TODO: hide for Logarithic, single-pole and multi-pole variant modes -->
       <label>
         <span>Loxodromic Twist Torsion: <span id="twistFactor-val">0.45</span></span>
-        <input type="range" id="twistFactor" min="-2.0" max="2.0" step="0.01" value="0.35" />
+        <input type="range" id="twistFactor" min="-2.0" max="2.0" step="0.01" value="0.45" />
       </label>
 
       <label>

@@ -22,7 +22,7 @@ Transition the engine from strictly linear point arrays to native smooth vector 
   ```
 * [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
 * [ ] **Tangency-Preserving Affine Warp:** Adapt the forward-mapping coordinate loops to deform control point handle vectors (`x1, y1`, `x2, y2`) perfectly in sync with localized grid shears.
-* [ ] **Curvature-Aware Subdivision Engine:** Upgrade `subdividePath` to dynamically inject intermediate mid-curve control points on Bezier segments experiencing heavy loxodromic stretching.
+* [ ] **Conformal Derivative Subdivision Engine:** Upgrade `subdividePath` to dynamically inject intermediate mid-curve control points based on the local scale factor metric $|f'(z)|$. Automatically cull decorative sub-features (`compIndex > 0`) that fall below physical FDM printing limits (<0.2mm) near logarithmic focal poles.
 * [ ] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height heights.
 * [ ] **Headless Slicer Command Assembly:** Wire up the automated `prusa-slicer` runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to output universal multi-material `.3mf` projects.
 
@@ -42,5 +42,13 @@ Allow artists to feed custom vector artwork straight into the engine without mod
 ## 🧮 PHASE 4: Conformal Complex Research Implementations
 Incorporate advanced mathematical tiling behaviors outlined in canonical complex mapping literature.
 * [ ] **Rational Fractional Stagger Factors:** Move beyond binary `0.0/1.0` snapping thresholds to allow variable fractional offsets (e.g., a `staggerFactor: 0.5` configuration for perfect running brick-bond alignments).
+* [ ] **Grünbaum-Shephard Isohedral Parameterization:** Implement an `ihSymmetryEngine.ts` module to classify and enforce edge transitivity across all 93 IH types. Map custom paths directly to J-edges (asymmetric), U-edges (glide-reflected), and K-edges (centrosymmetric midpoints).
 * [ ] **Derived Conformal Whirlpool Spaces (Mappings $\Phi_2$ & $\Phi_3$):** Implement forward transformation equations for the paper's Mobius-variant $\frac{z-i}{z+i}$ and periodic $\tan(z)$ mappings to generate complex multi-pole spiral whirlpool geometries.
 * [ ] **Stereographic Riemann Sphere Projections:** Map flat logarithmic spiral configurations cleanly onto 3D spherical point arrays to create closed-globe interlocking geometries.
+
+---
+
+## 🧬 PHASE 5: Automated Algorithmic Escherization
+Leverage topological shape optimization loops to warp user-provided artwork into compliant tiles.
+* [ ] **Target Energy Minimization Solver (`src/escherize.ts`):** Build a shape optimization loop (using a heuristic solver like Nelder-Mead) to automatically modify an incoming target silhouette path until it satisfies the interlocking boundary conditions of a chosen wallpaper or IH group.
+* [ ] **Symmetry Procrustes Analysis:** Programmatically calculate geometric distance metrics between arbitrary user sketches and ideal isohedral templates to find the mathematically closest-matching symmetry group before starting deformations.

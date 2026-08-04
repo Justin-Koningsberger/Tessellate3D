@@ -28,7 +28,7 @@ export const CONFIG: EngineConfig = {
     "#06B6D4", // layer 7: Teal
     "#7C3AED", // layer 8: Violet
     "#EC4899", // layer 9: Magenta
-    "#FFFFFF", // Layer 10: White
+    "#000000", // Layer 10: Black
     "#345fff"  // Layer 11: random
   ],
 

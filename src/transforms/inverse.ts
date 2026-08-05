@@ -29,21 +29,13 @@ export function inverseSinglePole(
   // Reverse the exponential step: scale * Math.exp(r)
   const logScale = Math.log(screenRadius / scale);
 
-  // 3. Reverse the branch frequency scaling layer
-  const flatY = thetaM / (totalBranches || 1);
+  // 3. Keep angle uncompressed to match the true layout span
+  let flatY = thetaM - angleOffset;
+  while (flatY < 0) flatY += Math.PI * 2;
+  while (flatY >= Math.PI * 2) flatY -= Math.PI * 2;
 
-  // 4. Reconstruct original uncompressed input radius tracking bounds
-  // Estimates factor configurations using the active layout limits from forward.js
-  const densityLimit = totalBranches || 6;
-  const maxSafeScale = Math.min(1.0, 6.0 / densityLimit);
-  const normalizationFactor = decayMultiplier * maxSafeScale;
-
-  let flatX = logScale;
-  if (densityLimit > 6 && logScale > 0) {
-    // Reverse the exponential power scaling rule if the limiter triggered
-    flatX = Math.pow(logScale, 1 / normalizationFactor);
-  }
-
+  // 4. Extract flat radial distance from the clean logScale base
+  const flatX = logScale / decayMultiplier;
   return {
     x: flatX,
     y: flatY
@@ -74,19 +66,11 @@ export function inverseMultiPoleHyperbolic(
   const screenRadius = Math.hypot(rx, ry);
   if (screenRadius < 0.0001) return { x: 0, y: 0 };
 
-  // 2. Exact Transcendental Factor Recovery Loop
-  let approxFactor = screenRadius / scale;
-  for (let i = 0; i < 6; i++) {
-    const compression = 0.25 + (approxFactor * 0.5);
-    approxFactor = (screenRadius / scale) / compression;
-  }
-  const finalCompression = 0.25 + (approxFactor * 0.5);
+  // 2. Map coordinates down directly to uncompressed base scale units
+  const u = rx / scale;
+  const v = ry / scale;
 
-  // 3. Strip outer scale parameters to isolate raw trigonometric identities
-  const u = rx / (scale * finalCompression);
-  const v = ry / (scale * finalCompression);
-
-  // 4. Invert Multi-Pole Trigonometric System via complex algebraic mapping
+  // 3. Invert Multi-Pole Trigonometric System via complex algebraic mapping
   const a = (u + 1) * (u + 1) + v * v;
   const b = (u - 1) * (u - 1) + v * v;
   const sqrtA = Math.sqrt(a);
@@ -99,29 +83,13 @@ export function inverseMultiPoleHyperbolic(
   const argX = Math.asin(clampY);
   const argY = Math.log(absX + Math.sqrt(Math.max(0, absX * absX - 1)));
 
-  // 5. Match the true fixed Scaling Factor used by forward.js
-  const r = scale * approxFactor;
-  const normalizationThreshold = scale * 1.5;
-  const scalingFactor = 0.002 * (normalizationThreshold / Math.max(normalizationThreshold, r));
+  // 4. Compute intermediate components natively without scaling factor dividers
+  const r = Math.hypot(argX, argY);
+  let flatY = Math.atan2(argY, argX);
+  while (flatY < 0) flatY += Math.PI * 2;
 
-  // 6. Divide by the true active scalingFactor to recover intermediate Cartesian coordinates
-  const mx = argX / scalingFactor;
-  const my = argY / scalingFactor;
-
-  // 7. Extract the intermediate phase angle directly from folded Cartesian space
-  let intermediateTheta = Math.atan2(my, mx);
-
-  // 8. Phase Quadrant Correction: Synchronize trig phase tracking signs with forward compression properties
-  if (Math.sin(intermediateTheta) * ry < 0 && Math.cos(intermediateTheta) * rx < 0) {
-    intermediateTheta += Math.PI;
-  }
-
-  /*
-   * 9. FIXED: Unwind global layout rotation spin shift BEFORE mapping back to the log domain.
-   * This matches the exact inverse step of forward.js, where theta = point.y + angleOffset.
-   */
-  const flatY = intermediateTheta - angleOffset;
-  const flatX = -Math.log(Math.hypot(mx, my) / scale) / decayMultiplier;
+  // 5. Map the final variables cleanly back to the base domain
+  const flatX = Math.log(r) / decayMultiplier;
 
   return {
     x: flatX,

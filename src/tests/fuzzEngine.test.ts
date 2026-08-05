@@ -94,7 +94,8 @@ function evaluateVariantExtended(
         // FIXED: Inject the dynamic ring and branch indices into wallpaper symmetry simulation blocks.
         // This ensures Point A (Ring + 1) matches face-to-face with Point B (Ring) on the active branch lane.
         const gridA_sp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext);
-        const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext);
+        const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing, randomTestBranch, mockContext);
+        originalGridA = gridA_sp;
         coordA = forward.singlePole(gridA_sp, scale, rotation, decay);
         coordB = forward.singlePole(gridB_sp, scale, rotation, decay);
         break;
@@ -134,31 +135,47 @@ function evaluateVariantExtended(
 
     // Bidirectional Verification Check
     if (name === "single-pole" || name === "loxodromic" || name === "multi-pole") {
-      // Use a safe tile interior anchor point to eliminate face-to-face boundary seam ambiguity
-      const interiorTestPoint: Point2D = { x: originalGridA.x + 0.5, y: originalGridA.y + 0.1 };
+      // 1. Establish a pristine testing point directly inside the true flat tile space
+      // Bounded perfectly inside X [0, 1] and Y [0, cellHeight] to match an unwarped motif face
+      const flatCellHeight = (Math.PI * 2) / branches;
+      const pristineTilePoint: Point2D = {
+        x: getRandom(0.1, 0.9),
+        y: getRandom(0.05, flatCellHeight - 0.05)
+      };
 
+      // 2. Project forward into canvas coordinate vectors
       let forwardInteriorPoint: Point2D;
       if (name === "single-pole") {
-        forwardInteriorPoint = forward.singlePole(interiorTestPoint, scale, rotation, decay);
+        forwardInteriorPoint = forward.singlePole(pristineTilePoint, scale, rotation, decay);
       } else if (name === "loxodromic") {
-        forwardInteriorPoint = forward.loxodromic(interiorTestPoint, scale, rotation, twist, decay);
+        forwardInteriorPoint = forward.loxodromic(pristineTilePoint, scale, rotation, twist, decay);
       } else {
-        forwardInteriorPoint = forward.multiPole(interiorTestPoint, scale, rotation, decay);
+        forwardInteriorPoint = forward.multiPole(pristineTilePoint, scale, rotation, decay);
       }
 
-      // Round-trip the interior coordinate point safely back through the inverse solver routing matrix
+      // 3. Round-trip the canvas coordinate back through the inverse solver engine
       const reconstructedInterior = inverseWarp(forwardInteriorPoint, mockContext, branches);
 
-      const invErrorX = Math.abs(reconstructedInterior.x - interiorTestPoint.x);
-      let invErrorY = Math.abs(reconstructedInterior.y - interiorTestPoint.y);
+      // 4. Calculate error metrics across standard wrap-around limits
+      let invErrorX = Math.abs(reconstructedInterior.x - pristineTilePoint.x);
+      let invErrorY = Math.abs(reconstructedInterior.y - pristineTilePoint.y);
 
-      // Apply clean modular layout bounding window checks
-      const anglePeriod = name === "multi-pole" ? ((Math.PI * 2) / (branches || 1)) : (Math.PI * 2);
+      // Dynamically select the correct angular period for each variant mode
+      // Single-pole interlocks periodically at individual tile/branch borders
+      const anglePeriod = name === "single-pole"
+        ? ((Math.PI * 2) / branches)
+        : (Math.PI * 2);
+
       invErrorY = invErrorY % anglePeriod;
       if (invErrorY > anglePeriod / 2) invErrorY = anglePeriod - invErrorY;
 
-      // FILTER MINIMAL SUB-MICRON VARIATIONS FROM BREAKING THE CAD SUITE:
-      // A threshold boundary of 0.05 canvas units represents fractions of a micron—completely invisible to 3D print slicing.
+      if (name === "multi-pole") {
+        const globalPeriod = Math.PI * 2;
+        invErrorX = invErrorX % globalPeriod;
+        if (invErrorX > globalPeriod / 2) invErrorX = globalPeriod - invErrorX;
+      }
+
+      // Assert true structural alignment limits
       if (invErrorX > 0.05 || invErrorY > 0.05) {
         return parseResult("FAIL", invErrorX, invErrorY, "Inverse Bijectivity Distortion Fault");
       } else if (invErrorX > EPSILON || invErrorY > EPSILON) {

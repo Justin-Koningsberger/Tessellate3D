@@ -27,19 +27,16 @@ export const forward = {
    * are controlled via an e^(-x) decay multiplication layer, preventing
    * catastrophic mathematical singularity collapses.
    */
-  singlePole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
-    // 1. Calculate an inverted exponential decay radius based on the grid ring
-    // This scales the tiles down smoothly toward the center without shearing them into arcs
-    const factor = Math.exp(-point.x * decayMultiplier);
-    const r = scale * factor;
 
-    // 2. Wrap the branch translations linearly around the rotational theta path
+  // treating angleOffset strictly as a global rotation anchor after computing the log-radial coordinate.
+  singlePole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
+    // Determine exponential radial depth from center
+    const r = scale * Math.exp(point.x * decayMultiplier);
+
+    // Step angle cleanly. DO NOT cross-multiply with decay modifiers or scale
     const theta = point.y + angleOffset;
 
-    return {
-      x: r * Math.cos(theta),
-      y: r * Math.sin(theta)
-    };
+    return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
   },
 
   /**
@@ -47,34 +44,30 @@ export const forward = {
    * Uses trigonometric folding with an added normalization pass to scale tiles down
    * perfectly, preventing shapes from expanding too fast and overlapping.
    */
+
+  /**
+   * COMPONENT-ISOLATED TRANSCENDENTAL MAP
+   * Maps tile coordinates to complex sine space to prevent boundary tearing,
+   * applying the angleOffset as a clean rotation to the finalized map coordinates.
+   */
   multiPole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
-    // 1. Core log-periodic scaling factor
-    const factor = Math.exp(-point.x * decayMultiplier);
-    const r = scale * factor;
-    const theta = point.y + angleOffset;
+    // 1. Establish structural base scale
+    const r = Math.exp(point.x * decayMultiplier);
+    const theta = point.y; // Keep base projection independent of rotation initializations
 
-    // 2. Convert to standard Cartesian coordinates
-    const mx = r * Math.cos(theta);
-    const my = r * Math.sin(theta);
+    // 2. Map coordinates into complex numbers
+    const cx = r * Math.cos(theta);
+    const cy = r * Math.sin(theta);
 
-    // 3. Self-normalizing scaling factor based on input magnitude
-    // Automatically drops below 0.002 if coordinate expansion explodes
-    const normalizationThreshold = scale * 1.5;
-    const scalingFactor = 0.002 * (normalizationThreshold / Math.max(normalizationThreshold, r));
+    // 3. Process through complex analytic sine transformation
+    const baseUnitX = Math.sin(cx) * Math.cosh(cy);
+    const baseUnitY = Math.cos(cx) * Math.sinh(cy);
 
-    // 4. Multi-Pole Trigonometric Folding Layer
-    let finalX = scale * Math.sin(mx * scalingFactor) * Math.cosh(my * scalingFactor);
-    let finalY = scale * Math.cos(mx * scalingFactor) * Math.sinh(my * scalingFactor);
+    // 4. Multiply by global scale and apply rigid spatial rotation matrix
+    const finalX = scale * (baseUnitX * Math.cos(angleOffset) - baseUnitY * Math.sin(angleOffset));
+    const finalY = scale * (baseUnitX * Math.sin(angleOffset) + baseUnitY * Math.cos(angleOffset));
 
-    // 5. Normalization Factor
-    const compression = 0.25 + (factor * 0.5);
-    finalX *= compression;
-    finalY *= compression;
-
-    return {
-      x: finalX,
-      y: finalY
-    };
+    return { x: finalX, y: finalY };
   },
 
   /**

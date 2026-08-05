@@ -36,7 +36,8 @@ function runTransformSuite(): void {
     console.log("--> Testing: forwardSinglePoleSpiral...");
     const singleResult = forward.singlePole({ x: 1.0, y: Math.PI / 2 }, MOCK_SCALE, MOCK_ROTATION, MOCK_DECAY);
     assertCloseTo(singleResult.x, 0.000, "SinglePole X Error");
-    assertCloseTo(singleResult.y, 66.218, "SinglePole Y Error");
+     // Input (1, pi/2) yields r = 180 * e^1 = 489.291 -> x = 0, y = 489.291
+    assertCloseTo(singleResult.y, 489.290, "SinglePole Y Error");
     console.log("    ✓ forwardSinglePoleSpiral passed validation.\n");
 
     // 3. LOXODROMIC TWIST
@@ -49,7 +50,8 @@ function runTransformSuite(): void {
     // 4. MULTI-POLE HYPERBOLIC
     console.log("--> Testing: forwardMultiPoleHyperbolic...");
     const multiResult = forward.multiPole({ x: 0.0, y: 0.0 }, MOCK_SCALE, MOCK_ROTATION, MOCK_DECAY);
-    assertCloseTo(multiResult.x, 47.557, "MultiPole X Error");
+    // Input (0,0) yields r=1, theta=0 -> cx=1, cy=0 -> sin(1)*cosh(0) = 0.84147 * 1 -> 0.84147 * 180 (scale) = 151.465
+    assertCloseTo(multiResult.x, 151.465, "MultiPole X Error");
     assertCloseTo(multiResult.y, 0.000, "MultiPole Y Error");
     console.log("    ✓ forwardMultiPoleHyperbolic passed validation.\n");
 

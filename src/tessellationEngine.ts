@@ -36,31 +36,65 @@ export interface EngineConfig {
   };
 }
 
+type WarpProjectionFn = (point: Point2D) => Point2D;
+
 /**
- * Linear path subdivision engine.
- * Ensures flat paths smoothly flex under conformal warping equations.
+ * Advanced Warped-Space Adaptive Subdivision Engine.
+ * Evaluates true physical distances post-transformation to guarantee
+ * perfectly smooth lines, zero geometric edge gaps, and fine-nozzle FDM culling.
  */
-export function subdividePath(points: Point2D[], maxSegmentLength: number): Point2D[] {
+export function subdividePath(
+  points: Point2D[],
+  config: EngineConfig,
+  compIndex: number,
+  warpProjection: WarpProjectionFn
+): Point2D[] {
   if (points.length < 2) return [...points];
+
   const subdivided: Point2D[] = [];
+  const subdivisionLimit = config.layout.subdivisionLimit;
+  // Minimum feature size for most 3D printers
+  const minThresholdMm = 0.2;
+
+  // Tie the engine coordinates directly to global physical millimeter scales
+  const physicalScaleFactor = config.layout.globalScale ?? 1.0;
 
   for (let i = 0; i < points.length; i++) {
     const current = points[i]!;
     const next = points[(i + 1) % points.length]!;
+
+    // 1. Run the forward transformation projection on both endpoints
+    const warpedCurrent = warpProjection(current);
+    const warpedNext = warpProjection(next);
+
+    // 2. Compute absolute Euclidean distance post-transformation
+    const dxWarped = warpedNext.x - warpedCurrent.x;
+    const dyWarped = warpedNext.y - warpedCurrent.y;
+    const physicalDistanceMm = Math.hypot(dxWarped, dyWarped) * physicalScaleFactor;
+
+    // 3. FDM Feature Culling Filter
+    // Automatically skip decorative sub-features (compIndex > 0) that compress below 0.2mm
+    if (compIndex > 0 && physicalDistanceMm < minThresholdMm) {
+      continue;
+    }
+
     subdivided.push(current);
 
-    const dx = next.x - current.x;
-    const dy = next.y - current.y;
-    const distance = Math.hypot(dx, dy);
-
-    if (distance > maxSegmentLength) {
-      const segmentsCount = Math.ceil(distance / maxSegmentLength);
+    // 4. True Post-Warp Segment Subdivision Execution
+    // If the actual physical segment exceeds visual fidelity limit,
+    // inject points natively in flat space to bridge the curved warp seamlessly.
+    if (physicalDistanceMm > subdivisionLimit) {
+      const segmentsCount = Math.ceil(physicalDistanceMm / subdivisionLimit);
       for (let j = 1; j < segmentsCount; j++) {
         const t = j / segmentsCount;
-        subdivided.push({ x: current.x + dx * t, y: current.y + dy * t });
+        subdivided.push({
+          x: current.x + (next.x - current.x) * t,
+          y: current.y + (next.y - current.y) * t
+        });
       }
     }
   }
+
   return subdivided;
 }
 
@@ -187,8 +221,41 @@ export function generateEscherTessellation(config: EngineConfig): string {
     ? (rawMotifData as Point2D[][])
     : [rawMotifData as Point2D[]];
 
-  const smoothComponents = motifComponents.map(comp =>
-    subdividePath(comp, config.layout.subdivisionLimit)
+  const globalScale = config.layout.globalScale ?? 100;
+  const twistFactor = config.layout.twistFactor ?? 0.45;
+  const decayMultiplier = config.layout.decayMultiplier ?? 0.35;
+  const nominalAngleOffset = 0.0; // Anchored target reference layer
+
+  const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
+    switch (config.variantMode) {
+      case 'logarithmic':
+        return forward.logarithmic(pt, globalScale, nominalAngleOffset);
+      case 'single-pole':
+        return forward.singlePole(pt, globalScale, nominalAngleOffset, decayMultiplier);
+      case 'multi-pole':
+        return forward.multiPole(pt, globalScale, nominalAngleOffset, decayMultiplier);
+      case 'loxodromic':
+      default:
+        return forward.loxodromic(pt, globalScale, nominalAngleOffset, twistFactor, decayMultiplier);
+    }
+  };
+
+  // Dynamically increase vertex density to seal micro-gaps caused by non-linear distortion
+  const baseLimit = config.layout.subdivisionLimit ?? 5.0;
+  const adjustedConfig: EngineConfig = {
+    ...config,
+    layout: {
+      ...config.layout,
+      subdivisionLimit: config.variantMode === "multi-pole"
+        ? baseLimit * Math.max(0.20, decayMultiplier * 0.65)
+        : config.variantMode === "single-pole"
+        ? baseLimit * Math.max(0.25, decayMultiplier * 0.85)
+        : baseLimit
+    }
+  };
+
+  const smoothComponents = motifComponents.map((comp, compIndex) =>
+    subdividePath(comp, adjustedConfig, compIndex, activeWarpProjection)
   );
 
   let calibrationSvg = "";
@@ -255,13 +322,16 @@ export function generateEscherTessellation(config: EngineConfig): string {
   const normalizedPaths = normalizeSpiralCanvas(rawPathObjects, 1000);
 
   const groupedPaths: Record<string, string[]> = {};
-  activeColors.forEach(color => { groupedPaths[color] = []; });
   const detailPaths: string[] = [];
 
   normalizedPaths.forEach(path => {
     if (path.compIndex === 0) {
-      if (!groupedPaths[path.color]) groupedPaths[path.color] = [];
-      groupedPaths[path.color]!.push(path.d);
+      const colorIdx = activeColors.indexOf(path.color);
+      const layerKey = `${colorIdx}_${path.color}`;
+      if (!groupedPaths[layerKey]) {
+        groupedPaths[layerKey] = [];
+      }
+      groupedPaths[layerKey]!.push(path.d);
     } else {
       detailPaths.push(path.d);
     }
@@ -271,10 +341,14 @@ export function generateEscherTessellation(config: EngineConfig): string {
   svgContent += `<svg\n  width="${config.canvas.width}"\n  height="${config.canvas.height}"\n  viewBox="${config.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://www.w3.org/2000/svg">\n`;
   svgContent += calibrationSvg;
 
-  activeColors.forEach((color, index) => {
-    const structuralLayerGroup = groupedPaths[color];
+  Object.keys(groupedPaths).forEach((layerKey) => {
+    const structuralLayerGroup = groupedPaths[layerKey];
     if (!structuralLayerGroup || structuralLayerGroup.length === 0) return;
-    const cleanId = color.replace('#', '');
+
+    const [indexStr, color] = layerKey.split('_');
+    const index = parseInt(indexStr!, 10);
+    const cleanId = color!.replace('#', '');
+
     svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${color}">\n`;
     svgContent += structuralLayerGroup.join('');
     svgContent += `  </g>\n`;

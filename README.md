@@ -6,7 +6,7 @@
 
 **Live Demo:** [tessellate3d.github.io](https://justin-koningsberger.github.io/Tessellate3D/) 🚀
 
-I have been creating tessellation SVGs for about two months now to print with my 3D printer. Throughout this journey, I found that the traditional workflow—using Inkscape to auto-trace or completely redraw a single tile inside a complex tessellation—was far too tedious and error-prone.
+I have been creating tessellation SVGs for a few months now to print with my 3D printer. Throughout this journey, I found that the traditional workflow—using Inkscape to auto-trace an image or completely redraw a single tile inside a complex tessellation—was far too tedious and error-prone.
 
 To solve this, I built **Tessellate3D** to bring the entire pipeline back into the pure mathematical domain. The goal is to enforce mathematical perfection at the tile boundaries while keeping the door wide open for artistic flourishes, ultimately giving the user absolute, granular control over their final vector and 3D printed physical manufacturing outputs.
 
@@ -28,12 +28,12 @@ There is also a deep structural link between 3D printing and classical relief pr
 * Loops through screen pixel coordinates $(x, y)$ to reverse-map a flat domain space.
 * Outstanding for real-time screens, high-resolution shaders, and canvas textures.
 
-### 2. Our Engine's Vector-Based Method (Forward Mapping)
-* Loops through structural grid coordinates (Rings and Branches).
-* Takes a specific, pre-defined vector path shape (**Base Motif**).
-* Shifts the motif across a 2D wallpaper domain using layout rules.
-* Warps the coordinates outward via a forward conformal function.
-* **Result:** Outputs clean, individual vector paths (`<path d="..." />`) natively readable by Inkscape, Illustrator, and 3D slicers.
+### 2. Our Engine's Vector-Based Method (Adaptive Forward-Conformal Mapping)
+* Loops through structural grid coordinates (Rings and Branches) on an infinite mathematical plane.
+* Evaluates path coordinates natively in flat continuous space, eliminating layout grid distortion before applying spatial transformations.
+* Processes raw vector shapes (**Base Motifs**) through a highly optimized, conformal warper matrix that scales straight outward from true geometric poles.
+* **Dynamic Resolution Engine:** Features an adaptive post-transformation subdivision engine that scales vertex density proportionally with spatial warping and decay. This seals micro-gaps near high-distortion vortex areas while reducing redundant vertex weights in flat zones.
+* **Result:** Outputs remarkably lightweight, individual vector paths (`<path d="..." />`) natively readable by Inkscape, Illustrator, and 3D slicers while preserving flawless edge-to-edge interlocking continuity.
 
 ---
 
@@ -42,7 +42,8 @@ There is also a deep structural link between 3D printing and classical relief pr
 * **`[Base Motif]`**
   * *Definition:* Statically typed, resolution-independent vector matrices supporting multi-component elements (outer boundaries and fine internal accent contours).
 * **`[Subdivision Engine (subdividePath)]`**
-  * *Purpose:* Injects extra vertices along long straight path edges.
+  * *Purpose:* Dynamically samples absolute Euclidean distance post-transformation to inject native flat-space vertices exactly where non-linear curves bend aggressively.
+  * *Why:* Keeps geometry perfectly fluid without turning arcs into jagged polygonal chords. It scales its accuracy resolution using the active `decayMultiplier` to optimize performance, while serving as a fine-nozzle FDM feature filter that automatically skips sub-micron details below $0.2\text{mm}$.
   * *Why:* Conformal mappings bend straight lines into smooth curves. Without subdivision, the output paths would warp as straight, jagged chords instead of fluid spiral segments.
 * **`[Symmetry Engine (applyWallpaperSymmetry)]`**
   * *Purpose:* Stacks tiles edge-to-edge in flat 2D domain space.
@@ -57,9 +58,21 @@ There is also a deep structural link between 3D printing and classical relief pr
   * *Strategy:* Leverages localized fixed-point iteration loops and decoupled matrix mappings to isolate u,v coordinates from screen space without runtime mathematical singularity collapses.
 * **`[Multi-Component Asset Parser & Detail Separator]`**
   * *Status:* COMPLETE
-  * *Purpose:* Safely distinguishes master interlocking solid tile boundary fills (`compIndex === 0`) from non-boundary artistic gray strokes (`compIndex > 0`), isolating them completely to prevent slicing self-intersections.
+    * *Purpose:* Stacks interlocking structural tiles seamlessly across an exponential log-polar coordinate plane.
+  * *Layout:* Concentric depth Rings populate the radial vector path, while Angular Branches step uniformly to preserve the a-priori $2\pi$ circle wrapper continuity, completely preventing edge tearing.
+* **`[Horizontal Affine Shear Matrix & Boundary Complementarity Sync]`**
+  * *Purpose:* Implements rigid shear slopes alongside strict wall-complementarity parsers to guarantee face-to-face interlocking alignment across tile lanes.
+* **`[Pure Conformal Warper Matrix (forward)]`**
+  * *Purpose:* Translates linear grid fields into four mathematically isolated, pure complex projections: `logarithmic` ($w = e^z$), scale-invariant `single-pole` (constant-frequency log-radial flow), transcendental `multi-pole` (complex analytic sine mapping), and complex-phase `loxodromic` (torsional spiral twists). Global angle offsets and rotation variables act purely as final rigid coordinate translations, completely decoupling mapping frequency from interactive spatial sliders.
+* **`[Stateless Inverse Solver Engines]`**
+  * *Purpose:* Performs exact backward grid tracking across independent variant configurations without relying on hardcoded scaling limits or approximation loops.
+  * *Strategy:* Implements pure mathematical inverses—such as direct algebraic parameter extractions and a dedicated complex inverse sine ($z = \text{asin}(w)$) formulation—mapping distorted screen dimensions directly back to flat operational space.
+* **`[Multi-Layer Asset Parser & Detached Color Grouper]`**
+  * *Status:* COMPLETE
+  * *Purpose:* Encodes a deterministic sorting layer key matching color palette index strings (`colorIndex_hexColor`). This safely segregates primary boundary fills (`compIndex === 0`) into unified, self-contained SVG `<g>` groups while isolating internal decorative line work (`compIndex > 0`), ensuring reliable layer stacks inside vector illustration tools and multi-material slicers.
+
 * **`[Color Cycler & Validator]`**
-  * *Purpose:* Colors tiles diagonally via index modulo rules, locks geometric precision via adaptive micro-snapping weld points.
+  * *Purpose:* Directs index-modulo path coloring across branches, running programmatic bijectivity round-trips to catch sub-micron panel drift.
   * *Grouping Output:* Organizes arrays of mapped coordinates dynamically into structured collections sorted by color parameters.
 
 ---

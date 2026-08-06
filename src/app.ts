@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     staggerFactor: document.getElementById('staggerFactor') as HTMLInputElement,
     staggerFactorVal: document.getElementById('staggerFactor-val') as HTMLSpanElement,
     canvasTarget: document.getElementById('svg-injection-target') as HTMLDivElement,
+    decayContainer: document.getElementById('decayContainer') as HTMLLabelElement,
+    twistContainer: document.getElementById('twistContainer') as HTMLLabelElement,
 
     // Color Palette DOM target mount nodes
     paletteContainer: document.getElementById('palette-list-container') as HTMLDivElement,
@@ -66,6 +68,15 @@ document.addEventListener('DOMContentLoaded', () => {
     els.twistFactorVal.textContent = currentConfig.layout.twistFactor.toFixed(2);
     els.staggerFactorVal.textContent = currentConfig.layout.staggerFactor.toFixed(1);
     els.decayMultiplierVal.textContent = currentConfig.layout.decayMultiplier.toFixed(2);
+
+    // Dynamically manage control panel visibility based on active variant mode mechanics
+    const mode = currentConfig.variantMode;
+    if (els.decayContainer) {
+      els.decayContainer.style.display = mode === 'logarithmic' ? 'none' : 'flex';
+    }
+    if (els.twistContainer) {
+      els.twistContainer.style.display = mode === 'loxodromic' ? 'flex' : 'none';
+    }
 
     try {
       // Execute pure transformation pass natively in-browser

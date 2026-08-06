@@ -8,9 +8,11 @@ This document outlines the architectural milestones, mathematical features, and 
 * **Strict NodeNext ES Module & Node 24 Architecture:** Migrated all core transformation modules, matrix loops, and layout engines into stateless, strongly typed TypeScript files (`.ts`) targeting modern ECMAScript specifications natively on the **Node.js v24** runtime.
 * **Horizontal Affine Shear Matrix:** Implemented dynamic transformation loops inside `tessellationEngine.ts` to ensure seamless alignment along structural symmetry axes.
 * **Binary Snap Validation:** Integrated strict `0.0` or `1.0` boundary enforcement filters in `applyWallpaperSymmetry` using explicit `EngineConfig` parameters to eliminate rounding drift.
-* **Loop Continuity Automation:** Patched motif coordinate boundaries by enforcing explicit bottom-left closure anchors (`{x: 0.0, y: cellHeight}`).
-* **Decoupled Automated QA Harness:** Re-engineered verification scripts into an isolated testing suite (`validateMotif.test.ts`, `validateTransforms.test.ts`, `fuzzEngine.test.ts`) utilizing strong type casting and a randomized dual-progression telemetry fuzzer.
+* **Loop Continuity & Boundary Complementarity Sync:** Patched motif coordinate boundaries by enforcing explicit bottom-left closure anchors (`{x: 0.0, y: cellHeight}`) and building verification scripts (`validateComplementarity.ts`) to validate exact face-to-face interlocking continuity.
+* **Pure Conformal Twin Mapping Matrices:** Fully synchronized and locked down the stateless mathematical forward/inverse equations (`single-pole` and `multi-pole`), completely isolating global rotation angles from interactive spatial multipliers.
+* **Decoupled Automated QA Harness:** Re-engineered verification scripts into an isolated testing suite (`validateMotif.test.ts`, `validateTransforms.test.ts`, `fuzzEngine.test.ts`) utilizing strong type casting and a randomized, domain-isolated round-trip bijectivity telemetry fuzzer.
 * **Multi-Component Layering & Color Linking:** Fully resolved internal detail extraction bugs. The system now parses custom element sub-paths natively, separating closed master interlocking structural boundaries (`compIndex === 0`) from open decorative gray stroke segments (`compIndex > 0`) with complete namespace validation.
+ **Warped-Space Adaptive Subdivision Engine:** Upgraded `subdividePath` to dynamically sample post-transformation distances. It auto-scales resolution limit thresholds using the active `decayMultiplier`, decreasing SVG file size (the hero svg in /assets went from 99kb down to 69kb) while completely sealing sub-pixel fractures.
 
 ---
 
@@ -22,7 +24,7 @@ Transition the engine from strictly linear point arrays to native smooth vector 
   ```
 * [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
 * [ ] **Tangency-Preserving Affine Warp:** Adapt the forward-mapping coordinate loops to deform control point handle vectors (`x1, y1`, `x2, y2`) perfectly in sync with localized grid shears.
-* [ ] **Conformal Derivative Subdivision Engine:** Upgrade `subdividePath` to dynamically inject intermediate mid-curve control points based on the local scale factor metric $|f'(z)|$. Automatically cull decorative sub-features (`compIndex > 0`) that fall below physical FDM printing limits (<0.2mm) near logarithmic focal poles.
+* [ ] **Internal Detail Stroke Optimization:** Dynamic line weight tapering towards the center will come later to prevent internal accents (`compIndex > 0`) from overlapping and choking near core focal poles.
 * [ ] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height heights.
 * [ ] **Headless Slicer Command Assembly:** Wire up the automated `prusa-slicer` runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to output universal multi-material `.3mf` projects.
 

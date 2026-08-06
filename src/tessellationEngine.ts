@@ -16,7 +16,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
-  baseMotif: "square" | "chevron" | "chevron2" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare";
+  baseMotif: "square" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare";
   useInverseDebugging: boolean;
   layout: {
     totalBranches: number;
@@ -48,7 +48,8 @@ export function subdividePath(
   points: Point2D[],
   config: EngineConfig,
   compIndex: number,
-  warpProjection: WarpProjectionFn
+  warpProjection: WarpProjectionFn,
+  isInitialTemplatePass: boolean = false
 ): Point2D[] {
   if (points.length < 2) return [...points];
 
@@ -60,7 +61,11 @@ export function subdividePath(
   // Tie the engine coordinates directly to global physical millimeter scales
   const physicalScaleFactor = config.layout.globalScale ?? 1.0;
 
-  for (let i = 0; i < points.length; i++) {
+  const isClosedLoop = compIndex === 0;
+  const iterations = isClosedLoop ? points.length : points.length - 1;
+
+  for (let i = 0; i < iterations; i++) {
+
     const current = points[i]!;
     const next = points[(i + 1) % points.length]!;
 
@@ -75,7 +80,7 @@ export function subdividePath(
 
     // 3. FDM Feature Culling Filter
     // Automatically skip decorative sub-features (compIndex > 0) that compress below 0.2mm
-    if (compIndex > 0 && physicalDistanceMm < minThresholdMm) {
+    if (compIndex > 0 && !isInitialTemplatePass && physicalDistanceMm < minThresholdMm) {
       continue;
     }
 
@@ -94,6 +99,11 @@ export function subdividePath(
         });
       }
     }
+  }
+
+  // For structural details running as open strokes, preserve the final terminal node explicitly
+  if (!isClosedLoop && points.length > 0) {
+    subdivided.push(points[points.length - 1]!);
   }
 
   return subdivided;
@@ -129,26 +139,35 @@ export function applyWallpaperSymmetry(
  * Enforces geometric precision closure to prevent slicing self-intersections.
  * Generates valid standalone SVG path tags containing evenodd slicing rules.
  */
-export function generateSvgPath(points: Point2D[]): string {
-  if (points.length < 3) return "";
+export function generateSvgPath(points: Point2D[], compIndex: number): string {
+  // Open paths need a minimum of two points, closed path need a minimum of three points
+  if (points.length < 2) return "";
+  if (compIndex === 0 && points.length < 3) return "";
 
   const startPoint = points[0]!;
   const endPoint = points[points.length - 1]!;
   const gapDistance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
 
   // If the path loops back near its origin, force-weld the anchors to form a perfect manifold
-  if (gapDistance > 0 && gapDistance < 0.005) {
+  if (compIndex === 0 && gapDistance > 0 && gapDistance < 0.005) {
     points[points.length - 1] = { x: startPoint.x, y: startPoint.y };
   }
 
   let d = `M ${points[0]!.x.toFixed(4)} ${points[0]!.y.toFixed(4)}`;
   for (let i = 1; i < points.length; i++) {
+    // Guard against non-linear transform coordinate breakdown corruption
+    if (isNaN(points[i]!.x) || isNaN(points[i]!.y) || !isFinite(points[i]!.x) || !isFinite(points[i]!.y)) {
+      continue;
+    }
+
     d += ` L ${points[i]!.x.toFixed(4)} ${points[i]!.y.toFixed(4)}`;
   }
 
-  d += " Z";
+  if (compIndex === 0) {
+    d += " Z";
+  }
 
-  return `<path fill-rule="evenodd" clip-rule="evenodd" d="${d}" />`;
+  return d;
 }
 
 /**
@@ -256,7 +275,7 @@ export function generateEscherTessellation(config: EngineConfig): string {
   };
 
   const smoothComponents = motifComponents.map((comp, compIndex) =>
-    subdividePath(comp, adjustedConfig, compIndex, activeWarpProjection)
+    subdividePath(comp, adjustedConfig, compIndex, activeWarpProjection, true)
   );
 
   let calibrationSvg = "";
@@ -310,7 +329,8 @@ export function generateEscherTessellation(config: EngineConfig): string {
           return finalPoint;
         });
 
-        const segmentStr = generateSvgPath(transformedPoints);
+        const segmentStr = generateSvgPath(transformedPoints, compIndex);
+
         rawPathObjects.push({
           d: segmentStr,
           compIndex: compIndex,
@@ -328,13 +348,16 @@ export function generateEscherTessellation(config: EngineConfig): string {
   normalizedPaths.forEach(path => {
     if (path.compIndex === 0) {
       const colorIdx = activeColors.indexOf(path.color);
-      const layerKey = `${colorIdx}_${path.color}`;
+      const layerKey = `${colorIdx}_${path.color.replace('#', '')}`;
+
       if (!groupedPaths[layerKey]) {
         groupedPaths[layerKey] = [];
       }
-      groupedPaths[layerKey]!.push(path.d);
+      groupedPaths[layerKey]!.push(`<path fill-rule="evenodd" clip-rule="evenodd" d="${path.d}" />`);
     } else {
-      detailPaths.push(path.d);
+      // Inject explicit stroke vector parameters straight onto the element tag
+      detailPaths.push(`<path fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="${path.d}" />`);
+
     }
   });
 
@@ -346,20 +369,26 @@ export function generateEscherTessellation(config: EngineConfig): string {
     const structuralLayerGroup = groupedPaths[layerKey];
     if (!structuralLayerGroup || structuralLayerGroup.length === 0) return;
 
-    const [indexStr, color] = layerKey.split('_');
+    const [indexStr, cleanId] = layerKey.split('_')
     const index = parseInt(indexStr!, 10);
-    const cleanId = color!.replace('#', '');
+    const colorHex = `#${cleanId}`;
 
-    svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${color}" stroke=${config.applyStroke ? "#000000" : "none"}>\n`;
+    // Extract matching open line decorative details (compIndex > 0) that belong to the current color
+    const matchingDetails = normalizedPaths
+      .filter(path => path.compIndex > 0 && activeColors.indexOf(path.color) === index)
+      .map(path => `<path d="${path.d}" />`)
+
+    svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${colorHex}" stroke="${config.applyStroke ? '#000000' : 'none'}">\n`;
     svgContent += structuralLayerGroup.join('');
     svgContent += `  </g>\n`;
-  });
 
-  if (detailPaths.length > 0) {
-    svgContent += `  <g id="escher_internal_details" fill="none" stroke="#808080" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">\n`;
-    svgContent += detailPaths.join('');
-    svgContent += `  </g>\n`;
-  }
+    if (matchingDetails.length > 0) {
+      // Group layer details cleanly by dynamic color ID
+      svgContent += `  <g id="color_${index + 1}_${cleanId}_details" fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="round">\n`;
+      svgContent += `    ${matchingDetails.join('\n    ')}\n`;
+      svgContent += `  </g>\n`;
+    }
+  });
 
   svgContent += `</svg>\n`;
   return svgContent;

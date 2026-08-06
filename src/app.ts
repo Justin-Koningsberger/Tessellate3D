@@ -273,19 +273,27 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. PARSE GEOMETRY AND ACCUMULATE TARGET VECTOR SHEETS INTO THE ZIP MANIFEST
       colorGroups.forEach((group, idx) => {
         const idAttr = group.getAttribute('id') || '';
+
+        // Skip details layers during the main loop so they don't generate separate files
+        if (idAttr.endsWith('_details')) return;
+
         const parts = idAttr.split('_');
 
         // Extract branch numbers and color hex codes safely
         const layerNumber = parts[parts.length - 2] || (idx + 1).toString();
         const hexSuffix = parts[parts.length - 1] || 'unknown';
 
+        // Dynamically find the matching interior lines group for this specific color layer
+        const matchingDetailsGroup = container.querySelector(`g[id="color_${layerNumber}_${hexSuffix}_details"]`);
+
         let splitSvg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
         splitSvg += `<svg width="${width}" height="${height}" viewBox="${viewBox}" version="1.1" xmlns="http://w3.org/2000/svg">\n`;
+        // Layer 1: The colored base motif shapes
         splitSvg += `  ${group.outerHTML}\n`;
 
-        // Mirror structural detail lining overlays
-        if (detailGroup) {
-          splitSvg += `  ${detailGroup.outerHTML}\n`;
+        // Layer 2: The matching graphic detail lines inside the same file
+        if (matchingDetailsGroup) {
+          splitSvg += `  ${matchingDetailsGroup.outerHTML}\n`;
         }
         splitSvg += `</svg>\n`;
 

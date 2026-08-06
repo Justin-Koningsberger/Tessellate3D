@@ -9,30 +9,35 @@ export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Po
     { x: 0.0, y: cellHeight }
   ],
 
-  // Simple square motif with internal Escher-style decorative details
-  detailedSquare: (cellHeight: number): Point2D[][] => [
-    // The first item is ALWAYS the outer boundary (must pass verifyMotif.js)
-    [
-      { x: 0.0, y: 0.0 },                   // Top-Left start
-      { x: 1.0, y: 0.0 },                   // Top-Right
-      { x: 1.0, y: cellHeight },            // Bottom-Right
-      { x: 0.0, y: cellHeight },            // Bottom-Left
-      { x: 0.0, y: cellHeight }             // Explicit closer for validator
-    ],
-    // Subsequent items are internal decorations (The Escher "Eye & Scale" Lines)
-    [
-      { x: 0.2, y: cellHeight * 0.2 },      // Internal Detail A: An "Eye" box
-      { x: 0.3, y: cellHeight * 0.2 },
-      { x: 0.3, y: cellHeight * 0.3 },
-      { x: 0.2, y: cellHeight * 0.3 },
-      { x: 0.2, y: cellHeight * 0.2 }       // Close the eye loop
-    ],
-    [
-      { x: 0.4, y: cellHeight * 0.5 },      // Internal Detail B: A decorative curve
-      { x: 0.6, y: cellHeight * 0.7 },
-      { x: 0.8, y: cellHeight * 0.5 }
-    ]
-  ],
+  // Circle-Junction Square Motif
+  detailedSquare: (cellHeight: number): Point2D[][] => {
+    const components: Point2D[][] = [];
+    const r = 0.15 * cellHeight;
+    const stepsPerArc = 16;
+
+    // compIndex === 0: Main square boundary loop
+    components.push([
+      { x: 0.0, y: 0.0 },
+      { x: 1.0, y: 0.0 },
+      { x: 1.0, y: cellHeight },
+      { x: 0.0, y: cellHeight }
+    ]);
+
+    const generateArcPoints = (cx: number, cy: number, startAngle: number, endAngle: number): Point2D[] => {
+      const points: Point2D[] = [];
+      for (let i = 0; i <= stepsPerArc; i++) {
+        const phi = startAngle + (endAngle - startAngle) * (i / stepsPerArc);
+        points.push({ x: cx + r * Math.cos(phi), y: cy + r * Math.sin(phi) });
+      }
+      return points;
+    };
+
+    components.push(generateArcPoints(0.0, 0.0, 0, Math.PI / 2));          // Top-Left
+    components.push(generateArcPoints(1.0, 0.0, Math.PI / 2, Math.PI));     // Top-Right
+    components.push(generateArcPoints(1.0, cellHeight, Math.PI, (3 * Math.PI) / 2)); // Bottom-Right
+    components.push(generateArcPoints(0.0, cellHeight, (3 * Math.PI) / 2, 2 * Math.PI)); // Bottom-Left
+    return components;
+  },
 
   // Chevron base motif
   chevron: (cellHeight: number): Point2D[] => [
@@ -42,19 +47,6 @@ export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Po
     { x: 1.0, y: cellHeight },           // Top-Right
     { x: 0.5, y: cellHeight + 0.5 },     // Top-Middle (pushed up)
     { x: 0.0, y: cellHeight }            // Top-Left
-  ],
-
-  // Chevron base motif with sharp, deep interlocking features
-  chevron2: (cellHeight: number): Point2D[] => [
-    { x: 0.0, y: 0.0 },                   // Top-Left corner start
-    { x: 0.5, y: 0.5 },                   // Top-Middle protruding crest (Pushed up)
-    { x: 1.0, y: 0.0 },                   // Top-Right corner
-    { x: 1.55, y: cellHeight / 2 },       // Right-Middle Wave (Deep hook protrusion)
-    { x: 1.0,  y: cellHeight },           // Bottom-Right corner
-    { x: 0.5,  y: cellHeight + 0.5 },     // Bottom-Middle matching pocket (Pushed up)
-    { x: 0.0,  y: cellHeight },           // Bottom-Left corner
-    { x: 0.55, y: cellHeight / 2 },       // Left-Middle Wave (Matching deep pocket receiver)
-    { x: 0.0,  y: cellHeight }            // Explicit Bottom-Left path closer
   ],
 
   // Smooth Sine Wavelet

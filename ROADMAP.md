@@ -18,13 +18,10 @@ This document outlines the architectural milestones, mathematical features, and 
 
 ## 🎨 PHASE 2: Resolution Independence & Multi-Material 3D Extrusion `[UP NEXT]`
 Transition the engine from strictly linear point arrays to native smooth vector geometries.
-* [ ] **Multi-Type Node Data Structure:** Upgrade the `baseMotifs.ts` library to accept complex curve command flags:
-  ```javascript
-  { type: 'C', x1: 0.25, y1: -0.2, x2: 0.75, y2: 0.2, x: 1.0, y: 0.0 } // Cubic Bezier
-  ```
+* [ ] **Parametric Curve Blueprinting Framework:** Expand the `baseMotifs.ts` dictionary to accept analytical parametric equations (e.g., ellipses, cycloids) alongside linear paths, ensuring smooth interior details can be evaluated procedurally.
 * [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
-* [ ] **Tangency-Preserving Affine Warp:** Adapt the forward-mapping coordinate loops to deform control point handle vectors (`x1, y1`, `x2, y2`) perfectly in sync with localized grid shears.
-* [ ] **Internal Detail Stroke Optimization:** Dynamic line weight tapering towards the center will come later to prevent internal accents (`compIndex > 0`) from overlapping and choking near core focal poles.
+* [ ] **Post-Transformation Vectorization Filter:** Implement an optimization pass that compresses dense point sequences back into SVG cubic Bézier segments *after* they are projected into screen space, keeping files tiny while preventing boundary tearing.
+* [ ] **Adaptive Detail Stroke-Weight Scaling:** Implement dynamic `stroke-width` scaling specifically targeting detail sub-groups (`compIndex > 0`) to taper line thicknesses toward center poles, preventing open arcs from bleeding or overlapping as log-polar spatial coordinates compress near zero.
 * [ ] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height heights.
 * [ ] **Headless Slicer Command Assembly:** Wire up the automated `prusa-slicer` runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to output universal multi-material `.3mf` projects.
 

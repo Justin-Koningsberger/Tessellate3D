@@ -40,7 +40,7 @@ There is also a deep structural link between 3D printing and classical relief pr
 ## Stable Pipeline Components (Phase 1 Conformal Architecture Core)
 
 * **`[Base Motif]`**
-  * *Definition:* Statically typed, resolution-independent vector matrices supporting multi-component elements (outer boundaries and fine internal accent contours).
+  * *Definition:* Statically typed, resolution-independent vector matrices supporting multi-component elements (outer boundaries and fine internal (open) detail paths).
 * **`[Subdivision Engine (subdividePath)]`**
   * *Purpose:* Dynamically samples absolute Euclidean distance post-transformation to inject native flat-space vertices exactly where non-linear curves bend aggressively.
   * *Why:* Keeps geometry perfectly fluid without turning arcs into jagged polygonal chords. It scales its accuracy resolution using the active `decayMultiplier` to optimize performance, while serving as a fine-nozzle FDM feature filter that automatically skips sub-micron details below $0.2\text{mm}$.
@@ -58,7 +58,7 @@ There is also a deep structural link between 3D printing and classical relief pr
   * *Strategy:* Leverages localized fixed-point iteration loops and decoupled matrix mappings to isolate u,v coordinates from screen space without runtime mathematical singularity collapses.
 * **`[Multi-Component Asset Parser & Detail Separator]`**
   * *Status:* COMPLETE
-    * *Purpose:* Stacks interlocking structural tiles seamlessly across an exponential log-polar coordinate plane.
+  * *Purpose:* Stacks interlocking structural tiles seamlessly across an exponential log-polar coordinate plane.
   * *Layout:* Concentric depth Rings populate the radial vector path, while Angular Branches step uniformly to preserve the a-priori $2\pi$ circle wrapper continuity, completely preventing edge tearing.
 * **`[Horizontal Affine Shear Matrix & Boundary Complementarity Sync]`**
   * *Purpose:* Implements rigid shear slopes alongside strict wall-complementarity parsers to guarantee face-to-face interlocking alignment across tile lanes.
@@ -70,7 +70,6 @@ There is also a deep structural link between 3D printing and classical relief pr
 * **`[Multi-Layer Asset Parser & Detached Color Grouper]`**
   * *Status:* COMPLETE
   * *Purpose:* Encodes a deterministic sorting layer key matching color palette index strings (`colorIndex_hexColor`). This safely segregates primary boundary fills (`compIndex === 0`) into unified, self-contained SVG `<g>` groups while isolating internal decorative line work (`compIndex > 0`), ensuring reliable layer stacks inside vector illustration tools and multi-material slicers.
-
 * **`[Color Cycler & Validator]`**
   * *Purpose:* Directs index-modulo path coloring across branches, running programmatic bijectivity round-trips to catch sub-micron panel drift.
   * *Grouping Output:* Organizes arrays of mapped coordinates dynamically into structured collections sorted by color parameters.

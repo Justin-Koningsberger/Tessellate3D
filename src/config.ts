@@ -17,6 +17,7 @@ export const CONFIG: EngineConfig = {
     staggerFactor: 0.0        // Set to 0.0 for classic side-by-side concentric tiling
   },
 
+  applyStroke: false,
   // Target Print Palette Hex Array
   colorPalette: [
     "#e62b12", // Layer 1: Red

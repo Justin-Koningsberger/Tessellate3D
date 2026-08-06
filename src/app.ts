@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     decayContainer: document.getElementById('decayContainer') as HTMLLabelElement,
     twistContainer: document.getElementById('twistContainer') as HTMLLabelElement,
 
+    applyStroke: document.getElementById('applyStroke') as HTMLInputElement,
     // Color Palette DOM target mount nodes
     paletteContainer: document.getElementById('palette-list-container') as HTMLDivElement,
     btnAddColor: document.getElementById('btn-add-color') as HTMLButtonElement,
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.variantMode = els.variantMode.value as EngineConfig['variantMode'];
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
     currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
+    currentConfig.applyStroke = els.applyStroke.checked;
 
     currentConfig.layout = {
       totalBranches: parseInt(els.totalBranches.value, 10),
@@ -59,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
       staggerFactor: parseFloat(els.staggerFactor.value)
+
     };
 
     // Update real-time label values next to sliders

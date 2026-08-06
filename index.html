@@ -97,14 +97,19 @@
         <span>Concentric Stagger Factor: <span id="staggerFactor-val">0.0</span></span>
         <input type="range" id="staggerFactor" min="0" max="1" step="1" value="0" />
       </label>
-
       <hr />
-        <label>
-          <span>Palette</span>
-        </label>
-        <!-- The dynamic color item list slots will be mounted inside this div -->
-        <div id="palette-list-container" style="display: flex; flex-direction: column; gap: 8px; margin: 4px 0;"></div>
-        <button id="btn-add-color" type="button" style="background: #10b981; color: white; padding: 6px; border: none; border-radius: 4px; margin-top: 4px; cursor: pointer;">➕ Add color</button>
+
+      <label>
+        <span>Palette</span>
+      </label>
+
+      <label class="row">
+        <input type="checkbox" id="applyStroke" />
+        <span>Apply stroke</span>
+      </label>
+      <!-- The dynamic color item list slots will be mounted inside this div -->
+      <div id="palette-list-container" style="display: flex; flex-direction: column; gap: 8px; margin: 4px 0;"></div>
+      <button id="btn-add-color" type="button" style="background: #10b981; color: white; padding: 6px; border: none; border-radius: 4px; margin-top: 4px; cursor: pointer;">➕ Add color</button>
     </section>
 
     <!-- Right Hand Interactive Graphic Viewport Canvas Section -->

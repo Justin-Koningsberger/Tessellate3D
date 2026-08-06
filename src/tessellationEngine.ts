@@ -28,6 +28,7 @@ export interface EngineConfig {
     twistFactor: number;
     staggerFactor: number;
   };
+  applyStroke: boolean;
   colorPalette: string[];
   canvas: {
     width: string;
@@ -349,7 +350,7 @@ export function generateEscherTessellation(config: EngineConfig): string {
     const index = parseInt(indexStr!, 10);
     const cleanId = color!.replace('#', '');
 
-    svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${color}">\n`;
+    svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${color}" stroke=${config.applyStroke ? "#000000" : "none"}>\n`;
     svgContent += structuralLayerGroup.join('');
     svgContent += `  </g>\n`;
   });

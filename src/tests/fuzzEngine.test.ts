@@ -70,7 +70,8 @@ function evaluateVariantExtended(
       twistFactor: twist,
       subdivisionLimit: 0.05,
       staggerFactor: 0.0
-    }
+    },
+    applyStroke: false,
   };
 
   try {

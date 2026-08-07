@@ -111,33 +111,28 @@ export function subdividePath(
 
 /**
  * Wallpaper Symmetry Engine (With Helical Spiral Shift Support).
- * Accepting the config parameter ensures decoupled, stateless execution.
  */
 export function applyWallpaperSymmetry(
   point: Point2D,
   ring: number,
   branch: number,
-  config: EngineConfig
+  totalBranches: number,
+  shearSlope: number,
 ): Point2D {
   const tileWidth = 1.0;
-  const totalBranches = config.layout.totalBranches;
   const tileHeight = (Math.PI * 2) / totalBranches;
 
-  const stagger = config.layout.staggerFactor;
-  const cleanStagger = stagger >= 0.5 ? 1.0 : 0.0;
-
   // Calculate continuous displacement offset across active branch counts
-  const helicalOffset = branch * (tileWidth / totalBranches) * cleanStagger;
+  const continuousHelicalOffset = branch * (tileWidth / totalBranches) * shearSlope;
 
   return {
-    x: point.x + (ring * tileWidth) - helicalOffset,
+    x: point.x + (ring * tileWidth) + continuousHelicalOffset,
     y: point.y + (branch * tileHeight)
   };
 }
 
 /**
  * Enforces geometric precision closure to prevent slicing self-intersections.
- * Generates valid standalone SVG path tags containing evenodd slicing rules.
  */
 export function generateSvgPath(points: Point2D[], compIndex: number): string {
   // Open paths need a minimum of two points, closed path need a minimum of three points
@@ -291,17 +286,17 @@ export function generateEscherTessellation(config: EngineConfig): string {
       const colorIndex = (branch + ring) % activeColors.length;
       const currentFill = activeColors[colorIndex] || "#000000";
 
-      const cleanStagger = config.layout.staggerFactor >= 0.5 ? 1.0 : 0.0;
-      const shearSlope = (1.0 / totalBranches) * cleanStagger;
+      const continuousStagger = config.layout.staggerFactor ?? 0.0;
+      const shearSlope = (1.0 / totalBranches) * continuousStagger;
 
       smoothComponents.forEach((componentPoints, compIndex) => {
         const transformedPoints = componentPoints.map(p => {
           const shearedPoint: Point2D = {
-            x: p.x + (p.y / cellHeight) * shearSlope,
+            x: p.x + (p.y / cellHeight) * shearSlope, // Slants individual cell walls to match the layout angle
             y: p.y
           };
 
-          const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, config);
+          const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
           let finalPoint: Point2D;
 
           switch (config.variantMode) {

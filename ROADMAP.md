@@ -40,7 +40,7 @@ Allow artists to feed custom vector artwork straight into the engine without mod
 
 ## 🧮 PHASE 4: Conformal Complex Research Implementations
 Incorporate advanced mathematical tiling behaviors outlined in canonical complex mapping literature.
-* [ ] **Rational Fractional Stagger Factors:** Move beyond binary `0.0/1.0` snapping thresholds to allow variable fractional offsets (e.g., a `staggerFactor: 0.5` configuration for perfect running brick-bond alignments).
+* [x] **Rational Fractional Stagger Factors:** Moved beyond binary `0.0/1.0` snapping thresholds to support continuous, fractional offsets (0.0 to 1.0+). Successfully verified fluid, gap-free running brick-bond alignments under all warp variants for the `square` and `detailedSquare` motifs, with the frontend panel safely restricting visibility to these supported profiles.
 * [ ] **Grünbaum-Shephard Isohedral Parameterization:** Implement an `ihSymmetryEngine.ts` module to classify and enforce edge transitivity across all 93 IH types. Map custom paths directly to J-edges (asymmetric), U-edges (glide-reflected), and K-edges (centrosymmetric midpoints).
 * [ ] **Derived Conformal Whirlpool Spaces (Mappings $\Phi_2$ & $\Phi_3$):** Implement forward transformation equations for the paper's Mobius-variant $\frac{z-i}{z+i}$ and periodic $\tan(z)$ mappings to generate complex multi-pole spiral whirlpool geometries.
 * [ ] **Stereographic Riemann Sphere Projections:** Map flat logarithmic spiral configurations cleanly onto 3D spherical point arrays to create closed-globe interlocking geometries.

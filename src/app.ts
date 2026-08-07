@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     canvasTarget: document.getElementById('svg-injection-target') as HTMLDivElement,
     decayContainer: document.getElementById('decayContainer') as HTMLLabelElement,
     twistContainer: document.getElementById('twistContainer') as HTMLLabelElement,
+    staggerContainer: document.getElementById('staggerContainer') as HTMLLabelElement,
 
     applyStroke: document.getElementById('applyStroke') as HTMLInputElement,
     // Color Palette DOM target mount nodes
@@ -80,6 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (els.twistContainer) {
       els.twistContainer.style.display = mode === 'loxodromic' ? 'flex' : 'none';
     }
+
+    // Dynamically manage control panel visibility based on active base motif
+    if (els.staggerContainer) {
+      // The other motifs with interlocking edges do not support stagger yet
+      const allowedMotifs = ['square', 'detailedSquare'];
+      const isStaggerSupported = allowedMotifs.includes(motif);
+
+      els.staggerContainer.style.display = isStaggerSupported ? 'flex' : 'none';
+    }
+
 
     try {
       // Execute pure transformation pass natively in-browser

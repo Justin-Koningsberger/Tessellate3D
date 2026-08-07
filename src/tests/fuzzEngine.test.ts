@@ -94,8 +94,8 @@ function evaluateVariantExtended(
       case "single-pole":
         // FIXED: Inject the dynamic ring and branch indices into wallpaper symmetry simulation blocks.
         // This ensures Point A (Ring + 1) matches face-to-face with Point B (Ring) on the active branch lane.
-        const gridA_sp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext);
-        const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing, randomTestBranch, mockContext);
+        const gridA_sp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
+        const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing, randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_sp;
         coordA = forward.singlePole(gridA_sp, scale, rotation, decay);
         coordB = forward.singlePole(gridB_sp, scale, rotation, decay);
@@ -103,8 +103,8 @@ function evaluateVariantExtended(
 
       case "loxodromic":
         // FIXED: Test torsional twist continuity at varying ring depths and branch rotations seamlessly
-        const gridA_lox = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext);
-        const gridB_lox = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext);
+        const gridA_lox = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
+        const gridB_lox = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_lox;
         coordA = forward.loxodromic(gridA_lox, scale, rotation, twist, decay);
         coordB = forward.loxodromic(gridB_lox, scale, rotation, twist, decay);
@@ -112,8 +112,8 @@ function evaluateVariantExtended(
 
       case "multi-pole":
         // FIXED: Subject the multi-pole trigonometric matrix to non-orthogonal quadrant boundaries
-        const gridA_mp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext);
-        const gridB_mp = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext);
+        const gridA_mp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
+        const gridB_mp = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_mp;
         coordA = forward.multiPole(gridA_mp, scale, rotation, decay);
         coordB = forward.multiPole(gridB_mp, scale, rotation, decay);

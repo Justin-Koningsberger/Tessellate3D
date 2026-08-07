@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (els.staggerContainer) {
       // The other motifs with interlocking edges do not support stagger yet
       const allowedMotifs = ['square', 'detailedSquare'];
-      const isStaggerSupported = allowedMotifs.includes(motif);
+      const isStaggerSupported = allowedMotifs.includes(currentConfig.baseMotif);
 
       els.staggerContainer.style.display = isStaggerSupported ? 'flex' : 'none';
     }

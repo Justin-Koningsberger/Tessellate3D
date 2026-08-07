@@ -8,9 +8,9 @@ This document outlines the architectural milestones, mathematical features, and 
 * **Strict NodeNext ES Module & Node 24 Architecture:** Migrated all core transformation modules, matrix loops, and layout engines into stateless, strongly typed TypeScript files (`.ts`) targeting modern ECMAScript specifications natively on the **Node.js v24** runtime.
 * **Horizontal Affine Shear Matrix:** Implemented dynamic transformation loops inside `tessellationEngine.ts` to ensure seamless alignment along structural symmetry axes.
 * **Binary Snap Validation:** Integrated strict `0.0` or `1.0` boundary enforcement filters in `applyWallpaperSymmetry` using explicit `EngineConfig` parameters to eliminate rounding drift.
-* **Loop Continuity & Boundary Complementarity Sync:** Patched motif coordinate boundaries by enforcing explicit bottom-left closure anchors (`{x: 0.0, y: cellHeight}`) and building verification scripts (`validateComplementarity.ts`) to validate exact face-to-face interlocking continuity.
+* **Loop Continuity & Boundary Complementarity Sync:** Patched motif coordinate boundaries by enforcing explicit bottom-left closure anchors (`{x: 0.0, y: cellHeight}`).
 * **Pure Conformal Twin Mapping Matrices:** Fully synchronized and locked down the stateless mathematical forward/inverse equations (`single-pole` and `multi-pole`), completely isolating global rotation angles from interactive spatial multipliers.
-* **Decoupled Automated QA Harness:** Re-engineered verification scripts into an isolated testing suite (`validateMotif.test.ts`, `validateTransforms.test.ts`, `fuzzEngine.test.ts`) utilizing strong type casting and a randomized, domain-isolated round-trip bijectivity telemetry fuzzer.
+* **Decoupled Automated QA Harness:** Re-engineered verification scripts into an isolated testing suite (`validateMotif.test.ts`, `validateTransforms.test.ts`, `fuzzEngine.test.ts`, `zipUtils.test.ts`).
 * **Multi-Component Layering & Color Linking:** Fully resolved internal detail extraction bugs. The system now parses custom element sub-paths natively, separating closed master interlocking structural boundaries (`compIndex === 0`) from open decorative gray stroke segments (`compIndex > 0`) with complete namespace validation.
  **Warped-Space Adaptive Subdivision Engine:** Upgraded `subdividePath` to dynamically sample post-transformation distances. It auto-scales resolution limit thresholds using the active `decayMultiplier`, decreasing SVG file size (the hero svg in /assets went from 99kb down to 69kb) while completely sealing sub-pixel fractures.
 
@@ -22,15 +22,15 @@ Transition the engine from strictly linear point arrays to native smooth vector 
 * [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
 * [ ] **Post-Transformation Vectorization Filter:** Implement an optimization pass that compresses dense point sequences back into SVG cubic Bézier segments *after* they are projected into screen space, keeping files tiny while preventing boundary tearing.
 * [ ] **Adaptive Detail Stroke-Weight Scaling:** Implement dynamic `stroke-width` scaling specifically targeting detail sub-groups (`compIndex > 0`) to taper line thicknesses toward center poles, preventing open arcs from bleeding or overlapping as log-polar spatial coordinates compress near zero.
-* [ ] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height heights.
+* [ ] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height.
 * [ ] **Headless Slicer Command Assembly:** Wire up the automated `prusa-slicer` runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to output universal multi-material `.3mf` projects.
 
 ---
 
 ## 🔌 PHASE 3: Dynamic Geometry & Native Asset Ingestion
 Allow artists to feed custom vector artwork straight into the engine without modifying the codebase.
-* [ ] **Color-Linked Internal Detail Serialization**
-      * **Why it matters:** Currently, all internal details are grouped into a single global grey overlay container. Splitting these paths by their originating tile color will allow multi-material slicers (like PrusaSlicer) to automatically map the eyes, scales, or wings to their respective physical filament layers instead of forcing a single color across the entire design.
+* [X] **Color-Linked Internal Detail Serialization**
+      * **Why it matters:** Internal details are grouped into a details layer (colorIndex_hexColor_details) per color used. This allows allows users to easily change the color used for details instead of forcing a single color across the entire design.
 * [ ] **Multi-Path Native Typing Integration:** Coordinate the SVG ingestion parser to output standard multi-path arrays natively recognized by the `compIndex` pipeline and `src/tests/validateMotif.test.ts`.
 * [ ] **Arbitrary SVG Ingestion Engine:** Build an XML file-stream parser to automatically extract, strip, and flatten compound transformation matrices from external `.svg` source graphics.
 * [ ] **Boundary Complementarity Verification Algorithm:** Programmatically parse an imported asset's bounding path to ensure its Top profile functions as a flawless mathematical complement to its Bottom profile.

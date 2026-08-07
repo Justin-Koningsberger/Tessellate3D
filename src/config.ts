@@ -23,14 +23,13 @@ export const CONFIG: EngineConfig = {
     "#e62b12", // Layer 1: Red
     "#f5c107", // Layer 2: Gold
     "#2aa10d", // Layer 3: Green
-    "#800080", // Layer 4: Purple
+    "#000000", // Layer 4: Black
     "#0000FF", // Layer 5: Blue
     "#F97316", // layer 6: Orange
-    "#06B6D4", // layer 7: Teal
+    "#B6FFBB", // layer 7: Mint
     "#7C3AED", // layer 8: Violet
     "#EC4899", // layer 9: Magenta
-    "#000000", // Layer 10: Black
-    "#345fff"  // Layer 11: random
+    "#6FD2EA", // Layer 10: Ice blue
   ],
 
   // Artboard Panel Sizing Constraints

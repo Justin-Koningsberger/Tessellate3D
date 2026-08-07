@@ -20,8 +20,8 @@ Never suggest, write, or approve a change to the codebase without instructing th
 * Target modern ECMAScript compilation rules.
 * Comply with strict `NodeNext` configurations.
 * **Node.js Runtime Spec**: Target **Node.js v24** capabilities natively. Do not introduce outdated npm polyfills for features natively supported in Node 24 (e.g., native fetch, modern cryptography, or advanced web streams).
-* **CRITICAL:** All internal module imports within source dependencies must include explicit, valid `.js` file extensions.
-* *Example:* `import { forward } from './transforms/forward.js';`
+* **CRITICAL:** All internal module imports within source dependencies must include explicit, valid `.ts` file extensions.
+* *Example:* `import { forward } from './transforms/forward.ts';`
 
 ### 3. Resolution-Independent Motif Scaling
 * All raw structural node definitions inside `src/baseMotifs.ts` must balance uniformly between localized tile boundary constraints ($X[0.0 - 1.0]$ and $Y[0.0 - cellHeight]$).

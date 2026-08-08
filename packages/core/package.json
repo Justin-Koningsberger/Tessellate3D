@@ -1,0 +1,24 @@
+{
+  "name": "@tessellate3d/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/tessellationEngine.ts",
+  "types": "src/tessellationEngine.ts",
+  "exports": {
+    ".": {
+      "types": "./src/tessellationEngine.ts",
+      "default": "./src/tessellationEngine.ts"
+    },
+    "./*": {
+      "types": "./*.ts",
+      "default": "./*.ts"
+    }
+  },
+  "scripts": {
+    "dev": "node --experimental-strip-types src/index.ts",
+    "test:motifs": "node --experimental-strip-types src/tests/validateMotif.test.ts",
+    "test:transforms": "node --experimental-strip-types src/tests/validateTransforms.test.ts",
+    "test:fuzz": "node --experimental-strip-types src/tests/fuzzEngine.test.ts"
+  }
+}

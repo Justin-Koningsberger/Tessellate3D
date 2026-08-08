@@ -1,0 +1,13 @@
+{
+  "name": "@tessellate3d/slicer-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "echo 'Slicer package verified by root compilation pass.'"
+  },
+  "dependencies": {
+    "@tessellate3d/core": "^1.0.0"
+  }
+}

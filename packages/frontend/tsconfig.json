@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "noEmit": true,
+    "paths": {
+      "@tessellate3d/core/*": ["../core/*"],
+    }
+  },
+  "include": ["src/**/*"],
+  "references": [
+    { "path": "../core" }
+  ]
+}

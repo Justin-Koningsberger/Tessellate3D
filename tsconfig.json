@@ -4,21 +4,20 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "moduleDetection": "force",
-    "lib": ["ESNext", "DOM"],
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "lib": ["ESNext"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "erasableSyntaxOnly": true,
-    "noEmit": true,
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["src/**/*"],
-  "exclude": [
-    "src/assets/**/*"
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/frontend" },
+    { "path": "packages/slicer-service" }
   ]
 }

@@ -3,6 +3,8 @@ import { resolve } from 'path';
 
 export default defineConfig({
   root: '.',
+  // Enforce relative resource pathing so asset URLs resolve correctly inside GitHub Pages sub-folders
+  base: './',
   server: {
     fs: {
       // Allow Vite to step outside /packages/frontend/ to read core source code files

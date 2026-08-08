@@ -1,7 +1,8 @@
 import { createUncompressedZip } from './zipUtils.ts';
-import { CONFIG } from './config.ts';
-import type { EngineConfig } from './tessellationEngine.ts';
-import { generateEscherTessellation } from './tessellationEngine.ts';
+import { CONFIG } from '@tessellate3d/core/src/config.ts';
+import { generateEscherTessellation } from '@tessellate3d/core/src/tessellationEngine.ts';
+
+import type { EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 
 /**
  * CORE STUDIO FRONTEND CONTROLLER

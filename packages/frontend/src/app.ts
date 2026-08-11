@@ -366,8 +366,9 @@ document.addEventListener('DOMContentLoaded', () => {
       els.btnDownload3dStl.innerText = 'Slicing Meshes...';
       els.btnDownload3dStl.disabled = true;
 
-      // Secure container network API endpoint target boundaries
-      const ENDPOINT_URL = 'https://127.0.0.1:3000/api/v1/slice';
+      // Dynamically resolve target based on deployment environment
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const ENDPOINT_URL = `${API_BASE_URL}/api/v1/slice`;
 
       try {
         console.log('📡 Transmitting SVG vector field to secure container slicing microservice...');
@@ -413,8 +414,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         const runErrorMessage = err instanceof Error ? err.message : String(err);
-        console.error('✖ Slicer endpoint transport fault context:', runErrorMessage);
-        alert(`Failed to compile 3D meshes: ${runErrorMessage}\n\n💡 Tip: Open a new tab and confirm you can access https://127.0.0.1:3000 to clear local self-signed certificate locks.`);
+        const fallbackUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        alert(`Failed to compile 3D meshes: ${runErrorMessage}\n\n💡 Tip: Open a new tab and confirm you can access ${fallbackUrl}/health to clear local certificate blocks or verify server availability.`);
       } finally {
         els.btnDownload3dStl.innerText = initialButtonLabel;
         els.btnDownload3dStl.disabled = false;

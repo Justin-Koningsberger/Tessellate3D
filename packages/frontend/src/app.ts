@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Package everything into a single file archive
         const zipArchiveBlob = createUncompressedZip(bundleManifest);
-        const customFileName = `tessellate3d_${currentConfig.variantMode}_${currentConfig.activeMotif}.zip`;
+        const customFileName = `tessellate3d_${currentConfig.variantMode}_${currentConfig.baseMotif}.zip`;
 
         // Dispatch single archive download event
         triggerDownload(zipArchiveBlob, customFileName);

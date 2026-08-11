@@ -97,4 +97,4 @@ This project is compiled under a modern, strict `NodeNext` ECMAScript specificat
 4. **Mathematical Regression Test:** `npm run test:transforms` *(Asserts forward coordinate vectors against exact algebraic checkpoints)*
 5. **Engine Telemetry Fuzzer:** `npm run test:fuzz` *(Runs a deep dual-progression random sweep across varying depth limits and ring layers)*
 6. **ZIP Binary Signature Test:** `npm run test:zip` *(Validates PKWARE local file headers, byte offsets, and CRC32 integrity checks)*
-7. **Containerized Slicer Microservice:** `docker compose up -d --build` *(Launches Fastify server with a STL generator route)*
+7. **Containerized Slicer Microservice:** run `docker compose up -d --build` from the root folder *(Launches Fastify server with a STL generator route)*

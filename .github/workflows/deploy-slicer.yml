@@ -1,0 +1,59 @@
+name: Continuous Production Container Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'packages/slicer-service/**'
+      - 'packages/core/**'
+      - '.github/workflows/deploy-slicer.yml'
+      - 'deploy/ansible/**'
+
+jobs:
+  verify-and-ship:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code Base
+        uses: actions/checkout@v4
+
+      - name: Initialize Node 24 Runtime Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install Monorepo Dependencies
+        run: npm ci
+
+      - name: Validate Microservice Type Integrity
+        run: npm run typecheck --workspace=packages/slicer-service
+
+      - name: Login to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assemble and Push Optimized Production Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packages/slicer-service/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/tessellate3d-slicer:latest
+
+      - name: Set up SSH Key for Ansible Engine
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/ssh-key-oracleInstance
+          chmod 600 ~/.ssh/ssh-key-oracleInstance
+
+      - name: Install Ansible Core Automation Engine
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+
+      - name: Execute Ansible Infrastructure Orchestration Playbook
+        run: |
+          ansible-playbook -i deploy/ansible/inventory.ini deploy/ansible/deploy-slicer.yml

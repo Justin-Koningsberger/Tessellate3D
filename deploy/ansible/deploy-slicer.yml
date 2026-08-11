@@ -1,0 +1,86 @@
+---
+- name: Deploy Tessellate3D Slicer Service Stack to Production OCI Instance
+  hosts: production
+  become: false
+  vars:
+    target_dir: "{{ ansible_env.HOME }}/tessellate3d-deployment"
+    duckdns_domain: "tessellate3d-slicer.duckdns.org"
+    admin_email: "justin.koningsberger@gmail.com"
+    github_username: "justin-koningsberger"
+
+  tasks:
+    - name: Ensure target deployment workspace matrix directory exists
+      ansible.builtin.file:
+        path: "{{ target_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate Production Caddyfile Blueprint Inline
+      ansible.builtin.copy:
+        dest: "{{ target_dir }}/Caddyfile"
+        mode: '0644'
+        content: |
+          {{ duckdns_domain }} {
+              tls {{ admin_email }}
+              reverse_proxy slicer-service:3000
+          }
+
+    - name: Generate Isolated Multi-Container Production Docker Compose Layout
+      ansible.builtin.copy:
+        dest: "{{ target_dir }}/docker-compose.prod.yml"
+        mode: '0644'
+        content: |
+          version: '3.8'
+
+          networks:
+            slicer-network:
+              driver: bridge
+
+          services:
+            slicer-service:
+              image: ghcr.io/{{ github_username }}/tessellate3d-slicer:latest
+              container_name: tessellate3d-slicer-prod
+              restart: unless-stopped
+              environment:
+                - NODE_ENV=production
+                - PORT=3000
+              volumes:
+                - ./packages/slicer-service/certs:/app/packages/slicer-service/certs
+              networks:
+                - slicer-network
+
+            caddy-proxy:
+              image: caddy:2-alpine
+              container_name: tessellate3d-caddy-proxy
+              restart: unless-stopped
+              ports:
+                - "80:80"
+                - "443:443"
+              volumes:
+                - ./Caddyfile:/etc/caddy/Caddyfile
+                - caddy_data:/data
+                - caddy_config:/config
+              networks:
+                - slicer-network
+
+          volumes:
+            caddy_data:
+            caddy_config:
+
+    - name: Ensure Host Directory for Volume Mounting Exists
+      ansible.builtin.file:
+        path: "{{ target_dir }}/packages/slicer-service/certs"
+        state: directory
+        mode: '0755'
+
+    - name: Execute Pull Directive for Latest Production Images
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml pull
+        chdir: "{{ target_dir }}"
+      changed_when: true
+
+    - name: Spin Up Secure Multi-Container Orchestration Stack
+      ansible.builtin.command:
+        cmd: docker compose -f docker-compose.prod.yml up -d --remove-orphans
+        chdir: "{{ target_dir }}"
+      changed_when: true

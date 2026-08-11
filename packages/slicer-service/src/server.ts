@@ -98,6 +98,11 @@ fastify.post('/api/v1/slice', async (request, reply) => {
   }
 });
 
+// POST /api/v1/embed-mesh
+// ├── Inputs: SVG string + target model type ("frisbee" | "mug" | "canvas")
+// └── Action: 1. Uses a task runner to merge the svgs with pre-baked .3mf projects
+//             3. Dispatches a headless `prusa-slicer` binary call via background execution lines to compile final G-code or project files
+
 // Status endpoint
 fastify.get('/health', async () => {
   return { status: 'healthy', timestamp: new Date().toISOString() };

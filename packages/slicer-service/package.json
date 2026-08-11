@@ -5,9 +5,14 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "build": "echo 'Slicer package verified by root compilation pass.'"
+    "build": "echo 'Slicer package verified by root compilation pass.'",
+    "test:slicer": "node --experimental-strip-types src/stlBuilder.test.ts"
+  },
+  "devDependencies": {
+  "@tessellate3d/core": "^1.0.0"
   },
   "dependencies": {
-    "@tessellate3d/core": "^1.0.0"
+    "@fastify/cors": "^8.5.0",
+    "fastify": "^4.28.1"
   }
 }

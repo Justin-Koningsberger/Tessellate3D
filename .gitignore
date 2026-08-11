@@ -8,6 +8,7 @@ node_modules/
 # ==========================================
 .vite/
 packages/frontend/dist/
+output_3d/
 
 # ==========================================
 # 3. Monorepo Workspace Build Artifacts
@@ -28,3 +29,13 @@ research/
 .DS_Store
 .vscode/
 *.log
+
+# ==========================================
+# 6. Encryption Keys & Security Certificates
+# ==========================================
+packages/slicer-service/certs/
+
+# ==========================================
+# 7. Environment Variables
+# ==========================================
+.env

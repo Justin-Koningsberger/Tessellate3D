@@ -241,8 +241,6 @@ function runFuzzSuite(): void {
 
         // EXTENDED STRESS BOUNDS: Sample randomly across the full progressive depth limit
         const randomTestRing = Math.floor(getRandom(0, maxTestLimit));
-
-        // Invoke your pure fuzzer core module
         const result = evaluateVariantExtended(variant, maxTestLimit, scale, rotation, decay, twist);
 
         if (result.gapX > worstGapX) worstGapX = result.gapX;

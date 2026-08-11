@@ -22,8 +22,8 @@ Transition the engine from strictly linear point arrays to native smooth vector 
 * [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
 * [ ] **Post-Transformation Vectorization Filter:** Implement an optimization pass that compresses dense point sequences back into SVG cubic Bézier segments *after* they are projected into screen space, keeping files tiny while preventing boundary tearing.
 * [ ] **Adaptive Detail Stroke-Weight Scaling:** Implement dynamic `stroke-width` scaling specifically targeting detail sub-groups (`compIndex > 0`) to taper line thicknesses toward center poles, preventing open arcs from bleeding or overlapping as log-polar spatial coordinates compress near zero.
-* [ ] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height.
-* [ ] **Headless Slicer Command Assembly:** Wire up the automated `prusa-slicer` runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to output universal multi-material `.3mf` projects.
+[x] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height, producing robust multi-material STL files compatible with any standard slicer or 3D software.
+* [ ] **Headless Slicer Command Assembly:** Wire up the automated backend `prusa-slicer` binary runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to package independent, server-extruded STL plates into unified multi-material `.3mf` projects.
 
 ---
 

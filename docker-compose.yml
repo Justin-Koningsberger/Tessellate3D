@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  slicer-service:
+    build:
+      context: .
+      dockerfile: packages/slicer-service/Dockerfile
+    container_name: tessellate3d-slicer
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      # Maps the local certificate folder to the container's runtime paths
+      - ./packages/slicer-service/certs:/app/packages/slicer-service/certs
+    restart: unless-stopped

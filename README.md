@@ -4,15 +4,13 @@
   <img src="./assets/hero-tessellation.svg" width="50%" alt="Loxodromic Square wave Tessellation" />
 </p>
 
-**Live Demo:** [tessellate3d.github.io](https://justin-koningsberger.github.io/Tessellate3D/) 🚀
+**Live Demo:** [Tessellate3D](https://justin-koningsberger.github.io/Tessellate3D/) 🚀
 
-I have been creating tessellation SVGs for a few months now to print with my 3D printer. Throughout this journey, I found that the traditional workflow—using Inkscape to auto-trace an image or completely redraw a single tile inside a complex tessellation—was far too tedious and error-prone.
+I've been creating tessellation SVGs for a few months to print with my 3D printer. I found the usual workflow (using Inkscape to auto-trace an image or completely redraw a single tile inside a complex tessellation) to be really tedious and error-prone.
 
-To solve this, I built **Tessellate3D** to bring the entire pipeline back into the pure mathematical domain. The goal is to enforce mathematical perfection at the tile boundaries while keeping the door wide open for artistic flourishes, ultimately giving the user absolute, granular control over their final vector and 3D printed physical manufacturing outputs.
+Inspired by the paper "Generation of advanced Escher-like spiral tessellations" (Ouyang et al., 2022), I built Tesselate3D to dynamically generate tessellation SVG and STL files. I wanted to have a playfull UX, while retaining granular control over the final vector and 3D printed physical output. This engine implements a Forward Mapping pipeline that adapts the paper's framework of cyclic symmetry groups (\(G_k(M, N)\)) and conformal transformations into a native vector workflow. While the original paper leverages fragment shaders for pixel-based canvas rendering, Tessellate3D takes discrete vector shapes, and projects raw path coordinates outward into spiral space. This produces clean path elements native to vector editors like Illustrator or Inkscape, ensuring perfect geometry for 3D prints while leaving the door open to implement their advanced derived mappings later on.
 
-Inspired by the paper "Generation of advanced Escher-like spiral tessellations" (Ouyang et al., 2022), this engine implements a Forward Mapping pipeline that adapts their framework of cyclic symmetry groups (\(G_k(M, N)\)) and conformal transformations into a native vector workflow. While the original paper leverages fragment shaders for pixel-based canvas rendering, Tessellate3D takes discrete vector shapes, steps across a structural lattice grid, and projects raw path coordinates outward into spiral space. This produces clean, individual <path> elements native to vector editors like Illustrator or Inkscape, ensuring perfect geometry for 3D prints while leaving the door open to implement their advanced derived mappings later on.
-
-I also see a deep structural link between 3D printing and classical relief printmaking, like the woodcuts of **Frans Masereel**. Both mediums rely on raw material paths, height differences, and crisp perimeters where every single line must be intentional; by translating math arrays straight into physical layers of plastic, the code becomes the digital carving tool that unlocks modern 3D print art.
+I also see a deep structural link between 3D printing and classical relief printmaking, like the woodcuts of **Frans Masereel**. Both mediums rely on raw material paths, height differences, and crisp perimeters where every single line must be intentional.
 
 ---
 
@@ -24,7 +22,7 @@ I also see a deep structural link between 3D printing and classical relief print
 * Loops through screen pixel coordinates $(x, y)$ to reverse-map a flat domain space.
 * Outstanding for real-time screens, high-resolution shaders, and canvas textures.
 
-### 2. Our Engine's Vector-Based Method (Adaptive Forward-Conformal Mapping)
+### 2. This Engine's Vector-Based Method (Adaptive Forward-Conformal Mapping)
 * Loops through structural grid coordinates (Rings and Branches) on an infinite mathematical plane.
 * Evaluates path coordinates natively in flat continuous space, eliminating layout grid distortion before applying spatial transformations.
 * Processes raw vector shapes (**Base Motifs**) through a highly optimized, conformal warper matrix that scales straight outward from true geometric poles.
@@ -52,7 +50,6 @@ I also see a deep structural link between 3D printing and classical relief print
   * *Purpose:* Runs automated bijectivity round-trips to catch spatial transformation drift by passing forward-mapped assets backward through the math stack.
   * *Strategy:* Implements pure mathematical inverses—such as direct algebraic parameter extractions and a dedicated complex inverse sine ($z = \text{asin}(w)$) formulation—mapping transformed dimensions back to flat operational space to assert that output coordinates strictly match initial parameters.
 * **`[Multi-Layer Asset Parser & Detached Color Grouper]`**
-  * *Status:* COMPLETE
   * *Purpose:* Encodes a deterministic sorting layer key matching color palette index strings (`colorIndex_hexColor`). This safely segregates primary boundary fills (`compIndex === 0`) into unified, self-contained SVG `<g>` groups while isolating internal decorative line work (`compIndex > 0`) into separate (`colorIndex_hexColor_details`) groups, ensuring reliable layer stacks inside vector illustration tools and multi-material slicers.
 * **`[Color Cycler & Validator]`**
   * *Purpose:* Directs index-modulo path coloring across branches, running programmatic bijectivity round-trips to catch sub-micron panel drift.
@@ -67,13 +64,13 @@ I also see a deep structural link between 3D printing and classical relief print
   * *Strategy:* Automatically tracks the absolute extreme minimum and maximum (X, Y) coordinate boundaries across all generated arrays, injecting tiny geometric alignment artifacts at the canvas corners.
 * **`[Library-Free ASCII STL Builder]`**
   * *Purpose:* Converts 2D mathematical vector paths into 3D manifolds on the server without heavy 3D rendering dependencies (like Three.js or OpenSCAD).
-  * *Strategy:* Maps 2D coordinate points straight into a pure text string array template, generating side-wall and top/bottom triangles extruded dynamically to a user-specified height configuration (e.g., 0.4mm or 0.6mm) determined by the target 3D canvas model constraints.
+  * *Strategy:* Standardizes tile winding to counter-clockwise via the Shoelace formula and resolves curved, concave geometries using an ear-clipping triangulation engine. It maps these 2D coordinates straight into a text string template, generating side-wall and top/bottom triangles.
 * **`[Dynamic Parameter-Driven Payload Interface]`**
   * *Purpose:* Synchronizes client-side UI manipulation with server-side 3D generation.
-  * *Strategy:* Minimizes bandwidth by passing raw, low-overhead JSON configuration objects containing symmetry variables, color lists, and target canvas choices directly from the browser to the backend service.
+  * *Strategy:* Implements a **Group-Aware Hierarchy Context Parser** that isolates independent multi-material base color layers and expands open decorative detail paths using hierarchical fallback `stroke-width` matching attributes.
 * **`[Headless Slicer Component Merger]`**
   * *Purpose:* Packages multi-color mathematical tessellations straight into print-ready physical configurations across dynamic canvas shapes.
-  * *Strategy:* Spreads variable array strings (`...generatedSTLs`) into a headless PrusaSlicer runtime command block, using the `--merge` instruction to drop multi-material vector modifiers onto pre-configured 3D template archives (`.3mf`). This layout allows seamless experimentation with diverse 3D canvases, generating universal project files that can be sent directly to on-demand commercial printing bureaus.
+  * *Strategy:* Automates multi-layer spatial alignment by processing independent material plates and decorative ribbon layers via a microservice. This generates a multi-part STL payload optimized for slicing software.
 
 ---
 
@@ -96,8 +93,8 @@ This project is compiled under a modern, strict `NodeNext` ECMAScript specificat
 
 1. **Local Compiler Test Runner:** `npm run dev` *(Evaluates local configuration layers at `src/config.ts` and outputs test slices into the root directory)*
 2. **Master Verification Test Suite:** `npm test` *(Triggers and strings together all tests in series)*
-3. **Motif Boundary Constraint Test:** `npm run test:motifs` *(Performs rigorous micro-micron closure checks over your base motif libraries)*
+3. **Motif Boundary Constraint Test:** `npm run test:motifs` *(Performs rigorous micro-micron closure checks over the base motifs)*
 4. **Mathematical Regression Test:** `npm run test:transforms` *(Asserts forward coordinate vectors against exact algebraic checkpoints)*
 5. **Engine Telemetry Fuzzer:** `npm run test:fuzz` *(Runs a deep dual-progression random sweep across varying depth limits and ring layers)*
 6. **ZIP Binary Signature Test:** `npm run test:zip` *(Validates PKWARE local file headers, byte offsets, and CRC32 integrity checks)*
-7. **Headless Project Assembler:** `node dist/server/compile3DProject.js` *(In development for Phase 2 manufacturing)*
+7. **Containerized Slicer Microservice:** `docker compose up -d --build` *(Launches Fastify server with a STL generator route)*

@@ -103,8 +103,8 @@ export function inverseMultiPoleHyperbolic(
  * linear matrix system using log-polar spatial components.
  *
  * MATHEMATICAL ARCHITECTURE INSIGHT: THE INVERSE LOXODROMIC TWIST IDENTITY
- * Your solver utilizes a clean linear matrix mapping shortcut. Because flatX 
- * depends entirely on logR, you solve it first, then pull the exact x parameter 
+ * This solver utilizes a clean linear matrix mapping shortcut. Because flatX
+ * depends entirely on logR, we solve it first, then pull the exact x parameter
  * out to decouple and un-twist the phase tracking bounds of flatY seamlessly.
  */
 export function inverseLoxodromic(

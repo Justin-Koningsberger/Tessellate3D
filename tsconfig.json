@@ -12,7 +12,10 @@
     "skipLibCheck": true,
     "erasableSyntaxOnly": true,
     "allowImportingTsExtensions": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@tessellate3d/core/*": ["./packages/core/*"]
+    }
   },
   "files": [],
   "references": [

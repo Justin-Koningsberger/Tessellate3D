@@ -4,6 +4,20 @@ import { generateEscherTessellation } from '@tessellate3d/core/src/tessellationE
 
 import type { EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 
+interface SlicerFileResponse {
+  filename: string;
+  content: string; // Base64 encoded string from Fastify container server
+}
+
+interface SlicerApiResponse {
+  status: string;
+  meta: {
+    totalLayersGenerated: number;
+    thicknessMillimeters: number;
+  };
+  files: SlicerFileResponse[];
+}
+
 /**
  * CORE STUDIO FRONTEND CONTROLLER
  * Explicitly binds native DOM event listeners directly to the stateless math engine.
@@ -42,7 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // EXPORT BUTTON HOOKS
     btnDownloadMaster: document.getElementById('btn-download-master') as HTMLButtonElement,
-    btnDownloadSeparatedColors: document.getElementById('btn-download-separated') as HTMLButtonElement
+    btnDownloadSeparatedColors: document.getElementById('btn-download-separated') as HTMLButtonElement,
+    btnDownload3dStl: document.getElementById('btn-download-3d-stl') as HTMLButtonElement
   };
 
   /**
@@ -89,7 +104,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const allowedMotifs = ['square', 'detailedSquare'];
       const isStaggerSupported = allowedMotifs.includes(currentConfig.baseMotif);
 
-      els.staggerContainer.style.display = isStaggerSupported ? 'flex' : 'none';
+      if (isStaggerSupported) {
+        els.staggerContainer.style.display = 'flex';
+      } else {
+        currentConfig.layout.staggerFactor = 0.0;
+        // Remove this if users want the previous stagger to be re-applied when switching back to a supported motif
+        els.staggerFactor.value = "0.0";
+        els.staggerContainer.style.display =  'none';
+      }
     }
 
 
@@ -328,13 +350,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // FIX: Larger STL files take a while to zip, longer than creating the STL files in the first place
+  // C. EXPORT 3D MULTI-MATERIAL STL FILES
+  if (els.btnDownload3dStl) {
+    els.btnDownload3dStl.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      const activeSvg = cachedActiveSvgString;
+      if (!activeSvg) {
+        alert("No pattern data cached. Please generate a tessellation first.");
+        return;
+      }
+
+      const initialButtonLabel = els.btnDownload3dStl.innerText;
+      els.btnDownload3dStl.innerText = 'Slicing Meshes...';
+      els.btnDownload3dStl.disabled = true;
+
+      // Secure container network API endpoint target boundaries
+      const ENDPOINT_URL = 'https://127.0.0.1:3000/api/v1/slice';
+
+      try {
+        console.log('📡 Transmitting SVG vector field to secure container slicing microservice...');
+
+        const apiResponse = await fetch(ENDPOINT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ svgString: activeSvg, designThickness: 0.6 })
+        });
+
+        if (!apiResponse.ok) {
+          const errorPayload = await apiResponse.json().catch(() => ({ message: 'Unknown engine crash' }));
+          throw new Error(`Slicer Container Refusal [${apiResponse.status}]: ${errorPayload.message}`);
+        }
+
+        const payload = await apiResponse.json() as SlicerApiResponse;
+        if (payload.status !== 'success' || !payload.files || payload.files.length === 0) {
+          throw new Error('Mesh calculations completed but returned an empty asset group.');
+        }
+
+        console.log(`📦 Unpacking ${payload.files.length} layers. Building uncompressed binary ZIP block in browser memory...`);
+
+        const bundleManifest: { name: string; content: Uint8Array }[] = [];
+
+        // Pack every returned file layer directly into the bundle array matrix
+        payload.files.forEach((fileAsset: SlicerFileResponse) => {
+          // Decode transport Base64 formatting string back into standard raw bytes arrays
+          const binaryBytesArray = Uint8Array.from(atob(fileAsset.content), c => c.charCodeAt(0));
+
+          bundleManifest.push({
+            name: fileAsset.filename,
+            content: binaryBytesArray // Pass raw binary bytes cleanly into manifest indices
+          });
+        });
+
+        // Package everything into a single file archive
+        const zipArchiveBlob = createUncompressedZip(bundleManifest);
+        const customFileName = `tessellate3d_${currentConfig.variantMode}_${currentConfig.activeMotif}.zip`;
+
+        // Dispatch single archive download event
+        triggerDownload(zipArchiveBlob, customFileName);
+        console.log('🎉 Consolidated multi-material asset package exported successfully!');
+
+      } catch (err) {
+        const runErrorMessage = err instanceof Error ? err.message : String(err);
+        console.error('✖ Slicer endpoint transport fault context:', runErrorMessage);
+        alert(`Failed to compile 3D meshes: ${runErrorMessage}\n\n💡 Tip: Open a new tab and confirm you can access https://127.0.0.1:3000 to clear local self-signed certificate locks.`);
+      } finally {
+        els.btnDownload3dStl.innerText = initialButtonLabel;
+        els.btnDownload3dStl.disabled = false;
+      }
+    });
+  }
+
   // Hook native listeners explicitly to global settings inputs only
   const globalInputs = document.querySelectorAll('#controls input:not([type="color"]), #controls select');
   globalInputs.forEach(input => {
     input.addEventListener('input', updateEnginePipeline);
   });
 
-  // Initialize your dynamic filament view and execute the starting draw pass
   renderPaletteUI();
   updateEnginePipeline();
 });

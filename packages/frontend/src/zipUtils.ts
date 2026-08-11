@@ -6,7 +6,7 @@
 
 interface ZipFileItem {
   name: string;
-  content: string;
+  content: string | Uint8Array;
 }
 
 // Pre-computed CRC32 cyclic redundancy check lookup table.
@@ -20,11 +20,10 @@ for (let i = 0; i < 256; i++) {
 }
 
 /**
- * Executes a bitwise CRC32 calculation over a text string payload.
+ * Executes a bitwise CRC32 calculation over a text string or raw binary byte array block.
  */
-function calculateCRC32(str: string): number {
-  const encoder = new TextEncoder();
-  const bytes = encoder.encode(str);
+function calculateCRC32(content: string | Uint8Array): number {
+  const bytes = typeof content === 'string' ? new TextEncoder().encode(content) : content;
   let crc = 0 ^ (-1);
   for (let i = 0; i < bytes.length; i++) {
     // Asserting array indexes are safe under strictNullChecks via non-null assertion
@@ -46,7 +45,9 @@ export function createUncompressedZip(files: ZipFileItem[]): Blob {
 
   // 1. SERIALIZE LOCAL FILE HEADER BLOCKS (PK0304)
   for (const file of files) {
-    const fileBytes = encoder.encode(file.content);
+    // Forward raw binary bytes directly; encode only text strings
+    const fileBytes = typeof file.content === 'string' ? encoder.encode(file.content) : file.content;
+
     const nameBytes = encoder.encode(file.name);
     const crc = calculateCRC32(file.content);
     const size = fileBytes.length;
@@ -73,7 +74,7 @@ export function createUncompressedZip(files: ZipFileItem[]): Blob {
     headerBytes.set(nameBytes, 30);
 
     chunks.push(headerBytes);
-    chunks.push(fileBytes);
+    chunks.push(new Uint8Array(fileBytes));
 
     // Increment global tracking pointer position across the accumulating binary stream
     currentOffset += headerBytes.length + fileBytes.length;

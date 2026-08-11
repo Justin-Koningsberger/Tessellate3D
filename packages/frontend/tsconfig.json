@@ -6,9 +6,6 @@
     "moduleResolution": "Bundler",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "noEmit": true,
-    "paths": {
-      "@tessellate3d/core/*": ["../core/*"],
-    }
   },
   "include": ["src/**/*"],
   "references": [

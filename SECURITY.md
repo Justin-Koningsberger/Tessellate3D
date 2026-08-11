@@ -12,4 +12,4 @@ When running `npm audit`, you may encounter the following transitive vulnerabili
 > Running a forced audit modification pass inside this monorepo workspace environment will break package tree resolution parameters by trying to downgrade Vite components to incompatible baseline targets.
 
 ### Impact Analysis
-These advisory components are exclusively utilized within your local development environment pipeline tools. They are completely excluded from final compiled distribution assets (`/packages/frontend/dist`), posing **zero risk** to production builds or external end users. The packages will automatically resolve once upstream ecosystem updates are pushed by the Vite maintenance teams.
+These advisory components are exclusively utilized within the local development environment pipeline tools. They are completely excluded from final compiled distribution assets (`/packages/frontend/dist`), posing **zero risk** to production builds or external end users. The packages will automatically resolve once upstream ecosystem updates are pushed by the Vite maintenance teams.

@@ -7,7 +7,7 @@
   "scripts": {
     "build": "echo 'Slicer package verified by root compilation pass.'",
     "test:slicer": "node --experimental-strip-types src/stlBuilder.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -b"
   },
   "devDependencies": {
   "@tessellate3d/core": "^1.0.0"

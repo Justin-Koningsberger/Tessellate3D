@@ -12,6 +12,9 @@ on:
 jobs:
   verify-and-ship:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout Code Base
         uses: actions/checkout@v4

@@ -35,13 +35,19 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Lowercase my repository owner string to prevent Docker tag errors
+      - name: Lowercase Repository Owner Name
+        id: repository_owner_lowercase
+        run: |
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> ${GITHUB_OUTPUT}
+
       - name: Assemble and Push Optimized Production Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: packages/slicer-service/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/tessellate3d-slicer:latest
+          tags: ghcr.io/${{ steps.repository_owner_lowercase.outputs.owner }}/tessellate3d-slicer:latest
 
       - name: Set up SSH Key for Ansible Engine
         run: |

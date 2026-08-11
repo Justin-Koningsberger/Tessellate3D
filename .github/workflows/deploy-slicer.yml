@@ -66,3 +66,6 @@ jobs:
       - name: Execute Ansible Infrastructure Orchestration Playbook
         run: |
           ansible-playbook -i deploy/ansible/inventory.ini deploy/ansible/deploy-slicer.yml
+        env:
+          # Disable host key confirmation prompt for this non-interactive automation pass
+          ANSIBLE_HOST_KEY_CHECKING: 'False'

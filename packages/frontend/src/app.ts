@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     decayContainer: document.getElementById('decayContainer') as HTMLLabelElement,
     twistContainer: document.getElementById('twistContainer') as HTMLLabelElement,
     staggerContainer: document.getElementById('staggerContainer') as HTMLLabelElement,
+    debuggingGridRow: document.getElementById('debugging-grid-row') as HTMLLabelElement,
 
     applyStroke: document.getElementById('applyStroke') as HTMLInputElement,
     // Color Palette DOM target mount nodes
@@ -113,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.staggerContainer.style.display =  'none';
       }
     }
-
 
     try {
       // Execute pure transformation pass natively in-browser
@@ -225,6 +225,62 @@ document.addEventListener('DOMContentLoaded', () => {
       updateEnginePipeline();
     });
   }
+
+  /**
+   * TASK 3: ONBOARDING VISUAL PRESET LISTENER SYSTEM
+   * Configures math parameters dynamically to showcase specific geometric families.
+   */
+  const presetContainer = document.querySelector('.preset-grid');
+  if (presetContainer) {
+    presetContainer.addEventListener('click', (e) => {
+      const target = e.target as HTMLButtonElement;
+      if (!target.classList.contains('btn-preset')) return;
+
+      const presetName = target.getAttribute('data-preset');
+
+      switch (presetName) {
+        case 'fortress':
+          els.variantMode.value = 'single-pole';
+          els.baseMotif.value = 'squarewave';
+          els.totalBranches.value = '5';
+          els.maxRings.value = '6';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '0.35';
+          els.twistFactor.value = '0.00';
+          els.staggerFactor.value = '0.0';
+          els.applyStroke.checked = false;
+          break;
+        case 'vortex':
+          els.variantMode.value = 'loxodromic';
+          els.baseMotif.value = 'square';
+          els.totalBranches.value = '4';
+          els.maxRings.value = '16';
+          els.globalRotation.value = '0';
+          els.decayMultiplier.value = '0.3';
+          els.twistFactor.value = '1.5';
+          els.staggerFactor.value = '3.0';
+          els.applyStroke.checked = false;
+          break;
+        case 'rose':
+          els.variantMode.value = 'multi-pole';
+          els.baseMotif.value = 'square';
+          els.totalBranches.value = '8';
+          els.maxRings.value = '5';
+          els.globalRotation.value = '1.57';
+          els.decayMultiplier.value = '0.40';
+          els.twistFactor.value = '0.00';
+          els.staggerFactor.value = '1.4';
+          els.applyStroke.checked = true;
+          break;
+        default:
+          return;
+      }
+
+      // Synchronize UI view elements, recompute vectors, and inject fresh vector layouts
+      updateEnginePipeline();
+    });
+  }
+
 
   /**
    * Launches a native download stream for any binary or text Blob via dynamic document
@@ -428,6 +484,12 @@ document.addEventListener('DOMContentLoaded', () => {
   globalInputs.forEach(input => {
     input.addEventListener('input', updateEnginePipeline);
   });
+
+  // Hide debugging in production builds
+  if (import.meta.env.PROD && els.debuggingGridRow) {
+    els.debuggingGridRow.style.display = 'none';
+  }
+
 
   renderPaletteUI();
   updateEnginePipeline();

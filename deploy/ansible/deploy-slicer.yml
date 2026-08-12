@@ -15,57 +15,17 @@
         state: directory
         mode: '0755'
 
-    - name: Generate Production Caddyfile Blueprint Inline
-      ansible.builtin.copy:
+    - name: Deploy Version-Controlled Caddyfile Routing Rule Matrix
+      ansible.builtin.template:
+        src: templates/Caddyfile.j2
         dest: "{{ target_dir }}/Caddyfile"
         mode: '0644'
-        content: |
-          {{ duckdns_domain }} {
-              tls {{ admin_email }}
-              reverse_proxy slicer-service:3000
-          }
 
-    - name: Generate Isolated Multi-Container Production Docker Compose Layout
-      ansible.builtin.copy:
+    - name: Deploy Version-Controlled Production Docker Compose Template
+      ansible.builtin.template:
+        src: templates/docker-compose.prod.yml.j2
         dest: "{{ target_dir }}/docker-compose.prod.yml"
         mode: '0644'
-        content: |
-          version: '3.8'
-
-          networks:
-            slicer-network:
-              driver: bridge
-
-          services:
-            slicer-service:
-              image: ghcr.io/{{ github_username }}/tessellate3d-slicer:latest
-              container_name: tessellate3d-slicer-prod
-              restart: unless-stopped
-              environment:
-                - NODE_ENV=production
-                - PORT=3000
-              volumes:
-                - ./packages/slicer-service/certs:/app/packages/slicer-service/certs
-              networks:
-                - slicer-network
-
-            caddy-proxy:
-              image: caddy:2-alpine
-              container_name: tessellate3d-caddy-proxy
-              restart: unless-stopped
-              ports:
-                - "80:80"
-                - "443:443"
-              volumes:
-                - ./Caddyfile:/etc/caddy/Caddyfile
-                - caddy_data:/data
-                - caddy_config:/config
-              networks:
-                - slicer-network
-
-          volumes:
-            caddy_data:
-            caddy_config:
 
     - name: Ensure Host Directory for Volume Mounting Exists
       ansible.builtin.file:

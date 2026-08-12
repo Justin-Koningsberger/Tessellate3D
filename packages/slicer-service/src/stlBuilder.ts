@@ -117,12 +117,7 @@ function triangulateConcavePolygon(polygon: Point2D[]): [number, number, number]
     }
 
     if (!earFound) {
-      // Degenerate safety fallback sequence: force a fallback split if polygon is hyper-warped
-      const prevIdx = vertexPool[0] ?? 0;
-      const currIdx = vertexPool[1] ?? 1;
-      const nextIdx = vertexPool[2] ?? 2;
-      triangles.push([prevIdx, currIdx, nextIdx]);
-      vertexPool.splice(1, 1);
+      throw new Error("Geometric triangulation failure: Non-manifold polygon path detected due to extreme non-linear warp scaling.");
     }
   }
 

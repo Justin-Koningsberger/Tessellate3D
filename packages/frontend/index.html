@@ -137,8 +137,8 @@
       <label>
         <span>Transform Variant Mode<span class="info-icon" title="Changes the layout style (spinning into a spiral or twisting around a core).">ⓘ</span></span>
         <select id="variantMode">
-          <option value="logarithmic">Logarithmic Spiral</option>
-          <option value="loxodromic" selected>Loxodromic Twist</option>
+          <option value="logarithmic" selected>Logarithmic Spiral</option>
+          <option value="loxodromic">Loxodromic Twist</option>
           <option value="single-pole">Single-Pole Decay</option>
           <option value="multi-pole">Multi-Pole Hyperbolic</option>
         </select>
@@ -148,11 +148,21 @@
         <span>Base Motif Geometry<span class="info-icon" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span></span>
         <select id="baseMotif">
           <option value="square">Square</option>
+          <option value="triangle">Triangle</option>
           <option value="chevron">Chevron</option>
           <option value="detailedSquare" selected>Detailed Square</option>
+          <option value="detailedTriangle" selected>Detailed Triangle</option>
           <option value="sinewave">Sine Wavelet</option>
           <option value="squarewave">Square Wave / Battlement</option>
           <option value="puzzle">Jigsaw Puzzle Tab</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Grid Lattice Base<span class="info-icon" title="Switches between a square and a 60-degree triangular layout.">ⓘ</span></span>
+        <select id="latticeType">
+          <option value="square">Square Lattice</option>
+          <option value="triangular" selected>Triangular (Isometric)</option>
         </select>
       </label>
 
@@ -174,8 +184,8 @@
       <hr />
 
       <label>
-        <span>Symmetry Arms / Branches: <span id="totalBranches-val">4</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
-        <input type="range" id="totalBranches" min="2" max="33" value="4" />
+        <span>Symmetry Arms / Branches: <span id="totalBranches-val">12</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
+        <input type="range" id="totalBranches" min="2" max="33" value="12" />
       </label>
 
       <label>

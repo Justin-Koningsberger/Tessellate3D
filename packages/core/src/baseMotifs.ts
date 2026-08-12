@@ -9,6 +9,39 @@ export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Po
     { x: 0.0, y: cellHeight }
   ],
 
+  // Pure Equilateral Triangle Motif
+  triangle: (cellHeight: number): Point2D[] => {
+    const triWidth = (Math.sqrt(3) / 2) * cellHeight;
+    return [
+      { x: 0.0,      y: 0.0 },
+      { x: triWidth, y: cellHeight * 0.5 },
+      { x: 0.0,      y: cellHeight }
+    ];
+  },
+
+  // Interlocking Triforce / Clover Triangle Motif
+  detailedTriangle: (cellHeight: number): Point2D[][] => {
+    const components: Point2D[][] = [];
+    const triWidth = (Math.sqrt(3) / 2) * cellHeight;
+    const h = cellHeight;
+
+    // Base structural perimeter
+    components.push([
+      { x: 0.0,      y: 0.0 },
+      { x: triWidth, y: h * 0.5 },
+      { x: 0.0,      y: h }
+    ]);
+
+    // Internal geometric negative space lines
+    components.push([
+      { x: triWidth * 0.5, y: h * 0.25 },
+      { x: 0.0,            y: h * 0.5 },
+      { x: triWidth * 0.5, y: h * 0.75 },
+      { x: triWidth * 0.5, y: h * 0.25 }
+    ]);
+    return components;
+  },
+
   // Circle-Junction Square Motif
   detailedSquare: (cellHeight: number): Point2D[][] => {
     const components: Point2D[][] = [];

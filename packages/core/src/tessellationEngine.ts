@@ -16,7 +16,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
-  baseMotif: "square" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare";
+  baseMotif: "square" | "triangle" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare" | "detailedTriangle";
   useInverseDebugging: boolean;
   layout: {
     totalBranches: number;
@@ -27,6 +27,8 @@ export interface EngineConfig {
     decayMultiplier: number;
     twistFactor: number;
     staggerFactor: number;
+    latticePhaseOffset: number; // Exposes dynamic alignment shifts
+    latticeType: 'square' | 'triangular';
   };
   applyStroke: boolean;
   colorPalette: string[];
@@ -242,16 +244,20 @@ export function generateEscherTessellation(config: EngineConfig): string {
   const nominalAngleOffset = 0.0; // Anchored target reference layer
 
   const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
+    const adjustedPt = { ...pt };
+    if (config.layout.latticeType === 'triangular') {
+      adjustedPt.x *= Math.sqrt(3) / 2;
+    }
     switch (config.variantMode) {
       case 'logarithmic':
-        return forward.logarithmic(pt, globalScale, nominalAngleOffset);
+        return forward.logarithmic(adjustedPt, globalScale, nominalAngleOffset);
       case 'single-pole':
-        return forward.singlePole(pt, globalScale, nominalAngleOffset, decayMultiplier);
+        return forward.singlePole(adjustedPt, globalScale, nominalAngleOffset, decayMultiplier);
       case 'multi-pole':
-        return forward.multiPole(pt, globalScale, nominalAngleOffset, decayMultiplier);
+        return forward.multiPole(adjustedPt, globalScale, nominalAngleOffset, decayMultiplier);
       case 'loxodromic':
       default:
-        return forward.loxodromic(pt, globalScale, nominalAngleOffset, twistFactor, decayMultiplier);
+        return forward.loxodromic(adjustedPt, globalScale, nominalAngleOffset, twistFactor, decayMultiplier);
     }
   };
 
@@ -290,46 +296,68 @@ export function generateEscherTessellation(config: EngineConfig): string {
       const shearSlope = (1.0 / totalBranches) * continuousStagger;
 
       smoothComponents.forEach((componentPoints, compIndex) => {
-        const transformedPoints = componentPoints.map(p => {
-          const shearedPoint: Point2D = {
-            x: p.x + (p.y / cellHeight) * shearSlope, // Slants individual cell walls to match the layout angle
-            y: p.y
-          };
+        // Triangles require two orientations (upright and inverted) to fill a lattice slot
+        const orientations = config.layout.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
+        const phaseOffset = config.layout.latticePhaseOffset ?? 0.5;
 
-          const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
-          let finalPoint: Point2D;
+        orientations.forEach((orientation) => {
+          const transformedPoints = componentPoints.map(p => {
+            // Create a local coordinate space clone for manipulation
+            let localX = p.x;
+            let localY = p.y;
 
-          switch (config.variantMode) {
-            case "logarithmic":
-              finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale, config.layout.globalRotation);
-              break;
-            case "single-pole":
-              finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.decayMultiplier);
-              break;
-            case "multi-pole":
-              finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.decayMultiplier);
-              break;
-            case "loxodromic":
-            default:
-              finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.twistFactor, config.layout.decayMultiplier);
-              break;
-          }
+            // If we are on a triangular lattice, shape the base motif bounding envelope
+            if (config.layout.latticeType === 'triangular') {
+              // Squish the horizontal axis to match equilateral proportions (sqrt(3)/2)
+              localX *= Math.sqrt(3) / 2;
 
-          // Run inverse debugging on anchor nodes when active to check mapping accuracy.
-          // The loxodromic solver pulls flatX from logR first to decouple and un-twist flatY.
-          if (config.useInverseDebugging && p.x === 0 && p.y === 0) {
-            inverseWarp(finalPoint, config);
-          }
+              // If it's the second orientation, flip/invert the tile to plug the mesh gap
+              if (orientation === 'inverted') {
+                localX = ((Math.sqrt(3) / 2) - localX);
+                localY = (cellHeight - localY);
+              }
 
-          return finalPoint;
-        });
+              // Apply a systematic offset to alternating rows so they slot into place like bricks
+              if (ring % 2 === 1) {
+                localY += cellHeight * phaseOffset;
+              }
+            }
 
-        const segmentStr = generateSvgPath(transformedPoints, compIndex);
+            // Pass new local points through the structural symmetry engine
+            const shearedPoint: Point2D = {
+              x: localX + (localY / cellHeight) * shearSlope,
+              y: localY
+            };
 
-        rawPathObjects.push({
-          d: segmentStr,
-          compIndex: compIndex,
-          color: currentFill
+            const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
+
+            let finalPoint: Point2D;
+            switch (config.variantMode) {
+              case "logarithmic":
+                finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale, config.layout.globalRotation);
+                break;
+              case "single-pole":
+                finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.decayMultiplier);
+                break;
+              case "multi-pole":
+                finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.decayMultiplier);
+                break;
+              case "loxodromic":
+              default:
+                finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.twistFactor, config.layout.decayMultiplier);
+                break;
+            }
+
+            return finalPoint;
+          });
+
+          const segmentStr = generateSvgPath(transformedPoints, compIndex);
+
+          rawPathObjects.push({
+            d: segmentStr,
+            compIndex: compIndex,
+            color: currentFill
+          });
         });
       });
     }

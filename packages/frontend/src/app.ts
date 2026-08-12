@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const els = {
     variantMode: document.getElementById('variantMode') as HTMLSelectElement,
     baseMotif: document.getElementById('baseMotif') as HTMLSelectElement,
+    latticeType: document.getElementById('latticeType') as HTMLSelectElement,
     useInverseDebugging: document.getElementById('useInverseDebugging') as HTMLInputElement,
     totalBranches: document.getElementById('totalBranches') as HTMLInputElement,
     totalBranchesVal: document.getElementById('totalBranches-val') as HTMLSpanElement,
@@ -78,8 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
       subdivisionLimit: 0.05, // Hardcoded engine baseline value to satisfy strict configuration types
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
-      staggerFactor: parseFloat(els.staggerFactor.value)
-
+      staggerFactor: parseFloat(els.staggerFactor.value),
+      latticeType: els.latticeType.value as EngineConfig['latticeType']
     };
 
     // Update real-time label values next to sliders
@@ -242,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         case 'fortress':
           els.variantMode.value = 'single-pole';
           els.baseMotif.value = 'squarewave';
+          els.latticeType.value = 'square'
           els.totalBranches.value = '5';
           els.maxRings.value = '6';
           els.globalRotation.value = '0.00';
@@ -253,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         case 'vortex':
           els.variantMode.value = 'loxodromic';
           els.baseMotif.value = 'square';
+          els.latticeType.value = 'square'
           els.totalBranches.value = '4';
           els.maxRings.value = '16';
           els.globalRotation.value = '0';
@@ -264,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         case 'rose':
           els.variantMode.value = 'multi-pole';
           els.baseMotif.value = 'square';
+          els.latticeType.value = 'square'
           els.totalBranches.value = '8';
           els.maxRings.value = '5';
           els.globalRotation.value = '1.57';

@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     variantMode: document.getElementById('variantMode') as HTMLSelectElement,
     baseMotif: document.getElementById('baseMotif') as HTMLSelectElement,
     latticeType: document.getElementById('latticeType') as HTMLSelectElement,
+    autoAlignContainer: document.getElementById('auto-align-container') as HTMLLabelElement,
+    useAutoAlignment: document.getElementById('useAutoAlignment') as HTMLInputElement,
     useInverseDebugging: document.getElementById('useInverseDebugging') as HTMLInputElement,
     totalBranches: document.getElementById('totalBranches') as HTMLInputElement,
     totalBranchesVal: document.getElementById('totalBranches-val') as HTMLSpanElement,
@@ -49,6 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
     decayContainer: document.getElementById('decayContainer') as HTMLLabelElement,
     twistContainer: document.getElementById('twistContainer') as HTMLLabelElement,
     staggerContainer: document.getElementById('staggerContainer') as HTMLLabelElement,
+    phaseOffsetContainer: document.getElementById('phaseOffsetContainer') as HTMLLabelElement,
+    latticePhaseOffset: document.getElementById('latticePhaseOffset') as HTMLInputElement,
+    latticePhaseOffsetVal: document.getElementById('latticePhaseOffset-val') as HTMLSpanElement,
+    ringDistanceContainer: document.getElementById('ringDistanceContainer') as HTMLLabelElement,
+    ringDistanceMultiplier: document.getElementById('ringDistanceMultiplier') as HTMLInputElement,
+    ringDistanceMultiplierVal: document.getElementById('ringDistanceMultiplier-val') as HTMLSpanElement,
+    intersectionContainer: document.getElementById('intersectionContainer') as HTMLLabelElement,
+    ringIntersectionFactor: document.getElementById('ringIntersectionFactor') as HTMLInputElement,
+    ringIntersectionFactorVal: document.getElementById('ringIntersectionFactor-val') as HTMLSpanElement,
+
     debuggingGridRow: document.getElementById('debugging-grid-row') as HTMLLabelElement,
 
     applyStroke: document.getElementById('applyStroke') as HTMLInputElement,
@@ -66,8 +78,28 @@ document.addEventListener('DOMContentLoaded', () => {
    * Reads current input parameter configurations directly from the active UI panel bounds.
    */
   function updateEnginePipeline(): void {
+    const totalBranches = parseInt(els.totalBranches.value, 10);
+    const isTriangular = els.latticeType.value === 'triangular';
+
+    // Dynamic Alignment Pass
+    if (isTriangular && els.useAutoAlignment.checked) {
+      // TODO: get rid of raw constants.
+      const idealIntersection = 5.4 / totalBranches;
+
+      const idealGap = totalBranches <= 11
+        ? 1.87 - (0.16 * totalBranches)
+        : -0.05 - (0.16 * (totalBranches - 12));
+
+      const idealPhase = totalBranches === 6 ? -1.00 : totalBranches === 18 ? -4.00 : -5.00;
+
+      els.ringIntersectionFactor.value = idealIntersection.toFixed(2);
+      els.ringDistanceMultiplier.value = idealGap.toFixed(2);
+      els.latticePhaseOffset.value = idealPhase.toFixed(2);
+    }
+
     currentConfig.variantMode = els.variantMode.value as EngineConfig['variantMode'];
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
+    currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
     currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
 
@@ -80,7 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
       staggerFactor: parseFloat(els.staggerFactor.value),
-      latticeType: els.latticeType.value as EngineConfig['latticeType']
+      latticePhaseOffset: parseFloat(els.latticePhaseOffset.value),
+      ringDistanceMultiplier: parseFloat(els.ringDistanceMultiplier.value),
+      ringIntersectionFactor: parseFloat(els.ringIntersectionFactor.value)
     };
 
     // Update real-time label values next to sliders
@@ -90,6 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
     els.twistFactorVal.textContent = currentConfig.layout.twistFactor.toFixed(2);
     els.staggerFactorVal.textContent = currentConfig.layout.staggerFactor.toFixed(1);
     els.decayMultiplierVal.textContent = currentConfig.layout.decayMultiplier.toFixed(2);
+    els.latticePhaseOffsetVal.textContent = currentConfig.layout.latticePhaseOffset.toFixed(2);
+    els.ringDistanceMultiplierVal.textContent = currentConfig.layout.ringDistanceMultiplier.toFixed(2);
+    els.ringIntersectionFactorVal.textContent = currentConfig.layout.ringIntersectionFactor.toFixed(2);
 
     // Dynamically manage control panel visibility based on active variant mode mechanics
     const mode = currentConfig.variantMode;
@@ -114,6 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
         els.staggerFactor.value = "0.0";
         els.staggerContainer.style.display =  'none';
       }
+    }
+
+    els.autoAlignContainer.style.display = isTriangular ? 'flex' : 'none';
+
+    // Dynamically manage control panel visibility based on active lattice layout
+    if (els.phaseOffsetContainer) {
+      const showSliders = isTriangular && !els.useAutoAlignment.checked;
+      els.phaseOffsetContainer.style.display = showSliders ? 'flex' : 'none';
+      els.ringDistanceContainer.style.display = showSliders ? 'flex' : 'none';
+      els.intersectionContainer.style.display = showSliders ? 'flex' : 'none';
     }
 
     try {
@@ -250,6 +297,9 @@ document.addEventListener('DOMContentLoaded', () => {
           els.decayMultiplier.value = '0.35';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '1.00';
+          els.ringDistanceMultiplier.value = '1.00';
+          els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = false;
           break;
         case 'vortex':
@@ -262,6 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
           els.decayMultiplier.value = '0.3';
           els.twistFactor.value = '1.5';
           els.staggerFactor.value = '3.0';
+          els.latticePhaseOffset.value = '1.00';
+          els.ringDistanceMultiplier.value = '1.00';
+          els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = false;
           break;
         case 'rose':
@@ -274,6 +327,9 @@ document.addEventListener('DOMContentLoaded', () => {
           els.decayMultiplier.value = '0.40';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '1.4';
+          els.latticePhaseOffset.value = '1.00';
+          els.ringDistanceMultiplier.value = '1.00';
+          els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = true;
           break;
         default:
@@ -427,7 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.btnDownload3dStl.disabled = true;
 
       // Dynamically resolve target based on deployment environment
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const API_BASE_URL = import.meta.env.SLICER_SERVICE_API_BASE_URL || 'https://0.0.0.0:3000';
       const ENDPOINT_URL = `${API_BASE_URL}/api/v1/slice`;
 
       try {
@@ -474,7 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         const runErrorMessage = err instanceof Error ? err.message : String(err);
-        const fallbackUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        const fallbackUrl = import.meta.env.SLICER_SERVICE_API_BASE_URL || 'https://0.0.0.0:3000';
         alert(`Failed to compile 3D meshes: ${runErrorMessage}\n\n💡 Tip: Open a new tab and confirm you can access ${fallbackUrl}/health to clear local certificate blocks or verify server availability.`);
       } finally {
         els.btnDownload3dStl.innerText = initialButtonLabel;

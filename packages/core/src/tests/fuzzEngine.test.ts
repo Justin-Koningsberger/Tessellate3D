@@ -58,6 +58,7 @@ function evaluateVariantExtended(
   const mockContext: EngineConfig = {
     variantMode: name,
     baseMotif: "chevron",
+    latticeType: 'square',
     useInverseDebugging: false,
     colorPalette: [],
     canvas: { width: "100px", height: "100px", viewBox: "0 0 100 100" },
@@ -69,7 +70,10 @@ function evaluateVariantExtended(
       decayMultiplier: decay,
       twistFactor: twist,
       subdivisionLimit: 0.05,
-      staggerFactor: 0.0
+      staggerFactor: 0.0,
+      ringDistanceMultiplier: 1.0,
+      ringIntersectionFactor: 1.0,
+      latticePhaseOffset: 1.0,
     },
     applyStroke: false,
   };

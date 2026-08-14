@@ -18,6 +18,7 @@ export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
   baseMotif: "square" | "triangle" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare" | "detailedTriangle";
   useInverseDebugging: boolean;
+  latticeType: 'square' | 'triangular';
   layout: {
     totalBranches: number;
     maxRings: number;
@@ -27,8 +28,9 @@ export interface EngineConfig {
     decayMultiplier: number;
     twistFactor: number;
     staggerFactor: number;
-    latticePhaseOffset: number; // Exposes dynamic alignment shifts
-    latticeType: 'square' | 'triangular';
+    ringDistanceMultiplier: number;
+    ringIntersectionFactor: number;
+    latticePhaseOffset: number;
   };
   applyStroke: boolean;
   colorPalette: string[];
@@ -245,7 +247,7 @@ export function generateEscherTessellation(config: EngineConfig): string {
 
   const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
     const adjustedPt = { ...pt };
-    if (config.layout.latticeType === 'triangular') {
+    if (config.latticeType === 'triangular') {
       adjustedPt.x *= Math.sqrt(3) / 2;
     }
     switch (config.variantMode) {
@@ -289,7 +291,13 @@ export function generateEscherTessellation(config: EngineConfig): string {
 
   for (let ring = 0; ring < config.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
-      const colorIndex = (branch + ring) % activeColors.length;
+      let colorIndex = (branch + ring) % activeColors.length;
+
+      if (config.latticeType === 'triangular') {
+        const structuralOffset = Math.floor(ring / 2);
+        colorIndex = (branch + ring - structuralOffset) % activeColors.length;
+      }
+
       const currentFill = activeColors[colorIndex] || "#000000";
 
       const continuousStagger = config.layout.staggerFactor ?? 0.0;
@@ -297,8 +305,10 @@ export function generateEscherTessellation(config: EngineConfig): string {
 
       smoothComponents.forEach((componentPoints, compIndex) => {
         // Triangles require two orientations (upright and inverted) to fill a lattice slot
-        const orientations = config.layout.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
-        const phaseOffset = config.layout.latticePhaseOffset ?? 0.5;
+        const orientations = config.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
+        const phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
+        const triangleGap = config.layout.ringDistanceMultiplier ?? 1.0;
+        const ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
 
         orientations.forEach((orientation) => {
           const transformedPoints = componentPoints.map(p => {
@@ -307,7 +317,7 @@ export function generateEscherTessellation(config: EngineConfig): string {
             let localY = p.y;
 
             // If we are on a triangular lattice, shape the base motif bounding envelope
-            if (config.layout.latticeType === 'triangular') {
+            if (config.latticeType === 'triangular') {
               // Squish the horizontal axis to match equilateral proportions (sqrt(3)/2)
               localX *= Math.sqrt(3) / 2;
 
@@ -315,11 +325,17 @@ export function generateEscherTessellation(config: EngineConfig): string {
               if (orientation === 'inverted') {
                 localX = ((Math.sqrt(3) / 2) - localX);
                 localY = (cellHeight - localY);
+
+                // 1. Adjust the localized radial spacing gap between triangle pairs
+                localX += (triangleGap - 1.0) * (Math.sqrt(3) / 2) * cellHeight;
+
+                // 2. Adjust the localized circumferential phase offset between triangle pairs
+                localY += (phaseOffset - 0.5) * cellHeight;
               }
 
               // Apply a systematic offset to alternating rows so they slot into place like bricks
               if (ring % 2 === 1) {
-                localY += cellHeight * phaseOffset;
+                localY += cellHeight * 0.5;
               }
             }
 
@@ -329,7 +345,13 @@ export function generateEscherTessellation(config: EngineConfig): string {
               y: localY
             };
 
-            const gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
+            let gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
+
+            // Dynamically adjust ring-to-ring depth
+            if (config.latticeType === 'triangular') {
+              const absoluteRingTranslationX = -ring * 1.0; // The 1.0 tileWidth used inside the symmetry engine
+              gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * (Math.sqrt(3) / 2) * ringIntersection);
+            }
 
             let finalPoint: Point2D;
             switch (config.variantMode) {

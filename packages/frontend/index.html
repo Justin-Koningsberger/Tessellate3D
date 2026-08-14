@@ -166,6 +166,12 @@
         </select>
       </label>
 
+
+      <label class="row" id="auto-align-container" style="display: none;">
+        <input type="checkbox" id="useAutoAlignment" checked />
+        <span>Auto-Align Isometric Grid<span class="info-icon" title="Choose whether triangles align automatically, or display manual adjustment sliders">ⓘ</span></span>
+      </label>
+
       <!-- Only used locally, for debugging/testing -->
       <label class="row" id="debugging-grid-row">
         <input type="checkbox" id="useInverseDebugging" />
@@ -185,7 +191,7 @@
 
       <label>
         <span>Symmetry Arms / Branches: <span id="totalBranches-val">12</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
-        <input type="range" id="totalBranches" min="2" max="33" value="12" />
+        <input type="range" id="totalBranches" min="2" max="30" value="10" />
       </label>
 
       <label>
@@ -212,6 +218,21 @@
       <label id="staggerContainer">
         <span>Concentric Stagger Factor: <span id="staggerFactor-val">0.0</span><span class="info-icon" title="Shifts alternating layers sideways to create an offset, interlocking pattern (only works with square and detailed square motifs).">ⓘ</span></span>
         <input type="range" id="staggerFactor" min="0" max="5.0" step="0.1" value="0" />
+      </label>
+
+      <label id="phaseOffsetContainer">
+        <span>Isometric Phase Offset: <span id="latticePhaseOffset-val">1.00</span><span class="info-icon" title="Shifts alternating triangles sideways within each ring.">ⓘ</span></span>
+        <input type="range" id="latticePhaseOffset" min="-10.0" max="10.0" step="0.5" value="1.0" />
+      </label>
+
+      <label id="ringDistanceContainer">
+        <span>Intra-Ring Triangle Gap: <span id="ringDistanceMultiplier-val">1.00</span><span class="info-icon" title="Adjusts the gap between the upright and inverted triangles within each ring.">ⓘ</span></span>
+        <input type="range" id="ringDistanceMultiplier" min="-3.0" max="3.0" step="0.01" value="1.0" />
+      </label>
+
+      <label id="intersectionContainer">
+        <span>Concentric Row Intersection: <span id="ringIntersectionFactor-val">1.00</span><span class="info-icon" title="Adjusts the distance between rings.">ⓘ</span></span>
+        <input type="range" id="ringIntersectionFactor" min="0" max="3.0" step="0.01" value="1.0" />
       </label>
       <hr />
 

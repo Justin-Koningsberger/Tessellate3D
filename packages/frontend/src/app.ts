@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const els = {
     variantMode: document.getElementById('variantMode') as HTMLSelectElement,
     baseMotif: document.getElementById('baseMotif') as HTMLSelectElement,
+    latticeType: document.getElementById('latticeType') as HTMLSelectElement,
+    autoAlignContainer: document.getElementById('auto-align-container') as HTMLLabelElement,
+    useAutoAlignment: document.getElementById('useAutoAlignment') as HTMLInputElement,
     useInverseDebugging: document.getElementById('useInverseDebugging') as HTMLInputElement,
     totalBranches: document.getElementById('totalBranches') as HTMLInputElement,
     totalBranchesVal: document.getElementById('totalBranches-val') as HTMLSpanElement,
@@ -48,6 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
     decayContainer: document.getElementById('decayContainer') as HTMLLabelElement,
     twistContainer: document.getElementById('twistContainer') as HTMLLabelElement,
     staggerContainer: document.getElementById('staggerContainer') as HTMLLabelElement,
+    phaseOffsetContainer: document.getElementById('phaseOffsetContainer') as HTMLLabelElement,
+    latticePhaseOffset: document.getElementById('latticePhaseOffset') as HTMLInputElement,
+    latticePhaseOffsetVal: document.getElementById('latticePhaseOffset-val') as HTMLSpanElement,
+    ringDistanceContainer: document.getElementById('ringDistanceContainer') as HTMLLabelElement,
+    ringDistanceMultiplier: document.getElementById('ringDistanceMultiplier') as HTMLInputElement,
+    ringDistanceMultiplierVal: document.getElementById('ringDistanceMultiplier-val') as HTMLSpanElement,
+    intersectionContainer: document.getElementById('intersectionContainer') as HTMLLabelElement,
+    ringIntersectionFactor: document.getElementById('ringIntersectionFactor') as HTMLInputElement,
+    ringIntersectionFactorVal: document.getElementById('ringIntersectionFactor-val') as HTMLSpanElement,
+
     debuggingGridRow: document.getElementById('debugging-grid-row') as HTMLLabelElement,
 
     applyStroke: document.getElementById('applyStroke') as HTMLInputElement,
@@ -67,6 +80,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateEnginePipeline(): void {
     currentConfig.variantMode = els.variantMode.value as EngineConfig['variantMode'];
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
+    currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
+    currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
     currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
 
@@ -78,8 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
       subdivisionLimit: 0.05, // Hardcoded engine baseline value to satisfy strict configuration types
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
-      staggerFactor: parseFloat(els.staggerFactor.value)
-
+      staggerFactor: parseFloat(els.staggerFactor.value),
+      latticePhaseOffset: parseFloat(els.latticePhaseOffset.value),
+      ringDistanceMultiplier: parseFloat(els.ringDistanceMultiplier.value),
+      ringIntersectionFactor: parseFloat(els.ringIntersectionFactor.value)
     };
 
     // Update real-time label values next to sliders
@@ -89,6 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
     els.twistFactorVal.textContent = currentConfig.layout.twistFactor.toFixed(2);
     els.staggerFactorVal.textContent = currentConfig.layout.staggerFactor.toFixed(1);
     els.decayMultiplierVal.textContent = currentConfig.layout.decayMultiplier.toFixed(2);
+    els.latticePhaseOffsetVal.textContent = currentConfig.layout.latticePhaseOffset.toFixed(2);
+    els.ringDistanceMultiplierVal.textContent = currentConfig.layout.ringDistanceMultiplier.toFixed(2);
+    els.ringIntersectionFactorVal.textContent = currentConfig.layout.ringIntersectionFactor.toFixed(2);
+
+    const isTriangular = els.latticeType.value === 'triangular';
+    els.autoAlignContainer.style.display = isTriangular ? 'flex' : 'none';
 
     // Dynamically manage control panel visibility based on active variant mode mechanics
     const mode = currentConfig.variantMode;
@@ -113,6 +136,14 @@ document.addEventListener('DOMContentLoaded', () => {
         els.staggerFactor.value = "0.0";
         els.staggerContainer.style.display =  'none';
       }
+    }
+
+    // Dynamically manage control panel visibility based on active lattice layout
+    if (els.phaseOffsetContainer) {
+      const showSliders = isTriangular && !els.useAutoAlignment.checked;
+      els.phaseOffsetContainer.style.display = showSliders ? 'flex' : 'none';
+      els.ringDistanceContainer.style.display = showSliders ? 'flex' : 'none';
+      els.intersectionContainer.style.display = showSliders ? 'flex' : 'none';
     }
 
     try {
@@ -242,35 +273,79 @@ document.addEventListener('DOMContentLoaded', () => {
         case 'fortress':
           els.variantMode.value = 'single-pole';
           els.baseMotif.value = 'squarewave';
+          els.latticeType.value = 'square'
           els.totalBranches.value = '5';
           els.maxRings.value = '6';
           els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '0.35';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '1.00';
+          els.ringDistanceMultiplier.value = '1.00';
+          els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = false;
           break;
         case 'vortex':
           els.variantMode.value = 'loxodromic';
           els.baseMotif.value = 'square';
+          els.latticeType.value = 'square'
           els.totalBranches.value = '4';
           els.maxRings.value = '16';
           els.globalRotation.value = '0';
           els.decayMultiplier.value = '0.3';
           els.twistFactor.value = '1.5';
           els.staggerFactor.value = '3.0';
+          els.latticePhaseOffset.value = '1.00';
+          els.ringDistanceMultiplier.value = '1.00';
+          els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = false;
           break;
         case 'rose':
           els.variantMode.value = 'multi-pole';
           els.baseMotif.value = 'square';
+          els.latticeType.value = 'square'
           els.totalBranches.value = '8';
           els.maxRings.value = '5';
           els.globalRotation.value = '1.57';
           els.decayMultiplier.value = '0.40';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '1.4';
+          els.latticePhaseOffset.value = '1.00';
+          els.ringDistanceMultiplier.value = '1.00';
+          els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = true;
+          break;
+        case 'triangles':
+          els.variantMode.value = 'logarithmic';
+          els.baseMotif.value = 'detailedTriangle';
+          els.latticeType.value = 'triangular'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '10';
+          els.maxRings.value = '6';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '0.00';
+          els.twistFactor.value = '0.00';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '-5.00';
+          els.ringDistanceMultiplier.value = '0.27';
+          els.ringIntersectionFactor.value = '0.54';
+          els.applyStroke.checked = false;
+          break;
+        case 'triangles2':
+          els.variantMode.value = 'loxodromic';
+          els.baseMotif.value = 'triangle';
+          els.latticeType.value = 'triangular'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '10';
+          els.maxRings.value = '6';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '1.00';
+          els.twistFactor.value = '-0.67';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '-4.00';
+          els.ringDistanceMultiplier.value = '0.27';
+          els.ringIntersectionFactor.value = '0.54';
+          els.applyStroke.checked = false;
           break;
         default:
           return;
@@ -423,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.btnDownload3dStl.disabled = true;
 
       // Dynamically resolve target based on deployment environment
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const API_BASE_URL = import.meta.env.SLICER_SERVICE_API_BASE_URL || 'https://0.0.0.0:3000';
       const ENDPOINT_URL = `${API_BASE_URL}/api/v1/slice`;
 
       try {
@@ -470,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         const runErrorMessage = err instanceof Error ? err.message : String(err);
-        const fallbackUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+        const fallbackUrl = import.meta.env.SLICER_SERVICE_API_BASE_URL || 'https://0.0.0.0:3000';
         alert(`Failed to compile 3D meshes: ${runErrorMessage}\n\n💡 Tip: Open a new tab and confirm you can access ${fallbackUrl}/health to clear local certificate blocks or verify server availability.`);
       } finally {
         els.btnDownload3dStl.innerText = initialButtonLabel;

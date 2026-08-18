@@ -45,6 +45,9 @@ function evaluateVariantExtended(
   decay: number,
   twist: number
 ): FuzzResult {
+  // Alternating pass between square and triangular structures independently
+  const testLattice: 'square' | 'triangular' = Math.random() > 0.5 ? 'triangular' : 'square';
+
   // 1. CHOOSE A RANDOM TESTING ANCHOR LAYER WITHIN ACTIVE BOUNDS
   // Pick an arbitrary ring depth and branch track to stress test the internal quadrants
   const randomTestRing = Math.floor(getRandom(0, branches)); // Scales dynamically to match active layout density
@@ -58,6 +61,8 @@ function evaluateVariantExtended(
   const mockContext: EngineConfig = {
     variantMode: name,
     baseMotif: "chevron",
+    latticeType: testLattice,
+    useAutoAlignment: true,
     useInverseDebugging: false,
     colorPalette: [],
     canvas: { width: "100px", height: "100px", viewBox: "0 0 100 100" },
@@ -69,7 +74,11 @@ function evaluateVariantExtended(
       decayMultiplier: decay,
       twistFactor: twist,
       subdivisionLimit: 0.05,
-      staggerFactor: 0.0
+      staggerFactor: 0.0,
+      // When auto-alignment is false, these manual seeds act as fallbacks
+      ringDistanceMultiplier: getRandom(0.1, 2.0),
+      ringIntersectionFactor: getRandom(0.1, 2.0),
+      latticePhaseOffset: getRandom(-5.0, 5.0),
     },
     applyStroke: false,
   };
@@ -131,7 +140,7 @@ function evaluateVariantExtended(
     const seamGapY = Math.abs(coordA.y - coordB.y);
 
     if (seamGapX > EPSILON || seamGapY > EPSILON) {
-      return parseResult("FAIL", seamGapX, seamGapY, "Seam Alignment Drift Detected");
+      return parseResult("FAIL", seamGapX, seamGapY, `[Lattice: ${testLattice}] Seam Alignment Drift Detected`);
     }
 
     // Bidirectional Verification Check
@@ -178,18 +187,18 @@ function evaluateVariantExtended(
 
       // Assert true structural alignment limits
       if (invErrorX > 0.05 || invErrorY > 0.05) {
-        return parseResult("FAIL", invErrorX, invErrorY, "Inverse Bijectivity Distortion Fault");
+        return parseResult("FAIL", invErrorX, invErrorY, `[Lattice: ${testLattice}] Inverse Bijectivity Distortion Fault`);
       } else if (invErrorX > EPSILON || invErrorY > EPSILON) {
         // Log minor floating-point shifts transparently as stable passes to prevent telemetry scanner panic
-        return parseResult("PASS", invErrorX, invErrorY, "OK (Sub-Micron Floating-Point Delta)");
+        return parseResult("PASS", invErrorX, invErrorY, `OK (${testLattice} - Sub-Micron Delta)`);
       }
     }
 
-    return parseResult("PASS", seamGapX, seamGapY, "OK");
+    return parseResult("PASS", seamGapX, seamGapY, `OK (${testLattice})`);
 
   } catch (err) {
     const fallbackMessage = err instanceof Error ? err.message : String(err);
-    return parseResult("FAIL", 0, 0, fallbackMessage);
+    return parseResult("FAIL", 0, 0, `[Lattice: ${testLattice}] ${fallbackMessage}`);
   }
 }
 

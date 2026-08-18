@@ -71,7 +71,8 @@
       margin-top: 4px;
     }
     .btn-preset {
-      flex: 1 1 70px;
+      /*three buttons per row max*/
+      flex: 0 0 calc(33.333% - 7px);
       text-align: center;
       white-space: nowrap;
       background: #0f0f13;
@@ -137,8 +138,8 @@
       <label>
         <span>Transform Variant Mode<span class="info-icon" title="Changes the layout style (spinning into a spiral or twisting around a core).">ⓘ</span></span>
         <select id="variantMode">
-          <option value="logarithmic">Logarithmic Spiral</option>
-          <option value="loxodromic" selected>Loxodromic Twist</option>
+          <option value="logarithmic" selected>Logarithmic Spiral</option>
+          <option value="loxodromic">Loxodromic Twist</option>
           <option value="single-pole">Single-Pole Decay</option>
           <option value="multi-pole">Multi-Pole Hyperbolic</option>
         </select>
@@ -148,12 +149,28 @@
         <span>Base Motif Geometry<span class="info-icon" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span></span>
         <select id="baseMotif">
           <option value="square">Square</option>
+          <option value="triangle">Triangle</option>
           <option value="chevron">Chevron</option>
           <option value="detailedSquare" selected>Detailed Square</option>
+          <option value="detailedTriangle" selected>Detailed Triangle</option>
           <option value="sinewave">Sine Wavelet</option>
           <option value="squarewave">Square Wave / Battlement</option>
           <option value="puzzle">Jigsaw Puzzle Tab</option>
         </select>
+      </label>
+
+      <label>
+        <span>Grid Lattice Base<span class="info-icon" title="Switches between a square and a 60-degree triangular layout.">ⓘ</span></span>
+        <select id="latticeType">
+          <option value="square">Square Lattice</option>
+          <option value="triangular" selected>Triangular (Isometric)</option>
+        </select>
+      </label>
+
+
+      <label class="row" id="auto-align-container" style="display: none;">
+        <input type="checkbox" id="useAutoAlignment" checked />
+        <span>Auto-Align Triangles<span class="info-icon" title="Choose whether triangles align automatically, or display manual adjustment sliders">ⓘ</span></span>
       </label>
 
       <!-- Only used locally, for debugging/testing -->
@@ -169,13 +186,15 @@
           <button class="btn-preset" data-preset="fortress" type="button">Fortress</button>
           <button class="btn-preset" data-preset="vortex" type="button">Vortex</button>
           <button class="btn-preset" data-preset="rose" type="button">Fractal Rose</button>
+          <button class="btn-preset" data-preset="triangles" type="button">Triangles</button>
+          <button class="btn-preset" data-preset="triangles2" type="button">Triangles2</button>
         </div>
       </div>
       <hr />
 
       <label>
-        <span>Symmetry Arms / Branches: <span id="totalBranches-val">4</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
-        <input type="range" id="totalBranches" min="2" max="33" value="4" />
+        <span>Symmetry Arms / Branches: <span id="totalBranches-val">12</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
+        <input type="range" id="totalBranches" min="2" max="30" value="10" />
       </label>
 
       <label>
@@ -202,6 +221,21 @@
       <label id="staggerContainer">
         <span>Concentric Stagger Factor: <span id="staggerFactor-val">0.0</span><span class="info-icon" title="Shifts alternating layers sideways to create an offset, interlocking pattern (only works with square and detailed square motifs).">ⓘ</span></span>
         <input type="range" id="staggerFactor" min="0" max="5.0" step="0.1" value="0" />
+      </label>
+
+      <label id="phaseOffsetContainer">
+        <span>Isometric Phase Offset: <span id="latticePhaseOffset-val">1.00</span><span class="info-icon" title="Shifts alternating triangles sideways within each ring.">ⓘ</span></span>
+        <input type="range" id="latticePhaseOffset" min="-10.0" max="10.0" step="0.5" value="1.0" />
+      </label>
+
+      <label id="ringDistanceContainer">
+        <span>Intra-Ring Triangle Gap: <span id="ringDistanceMultiplier-val">1.00</span><span class="info-icon" title="Adjusts the gap between the upright and inverted triangles within each ring.">ⓘ</span></span>
+        <input type="range" id="ringDistanceMultiplier" min="-3.0" max="3.0" step="0.01" value="1.0" />
+      </label>
+
+      <label id="intersectionContainer">
+        <span>Concentric Row Intersection: <span id="ringIntersectionFactor-val">1.00</span><span class="info-icon" title="Adjusts the distance between rings.">ⓘ</span></span>
+        <input type="range" id="ringIntersectionFactor" min="0" max="3.0" step="0.01" value="1.0" />
       </label>
       <hr />
 

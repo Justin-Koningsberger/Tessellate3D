@@ -4,6 +4,8 @@ export const CONFIG: EngineConfig = {
   variantMode: "loxodromic",
   baseMotif: "squarewave",
   useInverseDebugging: false, // True enables absolute canvas tracking via inverse math
+  latticeType: 'square',
+  useAutoAlignment: true,
 
   // Grid and Symmetry Layout Configuration
   layout: {
@@ -14,7 +16,10 @@ export const CONFIG: EngineConfig = {
     subdivisionLimit: 0.05,   // Precision length step for linear smoothing
     decayMultiplier: 0.35,    // Controls how fast tiles shrink as they descend inward. Set to 1.0 to close up the wide center hole completely!
     twistFactor: 0.45,        // With Loxodromic mode: 0.0 = straight rays (pure single-pole). Positive/Negative values introduce clockwise or counter-clockwise logarithmic nautilus twists.
-    staggerFactor: 0.0        // Set to 0.0 for classic side-by-side concentric tiling
+    staggerFactor: 0.0,       // Set to 0.0 for classic side-by-side concentric tiling
+    ringDistanceMultiplier: 1.0, // Adjusts the gap between the upright and inverted triangles within each ring
+    ringIntersectionFactor: 1.0, // Adjusts the distance between rings with triangles.
+    latticePhaseOffset: 1.0,  // Whole numbers make triangles snap edge to edge, half numbers make triangles overlap halfway
   },
 
   applyStroke: false,

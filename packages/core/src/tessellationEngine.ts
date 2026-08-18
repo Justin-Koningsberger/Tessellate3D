@@ -19,6 +19,7 @@ export interface EngineConfig {
   baseMotif: "square" | "triangle" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare" | "detailedTriangle";
   useInverseDebugging: boolean;
   latticeType: 'square' | 'triangular';
+  useAutoAlignment: boolean;
   layout: {
     totalBranches: number;
     maxRings: number;
@@ -245,6 +246,20 @@ export function generateEscherTessellation(config: EngineConfig): string {
   const decayMultiplier = config.layout.decayMultiplier ?? 0.35;
   const nominalAngleOffset = 0.0; // Anchored target reference layer
 
+  let phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
+  let triangleGap = config.layout.ringDistanceMultiplier ?? 1.0;
+  let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
+
+  if (config.latticeType === 'triangular' && config.useAutoAlignment) {
+    ringIntersection = (Math.PI * Math.sqrt(3)) / totalBranches;
+
+    triangleGap = 1.866025 - 0.159155 * totalBranches;
+
+    // Compute structural phase offset mapping for triangular grids
+    const isOdd = totalBranches % 2 !== 0;
+    phaseOffset = (Math.round(-totalBranches) / 2) + Math.floor(totalBranches / 4) - (isOdd ? 0.5 : 0);
+  }
+
   const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
     const adjustedPt = { ...pt };
     if (config.latticeType === 'triangular') {
@@ -306,9 +321,6 @@ export function generateEscherTessellation(config: EngineConfig): string {
       smoothComponents.forEach((componentPoints, compIndex) => {
         // Triangles require two orientations (upright and inverted) to fill a lattice slot
         const orientations = config.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
-        const phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
-        const triangleGap = config.layout.ringDistanceMultiplier ?? 1.0;
-        const ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
 
         orientations.forEach((orientation) => {
           const transformedPoints = componentPoints.map(p => {

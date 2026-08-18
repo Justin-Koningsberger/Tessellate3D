@@ -78,28 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
    * Reads current input parameter configurations directly from the active UI panel bounds.
    */
   function updateEnginePipeline(): void {
-    const totalBranches = parseInt(els.totalBranches.value, 10);
-    const isTriangular = els.latticeType.value === 'triangular';
-
-    // Dynamic Alignment Pass
-    if (isTriangular && els.useAutoAlignment.checked) {
-      // TODO: get rid of raw constants.
-      const idealIntersection = 5.4 / totalBranches;
-
-      const idealGap = totalBranches <= 11
-        ? 1.87 - (0.16 * totalBranches)
-        : -0.05 - (0.16 * (totalBranches - 12));
-
-      const idealPhase = totalBranches === 6 ? -1.00 : totalBranches === 18 ? -4.00 : -5.00;
-
-      els.ringIntersectionFactor.value = idealIntersection.toFixed(2);
-      els.ringDistanceMultiplier.value = idealGap.toFixed(2);
-      els.latticePhaseOffset.value = idealPhase.toFixed(2);
-    }
-
     currentConfig.variantMode = els.variantMode.value as EngineConfig['variantMode'];
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
     currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
+    currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
     currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
 
@@ -128,6 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
     els.ringDistanceMultiplierVal.textContent = currentConfig.layout.ringDistanceMultiplier.toFixed(2);
     els.ringIntersectionFactorVal.textContent = currentConfig.layout.ringIntersectionFactor.toFixed(2);
 
+    const isTriangular = els.latticeType.value === 'triangular';
+    els.autoAlignContainer.style.display = isTriangular ? 'flex' : 'none';
+
     // Dynamically manage control panel visibility based on active variant mode mechanics
     const mode = currentConfig.variantMode;
     if (els.decayContainer) {
@@ -152,8 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.staggerContainer.style.display =  'none';
       }
     }
-
-    els.autoAlignContainer.style.display = isTriangular ? 'flex' : 'none';
 
     // Dynamically manage control panel visibility based on active lattice layout
     if (els.phaseOffsetContainer) {
@@ -331,6 +314,38 @@ document.addEventListener('DOMContentLoaded', () => {
           els.ringDistanceMultiplier.value = '1.00';
           els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = true;
+          break;
+        case 'triangles':
+          els.variantMode.value = 'logarithmic';
+          els.baseMotif.value = 'detailedTriangle';
+          els.latticeType.value = 'triangular'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '10';
+          els.maxRings.value = '6';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '0.00';
+          els.twistFactor.value = '0.00';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '-5.00';
+          els.ringDistanceMultiplier.value = '0.27';
+          els.ringIntersectionFactor.value = '0.54';
+          els.applyStroke.checked = false;
+          break;
+        case 'triangles2':
+          els.variantMode.value = 'loxodromic';
+          els.baseMotif.value = 'triangle';
+          els.latticeType.value = 'triangular'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '10';
+          els.maxRings.value = '6';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '1.00';
+          els.twistFactor.value = '-0.67';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '-4.00';
+          els.ringDistanceMultiplier.value = '0.27';
+          els.ringIntersectionFactor.value = '0.54';
+          els.applyStroke.checked = false;
           break;
         default:
           return;

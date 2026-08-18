@@ -71,7 +71,8 @@
       margin-top: 4px;
     }
     .btn-preset {
-      flex: 1 1 70px;
+      /*three buttons per row max*/
+      flex: 0 0 calc(33.333% - 7px);
       text-align: center;
       white-space: nowrap;
       background: #0f0f13;
@@ -169,7 +170,7 @@
 
       <label class="row" id="auto-align-container" style="display: none;">
         <input type="checkbox" id="useAutoAlignment" checked />
-        <span>Auto-Align Isometric Grid<span class="info-icon" title="Choose whether triangles align automatically, or display manual adjustment sliders">ⓘ</span></span>
+        <span>Auto-Align Triangles<span class="info-icon" title="Choose whether triangles align automatically, or display manual adjustment sliders">ⓘ</span></span>
       </label>
 
       <!-- Only used locally, for debugging/testing -->
@@ -185,6 +186,8 @@
           <button class="btn-preset" data-preset="fortress" type="button">Fortress</button>
           <button class="btn-preset" data-preset="vortex" type="button">Vortex</button>
           <button class="btn-preset" data-preset="rose" type="button">Fractal Rose</button>
+          <button class="btn-preset" data-preset="triangles" type="button">Triangles</button>
+          <button class="btn-preset" data-preset="triangles2" type="button">Triangles2</button>
         </div>
       </div>
       <hr />

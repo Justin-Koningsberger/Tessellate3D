@@ -5,6 +5,7 @@ export const CONFIG: EngineConfig = {
   baseMotif: "squarewave",
   useInverseDebugging: false, // True enables absolute canvas tracking via inverse math
   latticeType: 'square',
+  useAutoAlignment: true,
 
   // Grid and Symmetry Layout Configuration
   layout: {

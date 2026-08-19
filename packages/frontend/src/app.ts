@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.btnDownload3dStl.disabled = true;
 
       // Dynamically resolve target based on deployment environment
-      const API_BASE_URL = import.meta.env.SLICER_SERVICE_API_BASE_URL || 'https://0.0.0.0:3000';
+      const API_BASE_URL = import.meta.env.VITE_SLICER_SERVICE_API_BASE_URL;
       const ENDPOINT_URL = `${API_BASE_URL}/api/v1/slice`;
 
       try {
@@ -545,7 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       } catch (err) {
         const runErrorMessage = err instanceof Error ? err.message : String(err);
-        const fallbackUrl = import.meta.env.SLICER_SERVICE_API_BASE_URL || 'https://0.0.0.0:3000';
+        const fallbackUrl = API_BASE_URL || 'https://0.0.0.0:3000';
         alert(`Failed to compile 3D meshes: ${runErrorMessage}\n\n💡 Tip: Open a new tab and confirm you can access ${fallbackUrl}/health to clear local certificate blocks or verify server availability.`);
       } finally {
         els.btnDownload3dStl.innerText = initialButtonLabel;

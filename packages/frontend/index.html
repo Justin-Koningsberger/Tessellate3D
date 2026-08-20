@@ -150,9 +150,11 @@
         <select id="baseMotif">
           <option value="square">Square</option>
           <option value="triangle">Triangle</option>
+          <option value="hexagon">Hexagon</option>
           <option value="chevron">Chevron</option>
-          <option value="detailedSquare" selected>Detailed Square</option>
+          <option value="detailedSquare">Detailed Square</option>
           <option value="detailedTriangle" selected>Detailed Triangle</option>
+          <option value="detailedHexagon">Detailed Hexagon</option>
           <option value="sinewave">Sine Wavelet</option>
           <option value="squarewave">Square Wave / Battlement</option>
           <option value="puzzle">Jigsaw Puzzle Tab</option>
@@ -162,8 +164,9 @@
       <label>
         <span>Grid Lattice Base<span class="info-icon" title="Switches between a square and a 60-degree triangular layout.">ⓘ</span></span>
         <select id="latticeType">
-          <option value="square">Square Lattice</option>
-          <option value="triangular" selected>Triangular (Isometric)</option>
+          <option value="square">Square</option>
+          <option value="triangular" selected>Triangular</option>
+          <option value="hexagonal">Hexagonal</option>
         </select>
       </label>
 
@@ -193,7 +196,7 @@
       <hr />
 
       <label>
-        <span>Symmetry Arms / Branches: <span id="totalBranches-val">12</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
+        <span>Symmetry Arms / Branches: <span id="totalBranches-val">10</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
         <input type="range" id="totalBranches" min="2" max="30" value="10" />
       </label>
 

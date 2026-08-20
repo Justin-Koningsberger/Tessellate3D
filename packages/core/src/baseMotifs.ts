@@ -19,6 +19,112 @@ export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Po
     ];
   },
 
+  // Point-topped hexagon
+  hexagon: (cellHeight) => {
+    const r = cellHeight / 2;
+    const h = r * (Math.sqrt(3) / 2);
+
+    return [
+      { x: 0.0, y: 0.0 },              // Node 1: Origin Anchor Apex
+      { x: h,   y: r * 0.5 },          // Node 2: Top Right Vertex
+      { x: h,   y: cellHeight - r * 0.5 }, // Node 3: Bottom Right Vertex
+      { x: 0.0, y: cellHeight },       // Node 4: Base Anchor Link
+      { x: -h,  y: cellHeight - r * 0.5 }, // Node 5: Bottom Left Vertex
+      { x: -h,  y: r * 0.5 },          // Node 6: Top Left Vertex
+      { x: 0.0, y: 0.0 }               // Node 7: Close back to Origin
+    ];
+  },
+
+  // Detailed hexagon with lizzard details
+  detailedHexagon: (cellHeight: number): Point2D[][] => {
+    const components: Point2D[][] = [];
+    const r = cellHeight / 2;
+    const h = r * (Math.sqrt(3) / 2);
+
+    // Regular hexagon vertices
+    const corners: Point2D[] = [
+      { x: 0.0, y: 0.0 },                  // Corner 0: Top Apex
+      { x: h,   y: r * 0.5 },              // Corner 1: Top Right
+      { x: h,   y: cellHeight - r * 0.5 }, // Corner 2: Bottom Right
+      { x: 0.0, y: cellHeight },           // Corner 3: Bottom Apex
+      { x: -h,  y: cellHeight - r * 0.5 }, // Corner 4: Bottom Left
+      { x: -h,  y: r * 0.5 },              // Corner 5: Top Left
+      { x: 0.0, y: 0.0 }                   // Close the path
+    ];
+
+    // compIndex === 0: Outer perimeter
+    components.push(corners);
+
+    // 1. Decorative Component: Symmetrical Head / Eye Bulbs
+    components.push([
+      { x: -h * 0.15, y: cellHeight * 0.22 },
+      { x: -h * 0.20, y: cellHeight * 0.15 },
+      { x: -h * 0.05, y: cellHeight * 0.12 },
+      { x: 0.0,       y: cellHeight * 0.18 },
+      { x: h * 0.05,  y: cellHeight * 0.12 },
+      { x: h * 0.20,  y: cellHeight * 0.15 },
+      { x: h * 0.15,  y: cellHeight * 0.22 }
+    ]);
+
+    // 2. Decorative Component: Main Spinal Column & Tail Ridge
+    components.push([
+      { x: 0.0,       y: cellHeight * 0.18 },
+      { x: -h * 0.05, y: cellHeight * 0.30 },
+      { x: h * 0.10,  y: cellHeight * 0.45 },
+      { x: -h * 0.12, y: cellHeight * 0.65 },
+      { x: h * 0.05,  y: cellHeight * 0.82 },
+      { x: 0.0,       y: cellHeight }
+    ]);
+
+    // 3. Decorative Component: Right Arm & Detailed 3-Toed Claw
+    components.push([
+      { x: 0.0,       y: cellHeight * 0.35 },
+      { x: h * 0.30,  y: cellHeight * 0.38 },
+      { x: h * 0.44,  y: cellHeight * 0.32 },
+      { x: h * 0.42,  y: cellHeight * 0.36 },
+      { x: h * 0.48,  y: cellHeight * 0.37 },
+      { x: h * 0.41,  y: cellHeight * 0.38 },
+      { x: h * 0.44,  y: cellHeight * 0.43 },
+      { x: h * 0.32,  y: cellHeight * 0.41 }
+    ]);
+
+    // 4. Decorative Component: Left Arm & Detailed 3-Toed Claw
+    components.push([
+      { x: 0.0,       y: cellHeight * 0.35 },
+      { x: -h * 0.30, y: cellHeight * 0.38 },
+      { x: -h * 0.44, y: cellHeight * 0.32 },
+      { x: -h * 0.42, y: cellHeight * 0.36 },
+      { x: -h * 0.48, y: cellHeight * 0.37 },
+      { x: -h * 0.41, y: cellHeight * 0.38 },
+      { x: -h * 0.44, y: cellHeight * 0.43 },
+      { x: -h * 0.32, y: cellHeight * 0.41 }
+    ]);
+
+    // 5. Decorative Component: Detailed Left Hind Leg & 3-Toed Claw
+    components.push([
+      { x: -h * 0.12, y: cellHeight * 0.65 },
+      { x: -h * 0.35, y: cellHeight * 0.70 },
+      { x: -h * 0.56, y: cellHeight * 0.75 },
+      { x: -h * 0.50, y: cellHeight * 0.78 },
+      { x: -h * 0.58, y: cellHeight * 0.81 },
+      { x: -h * 0.49, y: cellHeight * 0.82 },
+      { x: -h * 0.52, y: cellHeight * 0.86 }
+    ]);
+
+    // 6. Decorative Component: Detailed Right Hind Leg & 3-Toed Claw
+    components.push([
+      { x: -h * 0.12,  y: cellHeight * 0.65 },
+      { x: h * 0.35,  y: cellHeight * 0.70 },
+      { x: h * 0.56,  y: cellHeight * 0.75 },
+      { x: h * 0.50,  y: cellHeight * 0.78 },
+      { x: h * 0.58,  y: cellHeight * 0.81 },
+      { x: h * 0.49,  y: cellHeight * 0.82 },
+      { x: h * 0.52,  y: cellHeight * 0.86 }
+    ]);
+
+    return components;
+  },
+
   // Interlocking Triforce / Clover Triangle Motif
   detailedTriangle: (cellHeight: number): Point2D[][] => {
     const components: Point2D[][] = [];

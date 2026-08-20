@@ -110,8 +110,9 @@ document.addEventListener('DOMContentLoaded', () => {
     els.ringDistanceMultiplierVal.textContent = currentConfig.layout.ringDistanceMultiplier.toFixed(2);
     els.ringIntersectionFactorVal.textContent = currentConfig.layout.ringIntersectionFactor.toFixed(2);
 
-    const isTriangular = els.latticeType.value === 'triangular';
-    els.autoAlignContainer.style.display = isTriangular ? 'flex' : 'none';
+    const currentLattice = els.latticeType.value;
+    const isIsometric = currentLattice === 'triangular' || currentLattice === 'hexagonal';
+    els.autoAlignContainer.style.display = isIsometric ? 'flex' : 'none';
 
     // Dynamically manage control panel visibility based on active variant mode mechanics
     const mode = currentConfig.variantMode;
@@ -140,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dynamically manage control panel visibility based on active lattice layout
     if (els.phaseOffsetContainer) {
-      const showSliders = isTriangular && !els.useAutoAlignment.checked;
+      const showSliders = isIsometric && !els.useAutoAlignment.checked;
       els.phaseOffsetContainer.style.display = showSliders ? 'flex' : 'none';
       els.ringDistanceContainer.style.display = showSliders ? 'flex' : 'none';
       els.intersectionContainer.style.display = showSliders ? 'flex' : 'none';

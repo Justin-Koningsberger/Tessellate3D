@@ -16,9 +16,9 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
-  baseMotif: "square" | "triangle" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare" | "detailedTriangle";
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon";
   useInverseDebugging: boolean;
-  latticeType: 'square' | 'triangular';
+  latticeType: 'square' | 'triangular' | 'hexagonal';
   useAutoAlignment: boolean;
   layout: {
     totalBranches: number;
@@ -247,17 +247,22 @@ export function generateEscherTessellation(config: EngineConfig): string {
   const nominalAngleOffset = 0.0; // Anchored target reference layer
 
   let phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
-  let triangleGap = config.layout.ringDistanceMultiplier ?? 1.0;
+  let ringDistanceMultiplier = config.layout.ringDistanceMultiplier ?? 1.0;
   let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
 
   if (config.latticeType === 'triangular' && config.useAutoAlignment) {
     ringIntersection = (Math.PI * Math.sqrt(3)) / totalBranches;
-
-    triangleGap = 1.866025 - 0.159155 * totalBranches;
+    ringDistanceMultiplier = 1.866025 - 0.159155 * totalBranches;
 
     // Compute structural phase offset mapping for triangular grids
     const isOdd = totalBranches % 2 !== 0;
     phaseOffset = (Math.round(-totalBranches) / 2) + Math.floor(totalBranches / 4) - (isOdd ? 0.5 : 0);
+  }
+
+  if (config.latticeType === 'hexagonal' && config.useAutoAlignment) {
+    ringIntersection = 2.10 / totalBranches;
+    ringDistanceMultiplier = 1.298;
+    phaseOffset = 1.50;
   }
 
   const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
@@ -339,7 +344,7 @@ export function generateEscherTessellation(config: EngineConfig): string {
                 localY = (cellHeight - localY);
 
                 // 1. Adjust the localized radial spacing gap between triangle pairs
-                localX += (triangleGap - 1.0) * (Math.sqrt(3) / 2) * cellHeight;
+                localX += (ringDistanceMultiplier - 1.0) * (Math.sqrt(3) / 2) * cellHeight;
 
                 // 2. Adjust the localized circumferential phase offset between triangle pairs
                 localY += (phaseOffset - 0.5) * cellHeight;
@@ -349,6 +354,20 @@ export function generateEscherTessellation(config: EngineConfig): string {
               if (ring % 2 === 1) {
                 localY += cellHeight * 0.5;
               }
+            }
+
+            // If we are on a hexagonal lattice, implement an alternating branch grid layout
+            if (config.latticeType === 'hexagonal') {
+              // Compress the circumferential axis to pack flat side-edges together
+              localY *= Math.sqrt(3) / 2;
+
+              // Scale the inner motif dimensions to leave padding gaps between neighbors
+              const tileScaleFactor = 1.0 / ringDistanceMultiplier;
+              localX *= tileScaleFactor;
+              localY *= tileScaleFactor;
+
+              // Accumulate twist linearly across concentric ring layers
+              localY += ring * (phaseOffset - 1.0) * cellHeight;
             }
 
             // Pass new local points through the structural symmetry engine
@@ -363,6 +382,12 @@ export function generateEscherTessellation(config: EngineConfig): string {
             if (config.latticeType === 'triangular') {
               const absoluteRingTranslationX = -ring * 1.0; // The 1.0 tileWidth used inside the symmetry engine
               gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * (Math.sqrt(3) / 2) * ringIntersection);
+            }
+
+            if (config.latticeType === 'hexagonal') {
+              const absoluteRingTranslationX = -ring * 1.0;
+              // Step inward matching the 1.5x flat-packing cell thickness
+              gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);
             }
 
             let finalPoint: Point2D;

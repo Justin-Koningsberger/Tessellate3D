@@ -151,13 +151,14 @@
           <option value="square">Square</option>
           <option value="triangle">Triangle</option>
           <option value="hexagon">Hexagon</option>
-          <option value="chevron">Chevron</option>
           <option value="detailedSquare">Detailed Square</option>
-          <option value="detailedTriangle" selected>Detailed Triangle</option>
-          <option value="detailedHexagon">Detailed Hexagon</option>
-          <option value="sinewave">Sine Wavelet</option>
-          <option value="squarewave">Square Wave / Battlement</option>
-          <option value="puzzle">Jigsaw Puzzle Tab</option>
+          <option value="detailedTriangle">Detailed Triangle</option>
+          <option value="detailedHexagon" selected>Detailed Hexagon</option>
+          <option value="squarePuzzle">Square Puzzle Piece</option>
+          <option value="hexPuzzle">Hexagonal Puzzle Piece</option>
+          <option value="chevron">Chevron (square based)</option>
+          <option value="sinewave">Sine Wavelet (square based)</option>
+          <option value="squarewave">Square Wave / Battlement (square based)</option>
         </select>
       </label>
 
@@ -165,15 +166,9 @@
         <span>Grid Lattice Base<span class="info-icon" title="Switches between a square and a 60-degree triangular layout.">ⓘ</span></span>
         <select id="latticeType">
           <option value="square">Square</option>
-          <option value="triangular" selected>Triangular</option>
-          <option value="hexagonal">Hexagonal</option>
+          <option value="triangular">Triangular</option>
+          <option value="hexagonal" selected>Hexagonal</option>
         </select>
-      </label>
-
-
-      <label class="row" id="auto-align-container" style="display: none;">
-        <input type="checkbox" id="useAutoAlignment" checked />
-        <span>Auto-Align Triangles<span class="info-icon" title="Choose whether triangles align automatically, or display manual adjustment sliders">ⓘ</span></span>
       </label>
 
       <!-- Only used locally, for debugging/testing -->
@@ -189,11 +184,21 @@
           <button class="btn-preset" data-preset="fortress" type="button">Fortress</button>
           <button class="btn-preset" data-preset="vortex" type="button">Vortex</button>
           <button class="btn-preset" data-preset="rose" type="button">Fractal Rose</button>
-          <button class="btn-preset" data-preset="triangles" type="button">Triangles</button>
-          <button class="btn-preset" data-preset="triangles2" type="button">Triangles2</button>
+          <button class="btn-preset" data-preset="mandala" type="button">Mandala</button>
+          <button class="btn-preset" data-preset="cyclone" type="button">Cyclone</button>
+          <button class="btn-preset" data-preset="mitosis" type="button">Mitosis</button>
+          <button class="btn-preset" data-preset="bismuth" type="button">Bismuth</button>
+          <button class="btn-preset" data-preset="buzzsaw" type="button">Buzzsaw</button>
+          <button class="btn-preset" data-preset="hexPuzzle" type="button">Hex Puzzle</button>
+
         </div>
       </div>
       <hr />
+
+      <label class="row" id="auto-align-container" style="display: none;">
+        <input type="checkbox" id="useAutoAlignment" checked />
+        <span>Use Auto-Align<span class="info-icon" title="Choose whether triangles/hexagons align automatically, or display manual adjustment sliders">ⓘ</span></span>
+      </label>
 
       <label>
         <span>Symmetry Arms / Branches: <span id="totalBranches-val">10</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>

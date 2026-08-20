@@ -125,6 +125,92 @@ export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Po
     return components;
   },
 
+  /**
+   * 4. Interlocking Puzzle-Notch Hexagon Motif
+   * Uses a point-topped regular hexagon framework with alternating
+   * inward and outward rectangular interlocking tabs on its edges.
+   */
+  hexPuzzle: (cellHeight: number): Point2D[][] => {
+    const components: Point2D[][] = [];
+    const r = cellHeight / 2;
+    const h = r * (Math.sqrt(3) / 2);
+
+    // Six core vertices of the POINT-TOPPED regular hexagon base
+    const v: Point2D[] = [
+      { x: 0.0, y: 0.0 },                        // Vertex 0: Top Apex
+      { x: h,   y: r * 0.5 },                    // Vertex 1: Top Right
+      { x: h,   y: cellHeight - r * 0.5 },       // Vertex 2: Bottom Right
+      { x: 0.0, y: cellHeight },                 // Vertex 3: Bottom Apex
+      { x: -h,  y: cellHeight - r * 0.5 },       // Vertex 4: Bottom Left
+      { x: -h,  y: r * 0.5 }                     // Vertex 5: Top Left
+    ];
+
+    // Helper to interpolate between two points
+    const lerp = (p1: Point2D, p2: Point2D, t: number): Point2D => ({
+      x: p1.x + (p2.x - p1.x) * t,
+      y: p1.y + (p2.y - p1.y) * t
+    });
+
+    // Helper to calculate a perpendicular outward normal vector for an edge segment
+    const getNormal = (p1: Point2D, p2: Point2D, magnitude: number): Point2D => {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      return {
+        x: (dy / len) * magnitude,
+        y: (-dx / len) * magnitude
+      };
+    };
+
+    /**
+     * Generates a modified interlocking edge segment between two points.
+     */
+    const makeInterlockingEdge = (p1: Point2D, p2: Point2D, isInward: boolean): Point2D[] => {
+      const t1 = 0.35;
+      const t2 = 0.65;
+
+      const segA = lerp(p1, p2, t1);
+      const segB = lerp(p1, p2, t2);
+
+      const edgeLen = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+      const tabDepth = edgeLen * 0.15;
+
+      const normal = getNormal(p1, p2, isInward ? -tabDepth : tabDepth);
+
+      const tabCorner1 = { x: segA.x + normal.x, y: segA.y + normal.y };
+      const tabCorner2 = { x: segB.x + normal.x, y: segB.y + normal.y };
+
+      return [p1, segA, tabCorner1, tabCorner2, segB, p2];
+    };
+
+    // Construct the outer interlocking path loop
+    // Added '!' to tell TS these indexes are guaranteed to exist in this array length
+    const outerBoundary: Point2D[] = [
+      ...makeInterlockingEdge(v[0]!, v[1]!, true),  // Top-Right edge (Inward recess)
+      ...makeInterlockingEdge(v[1]!, v[2]!, false), // Right edge (Outward tab)
+      ...makeInterlockingEdge(v[2]!, v[3]!, true),  // Bottom-Right edge (Inward recess)
+      ...makeInterlockingEdge(v[3]!, v[4]!, false), // Bottom-Left edge (Outward tab)
+      ...makeInterlockingEdge(v[4]!, v[5]!, true),  // Left edge (Inward recess)
+      ...makeInterlockingEdge(v[5]!, v[0]!, false)  // Top-Left edge (Outward tab)
+    ];
+
+    components.push(outerBoundary);
+
+    // Add an internal visual ring accent line that mirrors the central point
+    const center = { x: 0.0, y: cellHeight * 0.5 };
+    const innerRing: Point2D[] = v.map(vertex => lerp(vertex, center, 0.4));
+
+    // Safely pull the first element out into a known variable context before pushing
+    const firstRingPoint = innerRing[0];
+    if (firstRingPoint) {
+      innerRing.push({ ...firstRingPoint });
+    }
+
+    components.push(innerRing);
+
+    return components;
+  },
+
   // Interlocking Triforce / Clover Triangle Motif
   detailedTriangle: (cellHeight: number): Point2D[][] => {
     const components: Point2D[][] = [];
@@ -218,7 +304,7 @@ export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Po
   ],
 
   // Proportioned Jigsaw Puzzle Tab preventing Bijectivity Distortion Faults
-  puzzle: (cellHeight: number): Point2D[] => [
+  squarePuzzle: (cellHeight: number): Point2D[] => [
     { x: 0.0,   y: 0.0 },
     { x: 0.5,   y: -cellHeight * 0.3 },     // Top bubble scaled to height
     { x: 1.0,   y: 0.0 },                   // Top-Right corner

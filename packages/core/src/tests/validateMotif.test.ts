@@ -44,14 +44,24 @@ function validateMotif(name: string, func: (cellHeight: number) => Point2D[][] |
     return false;
   }
 
-  if (bottomLeft.x !== 0.0 || Math.abs(bottomLeft.y - testHeight) > 0.001) {
-    console.error(`❌ Error: Motif paths must end uniformly at the base boundary link point {x: 0, y: cellHeight}. Found:`, bottomLeft);
-    return false;
+  // Evaluate structural constraints based on layout geometry
+  // TODO: Add latticeType information directly to basemotif type
+  const isHexagonAsset = name.toLowerCase().includes('hex');
+  if (isHexagonAsset) {
+    if (bottomLeft.x !== 0.0 || bottomLeft.y !== 0.0) {
+      console.error(`❌ Error: Hexagonal loops must close completely back at the origin axis {x: 0, y: 0}. Found:`, bottomLeft);
+      return false;
+    }
+  } else {
+    if (bottomLeft.x !== 0.0 || Math.abs(bottomLeft.y - testHeight) > 0.001) {
+      console.error(`❌ Error: Square/Triangular paths must end uniformly at the base boundary link point {x: 0, y: cellHeight}. Found:`, bottomLeft);
+      return false;
+    }
   }
 
   console.log(`✅ ${name} passed boundary constraints! (${points.length} structural nodes verified)`);
   return true;
-}
+  };
 
 /**
  * Orchestrates verification passes over the entire active geometric profile suite.

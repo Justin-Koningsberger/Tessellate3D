@@ -310,13 +310,13 @@ document.addEventListener('DOMContentLoaded', () => {
           els.globalRotation.value = '1.57';
           els.decayMultiplier.value = '0.40';
           els.twistFactor.value = '0.00';
-          els.staggerFactor.value = '1.4';
+          els.staggerFactor.value = '1.2';
           els.latticePhaseOffset.value = '1.00';
           els.ringDistanceMultiplier.value = '1.00';
           els.ringIntersectionFactor.value = '1.00';
           els.applyStroke.checked = true;
           break;
-        case 'triangles':
+        case 'mandala':
           els.variantMode.value = 'logarithmic';
           els.baseMotif.value = 'detailedTriangle';
           els.latticeType.value = 'triangular'
@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
           els.ringIntersectionFactor.value = '0.54';
           els.applyStroke.checked = false;
           break;
-        case 'triangles2':
+        case 'cyclone':
           els.variantMode.value = 'loxodromic';
           els.baseMotif.value = 'triangle';
           els.latticeType.value = 'triangular'
@@ -347,6 +347,70 @@ document.addEventListener('DOMContentLoaded', () => {
           els.ringDistanceMultiplier.value = '0.27';
           els.ringIntersectionFactor.value = '0.54';
           els.applyStroke.checked = false;
+          break;
+        case 'mitosis':
+          els.variantMode.value = 'multi-pole';
+          els.baseMotif.value = 'triangle';
+          els.latticeType.value = 'triangular'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '20';
+          els.maxRings.value = '7';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '1.58';
+          els.twistFactor.value = '0.00';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '4.00';
+          els.ringDistanceMultiplier.value = '-1.31';
+          els.ringIntersectionFactor.value = '0.27';
+          els.applyStroke.checked = false;
+          break;
+        case 'bismuth':
+          els.variantMode.value = 'single-pole';
+          els.baseMotif.value = 'hexagon';
+          els.latticeType.value = 'hexagonal'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '20';
+          els.maxRings.value = '20';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '1.05';
+          els.twistFactor.value = '0.0';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '0.00';
+          els.ringDistanceMultiplier.value = '0.27';
+          els.ringIntersectionFactor.value = '0.54';
+          els.applyStroke.checked = false;
+          break;
+        case 'buzzsaw':
+          els.variantMode.value = 'loxodromic';
+          els.baseMotif.value = 'hexagon';
+          els.latticeType.value = 'hexagonal'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '10';
+          els.maxRings.value = '10';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '1.25';
+          els.twistFactor.value = '-0.67';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '-4.00';
+          els.ringDistanceMultiplier.value = '0.27';
+          els.ringIntersectionFactor.value = '0.54';
+          els.applyStroke.checked = true;
+          break;
+        case 'hexPuzzle':
+          els.variantMode.value = 'logarithmic';
+          els.baseMotif.value = 'hexPuzzle';
+          els.latticeType.value = 'hexagonal'
+          els.useAutoAlignment.checked = true;
+          els.totalBranches.value = '10';
+          els.maxRings.value = '14';
+          els.globalRotation.value = '0.00';
+          els.decayMultiplier.value = '1.00';
+          els.twistFactor.value = '0.0';
+          els.staggerFactor.value = '0.0';
+          els.latticePhaseOffset.value = '2.50';
+          els.ringDistanceMultiplier.value = '-1.29';
+          els.ringIntersectionFactor.value = '0.21';
+          els.applyStroke.checked = true;
           break;
         default:
           return;

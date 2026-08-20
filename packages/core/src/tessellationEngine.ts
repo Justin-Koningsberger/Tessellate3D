@@ -16,7 +16,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
-  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "puzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon";
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle";
   useInverseDebugging: boolean;
   latticeType: 'square' | 'triangular' | 'hexagonal';
   useAutoAlignment: boolean;

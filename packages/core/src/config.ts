@@ -3,9 +3,11 @@ import type { EngineConfig } from './tessellationEngine.ts';
 export const CONFIG: EngineConfig = {
   variantMode: "loxodromic",
   baseMotif: "squarewave",
-  useInverseDebugging: false, // True enables absolute canvas tracking via inverse math
   latticeType: 'square',
+  symmetryGroup: 'p1',        // Default to standard translation symmetry
+  motifScaleFactor: 1.0,      // Default to fully interlocking size
   useAutoAlignment: true,
+  useInverseDebugging: false, // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {

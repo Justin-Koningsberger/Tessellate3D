@@ -62,6 +62,8 @@ function evaluateVariantExtended(
     variantMode: name,
     baseMotif: "chevron",
     latticeType: testLattice,
+    symmetryGroup: 'p1',
+    motifScaleFactor: 1.0,
     useAutoAlignment: true,
     useInverseDebugging: false,
     colorPalette: [],

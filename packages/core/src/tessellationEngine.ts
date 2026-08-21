@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
 import { inverseWarp } from './transforms/inverse.ts';
+import { packLocalMotifSpace } from './transforms/latticePacking.ts';
+import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
 
 export interface Point2D {
   x: number;
@@ -16,10 +18,12 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
-  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle";
-  useInverseDebugging: boolean;
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon";
   latticeType: 'square' | 'triangular' | 'hexagonal';
+  symmetryGroup: 'p1' | 'p3';
+  motifScaleFactor: number;
   useAutoAlignment: boolean;
+  useInverseDebugging: boolean;
   layout: {
     totalBranches: number;
     maxRings: number;
@@ -116,6 +120,7 @@ export function subdividePath(
 
 /**
  * Wallpaper Symmetry Engine (With Helical Spiral Shift Support).
+ * Supports standard translation configurations (p1) and 3-fold rotations (p3).
  */
 export function applyWallpaperSymmetry(
   point: Point2D,
@@ -123,111 +128,70 @@ export function applyWallpaperSymmetry(
   branch: number,
   totalBranches: number,
   shearSlope: number,
+  symmetryGroup: 'p1' | 'p3' = 'p1'
 ): Point2D {
   const tileWidth = 1.0;
   const tileHeight = (Math.PI * 2) / totalBranches;
 
-  // Calculate continuous displacement offset across active branch counts
+  // 1. Compute the standard baseline layout translation vectors
   const continuousHelicalOffset = branch * (tileWidth / totalBranches) * shearSlope;
+  const translationX = (ring * tileWidth) + continuousHelicalOffset;
+  const translationY = branch * tileHeight;
 
-  return {
-    x: point.x + (ring * tileWidth) + continuousHelicalOffset,
-    y: point.y + (branch * tileHeight)
-  };
-}
+  switch (symmetryGroup) {
+    case 'p3': {
+      // 2. Compute the 3-fold rotational step index based on current grid location
+      // Using Math.abs to handle negative ring coordinates cleanly
+      const rotationIndex = (Math.abs(ring) + branch) % 3;
 
-/**
- * Enforces geometric precision closure to prevent slicing self-intersections.
- */
-export function generateSvgPath(points: Point2D[], compIndex: number): string {
-  // Open paths need a minimum of two points, closed path need a minimum of three points
-  if (points.length < 2) return "";
-  if (compIndex === 0 && points.length < 3) return "";
+      if (rotationIndex === 0) {
+        // 0 degrees rotation: return standard translation directly
+        return {
+          x: point.x + translationX,
+          y: point.y + translationY
+        };
+      }
 
-  const startPoint = points[0]!;
-  const endPoint = points[points.length - 1]!;
-  const gapDistance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+      // 3. Determine target angle in radians
+      const angleDegrees = rotationIndex * 120;
+      const radians = (angleDegrees * Math.PI) / 180;
+      const cos = Math.cos(radians);
+      const sin = Math.sin(radians);
 
-  // If the path loops back near its origin, force-weld the anchors to form a perfect manifold
-  if (compIndex === 0 && gapDistance > 0 && gapDistance < 0.005) {
-    points[points.length - 1] = { x: startPoint.x, y: startPoint.y };
-  }
+      // 4. Calculate local cell center pivot coordinates
+      const pivotX = 0.5;
+      const pivotY = tileHeight * 0.5;
 
-  let d = `M ${points[0]!.x.toFixed(4)} ${points[0]!.y.toFixed(4)}`;
-  for (let i = 1; i < points.length; i++) {
-    // Guard against non-linear transform coordinate breakdown corruption
-    if (isNaN(points[i]!.x) || isNaN(points[i]!.y) || !isFinite(points[i]!.x) || !isFinite(points[i]!.y)) {
-      continue;
+      // 5. Execute 2D rotation matrix around local cell centroid
+      const dx = point.x - pivotX;
+      const dy = point.y - pivotY;
+
+      const rotatedLocalX = dx * cos - dy * sin + pivotX;
+      const rotatedLocalY = dx * sin + dy * cos + pivotY;
+
+      // 6. Map the locally rotated point back to global grid coordinates
+      return {
+        x: rotatedLocalX + translationX,
+        y: rotatedLocalY + translationY
+      };
     }
 
-    d += ` L ${points[i]!.x.toFixed(4)} ${points[i]!.y.toFixed(4)}`;
-  }
-
-  if (compIndex === 0) {
-    d += " Z";
-  }
-
-  return d;
-}
-
-/**
- * Global Coordinate Normalization Module.
- * Scales and centers a raw array of spiral path string definitions.
- */
-export function normalizeSpiralCanvas(
-  compiledPathObjects: PathObject[],
-  targetDimensions: number = 500
-): PathObject[] {
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
-
-  // Scan phase: Parse out raw coordinates to find absolute geometric bounds
-  compiledPathObjects.forEach(path => {
-    const coordPairs = path.d.match(/[-+]?[0-9]*\.?[0-9]+/g);
-    if (!coordPairs) return;
-
-    for (let i = 0; i < coordPairs.length; i += 2) {
-      const xStr = coordPairs[i];
-      const yStr = coordPairs[i + 1];
-      if (!xStr || !yStr) continue;
-
-      const x = parseFloat(xStr);
-      const y = parseFloat(yStr);
-
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
+    case 'p1':
+    default: {
+      return {
+        x: point.x + translationX,
+        y: point.y + translationY
+      };
     }
-  });
-
-  const currentWidth = maxX - minX;
-  const currentHeight = maxY - minY;
-
-  if (currentWidth === 0 || currentHeight === 0 || minX === Infinity || minY === Infinity) {
-    return compiledPathObjects;
   }
-
-  const scaleFactor = targetDimensions / Math.max(currentWidth, currentHeight);
-  const centerX = minX + (currentWidth / 2);
-  const centerY = minY + (currentHeight / 2);
-
-  // Transformation pass: Apply normalized matrices back to the SVG path tokens
-  return compiledPathObjects.map(path => {
-    const normalizedD = path.d.replace(/([-+]?[0-9]*\.?[0-9]+)\s+([-+]?[0-9]*\.?[0-9]+)/g, (_, xStr, yStr) => {
-      const nx = ((parseFloat(xStr) - centerX) * scaleFactor).toFixed(4);
-      const ny = ((parseFloat(yStr) - centerY) * scaleFactor).toFixed(4);
-      return `${nx} ${ny}`;
-    });
-
-    return { ...path, d: normalizedD };
-  });
 }
 
 /**
  * Master Generator Function
  */
 export function generateTessellation(config: EngineConfig): string {
+  console.log("🏭 [Core Engine] generateTessellation invoked. Base Motif targeting:", config.baseMotif);
+
   const totalBranches = config.layout.totalBranches;
   const cellHeight = (Math.PI * 2) / totalBranches;
 
@@ -236,7 +200,11 @@ export function generateTessellation(config: EngineConfig): string {
     activeColors.push(config.colorPalette[i % config.colorPalette.length] || "#000000");
   }
 
-  const rawMotifData = baseMotifs[config.baseMotif]?.(cellHeight) || [];
+  const rawMotifData = baseMotifs[config.baseMotif]?.({
+    cellHeight: cellHeight,
+    symmetryGroup: config.symmetryGroup ?? 'p1',
+    latticeType: config.latticeType
+  }) || [];
   const motifComponents = Array.isArray(rawMotifData[0])
     ? (rawMotifData as Point2D[][])
     : [rawMotifData as Point2D[]];
@@ -422,7 +390,7 @@ export function generateTessellation(config: EngineConfig): string {
     }
   }
 
-  const normalizedPaths = normalizeSpiralCanvas(rawPathObjects, 1000);
+  const normalizedPaths = normalizeSpiralLayout(rawPathObjects, 1000);
 
   const groupedPaths: Record<string, string[]> = {};
   const detailPaths: string[] = [];

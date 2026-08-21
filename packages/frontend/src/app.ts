@@ -1,7 +1,12 @@
 import { createUncompressedZip } from './zipUtils.ts';
 import { customWorkspace } from './tileWorkspace.ts';
 import { CONFIG } from '@tessellate3d/core/src/config.ts';
-import { generateTessellation } from '@tessellate3d/core/src/tessellationEngine.ts';
+import { generateTessellation, type Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
+
+import {
+  liveEditorState,
+  updateLiveEditorState
+} from '@tessellate3d/core/src/tileSymmetry.ts';
 
 import type { EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 
@@ -76,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnOpenCustom: document.getElementById('btn-open-custom') as HTMLButtonElement,
     customModal: document.getElementById('custom-modal') as HTMLDivElement,
     customCanvas: document.getElementById('custom-canvas') as HTMLCanvasElement,
-    btnClosecustomSave: document.getElementById('btn-close-custom-save') as HTMLButtonElement,
+    btnCloseCustomSave: document.getElementById('btn-close-custom-save') as HTMLButtonElement,
     btnClosecustomCancel: document.getElementById('btn-close-custom-cancel') as HTMLButtonElement
   };
 
@@ -90,6 +95,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
     currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
+
+    // SPRINT 4 INTEGRATION RULES:
+    // If the active UI dropdown selector is matching our custom workspace shape,
+    // force the symmetry group to p3 rotations. Otherwise, default to standard p1 translation grid.
+    if (currentConfig.baseMotif === "customSymmetricHexagon") {
+      currentConfig.symmetryGroup = "p3";
+    } else {
+      currentConfig.symmetryGroup = "p1";
+    }
 
     currentConfig.layout = {
       totalBranches: parseInt(els.totalBranches.value, 10),
@@ -139,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.staggerContainer.style.display = 'flex';
       } else {
         currentConfig.layout.staggerFactor = 0.0;
-        // Remove this if users want the previous stagger to be re-applied when switching back to a supported motif
         els.staggerFactor.value = "0.0";
         els.staggerContainer.style.display =  'none';
       }
@@ -153,15 +166,29 @@ document.addEventListener('DOMContentLoaded', () => {
       els.intersectionContainer.style.display = showSliders ? 'flex' : 'none';
     }
 
+    // TELEMETRY STACK LOGGING
+    console.log("⚙️ [Pipeline] Preparing math execution pass. Final scraped config parameters:", {
+      variantMode: currentConfig.variantMode,
+      baseMotif: currentConfig.baseMotif,
+      symmetryGroup: currentConfig.symmetryGroup,
+      latticeType: currentConfig.latticeType
+    });
+
     try {
+      console.log("⚙️ [Pipeline] Invoking core generateTessellation()...");
       // Execute pure transformation pass natively in-browser
       const svgString = generateTessellation(currentConfig);
 
       cachedActiveSvgString = svgString;
 
-      els.canvasTarget.innerHTML = svgString;
+      if (els.canvasTarget) {
+        els.canvasTarget.innerHTML = svgString;
+        console.log(`🚀 [Pipeline] Render successful! Injected ${svgString.length} SVG characters into DOM.`);
+      } else {
+        console.error("❌ [Pipeline] DOM target 'els.canvasTarget' is completely missing!");
+      }
     } catch (err) {
-      console.error("Engine generation fault intercepted: ", err);
+      console.error("❌❌ [Pipeline CRASH] Engine generation fault intercepted: ", err);
     }
   }
 
@@ -172,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function initializeCustomEditor(): void {
     let customWorkspaceInstance: customWorkspace | null = null;
 
-    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.btnClosecustomSave || !els.btnClosecustomCancel) {
+    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.btnCloseCustomSave || !els.btnClosecustomCancel) {
       return;
     }
 
@@ -188,13 +215,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    els.btnClosecustomSave.addEventListener('click', () => {
+    els.btnCloseCustomSave.addEventListener('click', () => {
       els.customModal.style.display = 'none';
 
-      // Update select value to use the user's customHexagon
-      els.baseMotif.value = "customHexagon";
+      currentConfig.baseMotif = "customSymmetricHexagon";
+      currentConfig.symmetryGroup = "p3";
 
-      // Re-trigger the pipeline pass to immediately pull new node deformations into view
+      if (els.baseMotif) {
+        els.baseMotif.value = "customSymmetricHexagon";
+      }
+
+      console.log("🔍 [UI Sync] Configuration mutated: baseMotif='customSymmetricHexagon', symmetryGroup='p3'");
+
+      if (liveEditorState) {
+        console.log("🔍 [UI Sync] liveEditorState exists. Master edge lengths:", {
+          edgeA: liveEditorState.edgeA.length,
+          edgeB: liveEditorState.edgeB.length,
+          edgeC: liveEditorState.edgeC.length
+        });
+      } else {
+        console.warn("⚠️ [UI Sync] liveEditorState is null or undefined prior to pipeline compilation!");
+      }
+
+      console.log("🚀 [UI Sync] Invoking updateEnginePipeline()...");
       updateEnginePipeline();
     });
 

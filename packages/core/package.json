@@ -19,6 +19,7 @@
     "dev": "node --experimental-strip-types src/index.ts",
     "test:motifs": "node --experimental-strip-types src/tests/validateMotif.test.ts",
     "test:transforms": "node --experimental-strip-types src/tests/validateTransforms.test.ts",
-    "test:fuzz": "node --experimental-strip-types src/tests/fuzzEngine.test.ts"
+    "test:fuzz": "node --experimental-strip-types src/tests/fuzzEngine.test.ts",
+    "test:symmetry": "node --experimental-strip-types src/tests/tileSymmetry.test.ts"
   }
 }

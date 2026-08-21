@@ -1,3 +1,4 @@
+// TODO: move ziputils to /utils and update all imports
 /**
  * High-performance, zero-dependency client-side ZIP archiver.
  * To keep the core package 100% dependency-free as long as possible, this computes PKWARE ZIP

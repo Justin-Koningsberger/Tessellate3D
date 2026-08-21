@@ -227,7 +227,7 @@ export function normalizeSpiralCanvas(
 /**
  * Master Generator Function
  */
-export function generateEscherTessellation(config: EngineConfig): string {
+export function generateTessellation(config: EngineConfig): string {
   const totalBranches = config.layout.totalBranches;
   const cellHeight = (Math.PI * 2) / totalBranches;
 

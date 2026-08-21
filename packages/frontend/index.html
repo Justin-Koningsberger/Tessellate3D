@@ -148,6 +148,7 @@
       <label>
         <span>Base Motif Geometry<span class="info-icon" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span></span>
         <select id="baseMotif">
+          <!-- <option value="customHexagon">Custom Hexagon</option> -->
           <option value="square">Square</option>
           <option value="triangle">Triangle</option>
           <option value="hexagon">Hexagon</option>
@@ -176,6 +177,10 @@
         <input type="checkbox" id="useInverseDebugging" />
         <span>Enable Inverse Grid Lines</span>
       </label>
+
+      <button id="btn-open-custom" class="btn-preset" style="background: #4a90e2; color: #fff; margin-top: 5px; margin-bottom: 15px;" type="button">
+        🎨 Design Custom Motif
+      </button>
       <hr />
 
       <div>
@@ -285,5 +290,20 @@
   </main>
 
   <script type="module" src="/src/app.ts"></script>
+
+  <!-- INJECT MODAL CREATE CUSTOM MOTIF POPUP -->
+  <div id="custom-modal" class="custom-modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #222; border: 1px solid #444; border-radius: 8px; padding: 20px; text-align: center; max-width: 90vw;">
+      <h3 style="color: #fff; margin-top: 0;">custom Symmetry Node Editor</h3>
+      <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">Grab and drag the red vertices to distort the primary edges.</p>
+
+      <canvas id="custom-canvas" width="500" height="500" style="background: #111; border: 1px solid #333; border-radius: 4px; display: block; margin: 0 auto; max-width: 100%;"></canvas>
+
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+        <button id="btn-close-custom-save" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" type="button">Apply to Spiral Matrix</button>
+        <button id="btn-close-custom-cancel" style="background: #dc3545; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

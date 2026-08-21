@@ -1,6 +1,7 @@
 import { createUncompressedZip } from './zipUtils.ts';
+import { customWorkspace } from './tileWorkspace.ts';
 import { CONFIG } from '@tessellate3d/core/src/config.ts';
-import { generateEscherTessellation } from '@tessellate3d/core/src/tessellationEngine.ts';
+import { generateTessellation } from '@tessellate3d/core/src/tessellationEngine.ts';
 
 import type { EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 
@@ -71,7 +72,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // EXPORT BUTTON HOOKS
     btnDownloadMaster: document.getElementById('btn-download-master') as HTMLButtonElement,
     btnDownloadSeparatedColors: document.getElementById('btn-download-separated') as HTMLButtonElement,
-    btnDownload3dStl: document.getElementById('btn-download-3d-stl') as HTMLButtonElement
+    btnDownload3dStl: document.getElementById('btn-download-3d-stl') as HTMLButtonElement,
+    btnOpenCustom: document.getElementById('btn-open-custom') as HTMLButtonElement,
+    customModal: document.getElementById('custom-modal') as HTMLDivElement,
+    customCanvas: document.getElementById('custom-canvas') as HTMLCanvasElement,
+    btnClosecustomSave: document.getElementById('btn-close-custom-save') as HTMLButtonElement,
+    btnClosecustomCancel: document.getElementById('btn-close-custom-cancel') as HTMLButtonElement
   };
 
   /**
@@ -149,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // Execute pure transformation pass natively in-browser
-      const svgString = generateEscherTessellation(currentConfig);
+      const svgString = generateTessellation(currentConfig);
 
       cachedActiveSvgString = svgString;
 
@@ -157,6 +163,44 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error("Engine generation fault intercepted: ", err);
     }
+  }
+
+  /**
+   * Initializes the interactive custom Symmetry Editor modal, canvas listeners,
+   * and binds the output results back to the master production loop.
+   */
+  function initializeCustomEditor(): void {
+    let customWorkspaceInstance: customWorkspace | null = null;
+
+    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.btnClosecustomSave || !els.btnClosecustomCancel) {
+      return;
+    }
+
+    els.btnOpenCustom.addEventListener('click', () => {
+      // Reveal modal backdrop window overlay layer
+      els.customModal.style.display = 'flex';
+
+      // Instantiate or redraw the native 2D workspace context state
+      if (!customWorkspaceInstance) {
+        customWorkspaceInstance = new customWorkspace(els.customCanvas, 2.0);
+      } else {
+        customWorkspaceInstance.render();
+      }
+    });
+
+    els.btnClosecustomSave.addEventListener('click', () => {
+      els.customModal.style.display = 'none';
+
+      // Update select value to use the user's customHexagon
+      els.baseMotif.value = "customHexagon";
+
+      // Re-trigger the pipeline pass to immediately pull new node deformations into view
+      updateEnginePipeline();
+    });
+
+    els.btnClosecustomCancel.addEventListener('click', () => {
+      els.customModal.style.display = 'none';
+    });
   }
 
   /**
@@ -487,7 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const colorGroups = container.querySelectorAll('g[id^="color_"]');
-      const detailGroup = container.querySelector('g[id="escher_internal_details"]');
+      const detailGroup = container.querySelector('g[id="custom_internal_details"]');
 
       if (colorGroups.length === 0) {
         alert("No printable color groups discovered within the vector memory stream.");
@@ -631,6 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  initializeCustomEditor();
   renderPaletteUI();
+
   updateEnginePipeline();
 });

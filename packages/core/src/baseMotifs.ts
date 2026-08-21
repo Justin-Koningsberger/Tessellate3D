@@ -1,6 +1,26 @@
 import type { Point2D } from './tessellationEngine.ts';
 
+import {
+  liveEditorState,
+  compileSymmetricTile,
+  type ModularEditorState
+} from './tileSymmetry.ts';
+
 export const baseMotifs: Record<string, (cellHeight: number) => Point2D[][] | Point2D[]> = {
+  customSymmetricHexagon: (cellHeight: number): Point2D[][] => {
+    if (!liveEditorState) {
+      const hexagonFn = baseMotifs["hexagon"];
+      if (!hexagonFn) return [[]];
+      const flatHex = hexagonFn(cellHeight);
+
+      return Array.isArray(flatHex[0])
+        ? (flatHex as Point2D[][])
+        : [flatHex as Point2D[]];
+    }
+
+    return compileSymmetricTile(liveEditorState);
+  },
+
   // Square motif
   square: (cellHeight: number): Point2D[] => [
     { x: 0.0, y: 0.0 },

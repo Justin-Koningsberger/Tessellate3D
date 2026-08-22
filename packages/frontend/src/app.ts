@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     variantMode: document.getElementById('variantMode') as HTMLSelectElement,
     baseMotif: document.getElementById('baseMotif') as HTMLSelectElement,
     latticeType: document.getElementById('latticeType') as HTMLSelectElement,
+    symmetryGroup: document.getElementById('symmetryGroup') as HTMLSelectElement,
     autoAlignContainer: document.getElementById('auto-align-container') as HTMLLabelElement,
     useAutoAlignment: document.getElementById('useAutoAlignment') as HTMLInputElement,
     useInverseDebugging: document.getElementById('useInverseDebugging') as HTMLInputElement,
@@ -92,18 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.variantMode = els.variantMode.value as EngineConfig['variantMode'];
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
     currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
+    currentConfig.symmetryGroup = els.symmetryGroup.value as EngineConfig['symmetryGroup'];
     currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
     currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
-
-    // SPRINT 4 INTEGRATION RULES:
-    // If the active UI dropdown selector is matching our custom workspace shape,
-    // force the symmetry group to p3 rotations. Otherwise, default to standard p1 translation grid.
-    if (currentConfig.baseMotif === "customSymmetricHexagon") {
-      currentConfig.symmetryGroup = "p3";
-    } else {
-      currentConfig.symmetryGroup = "p1";
-    }
 
     currentConfig.layout = {
       totalBranches: parseInt(els.totalBranches.value, 10),
@@ -716,7 +709,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (import.meta.env.PROD && els.debuggingGridRow) {
     els.debuggingGridRow.style.display = 'none';
   }
-
 
   initializeCustomEditor();
   renderPaletteUI();

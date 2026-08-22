@@ -190,7 +190,7 @@ export function applyWallpaperSymmetry(
  * Master Generator Function
  */
 export function generateTessellation(config: EngineConfig): string {
-  console.log("🏭 [Core Engine] generateTessellation invoked. Base Motif targeting:", config.baseMotif);
+  console.log("🏭 [Core Engine] generateTessellation invoked. Base Motif targeting:", config.baseMotif, config.symmetryGroup, config.latticeType);
 
   const totalBranches = config.layout.totalBranches;
   const cellHeight = (Math.PI * 2) / totalBranches;

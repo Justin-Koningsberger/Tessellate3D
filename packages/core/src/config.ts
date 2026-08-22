@@ -14,7 +14,6 @@ export const CONFIG: EngineConfig = {
     totalBranches: 4,         // Total spiral arms / structural symmetry axis
     maxRings: 6,              // Depth layers (How many rings wrap inward)
     globalScale: 180,         // Overall design magnification size
-    globalRotation: 0,        // Camera spin orientation angle (0 = base alignment)
     subdivisionLimit: 0.05,   // Precision length step for linear smoothing
     decayMultiplier: 0.35,    // Controls how fast tiles shrink as they descend inward. Set to 1.0 to close up the wide center hole completely!
     twistFactor: 0.45,        // With Loxodromic mode: 0.0 = straight rays (pure single-pole). Positive/Negative values introduce clockwise or counter-clockwise logarithmic nautilus twists.

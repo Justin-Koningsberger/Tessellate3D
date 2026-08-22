@@ -41,7 +41,6 @@ function evaluateVariantExtended(
   name: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic",
   branches: number,
   scale: number,
-  rotation: number,
   decay: number,
   twist: number
 ): FuzzResult {
@@ -72,7 +71,6 @@ function evaluateVariantExtended(
       totalBranches: branches,
       maxRings: 10,
       globalScale: scale,
-      globalRotation: rotation,
       decayMultiplier: decay,
       twistFactor: twist,
       subdivisionLimit: 0.05,
@@ -98,8 +96,8 @@ function evaluateVariantExtended(
         // Logarithmic space wraps linearly across global coordinates
         const gridA_log = { x: pointA.x, y: pointA.y };
         const gridB_log = { x: pointB.x + 1, y: pointB.y };
-        coordA = forward.logarithmic(gridA_log, scale, rotation);
-        coordB = forward.logarithmic(gridB_log, scale, rotation);
+        coordA = forward.logarithmic(gridA_log, scale);
+        coordB = forward.logarithmic(gridB_log, scale);
         break;
 
       case "single-pole":
@@ -108,17 +106,16 @@ function evaluateVariantExtended(
         const gridA_sp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing, randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_sp;
-        coordA = forward.singlePole(gridA_sp, scale, rotation, decay);
-        coordB = forward.singlePole(gridB_sp, scale, rotation, decay);
+        coordA = forward.singlePole(gridA_sp, scale, decay);
+        coordB = forward.singlePole(gridB_sp, scale, decay);
         break;
 
       case "loxodromic":
-        // FIXED: Test torsional twist continuity at varying ring depths and branch rotations seamlessly
         const gridA_lox = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_lox = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_lox;
-        coordA = forward.loxodromic(gridA_lox, scale, rotation, twist, decay);
-        coordB = forward.loxodromic(gridB_lox, scale, rotation, twist, decay);
+        coordA = forward.loxodromic(gridA_lox, scale, twist, decay);
+        coordB = forward.loxodromic(gridB_lox, scale, twist, decay);
         break;
 
       case "multi-pole":
@@ -126,8 +123,8 @@ function evaluateVariantExtended(
         const gridA_mp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_mp = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_mp;
-        coordA = forward.multiPole(gridA_mp, scale, rotation, decay);
-        coordB = forward.multiPole(gridB_mp, scale, rotation, decay);
+        coordA = forward.multiPole(gridA_mp, scale, decay);
+        coordB = forward.multiPole(gridB_mp, scale, decay);
         break;
 
       default:
@@ -158,11 +155,11 @@ function evaluateVariantExtended(
       // 2. Project forward into canvas coordinate vectors
       let forwardInteriorPoint: Point2D;
       if (name === "single-pole") {
-        forwardInteriorPoint = forward.singlePole(pristineTilePoint, scale, rotation, decay);
+        forwardInteriorPoint = forward.singlePole(pristineTilePoint, scale, decay);
       } else if (name === "loxodromic") {
-        forwardInteriorPoint = forward.loxodromic(pristineTilePoint, scale, rotation, twist, decay);
+        forwardInteriorPoint = forward.loxodromic(pristineTilePoint, scale, twist, decay);
       } else {
-        forwardInteriorPoint = forward.multiPole(pristineTilePoint, scale, rotation, decay);
+        forwardInteriorPoint = forward.multiPole(pristineTilePoint, scale, decay);
       }
 
       // 3. Round-trip the canvas coordinate back through the inverse solver engine
@@ -246,13 +243,12 @@ function runFuzzSuite(): void {
 
       for (let run = 1; run <= CONFIG_RUNS_PER_STEP; run++) {
         const scale = getRandom(10, 300);
-        const rotation = getRandom(0, Math.PI * 2);
         const decay = getRandom(0.2, 1.5);
         const twist = getRandom(0.1, 1.2);
 
         // EXTENDED STRESS BOUNDS: Sample randomly across the full progressive depth limit
         const randomTestRing = Math.floor(getRandom(0, maxTestLimit));
-        const result = evaluateVariantExtended(variant, maxTestLimit, scale, rotation, decay, twist);
+        const result = evaluateVariantExtended(variant, maxTestLimit, scale, decay, twist);
 
         if (result.gapX > worstGapX) worstGapX = result.gapX;
         if (result.gapY > worstGapY) worstGapY = result.gapY;

@@ -8,13 +8,12 @@ export const forward = {
    * directly into an organic outer spiral space) rather than compressing down
    * via a traditional complex natural log w = ln(z).
    */
-  logarithmic: (point: Point2D, scale: number, angleOffset: number): Point2D => {
+  logarithmic: (point: Point2D, scale: number): Point2D => {
     const r = Math.exp(point.x) * scale;
-    const theta = point.y + angleOffset;
 
     return {
-      x: r * Math.cos(theta),
-      y: r * Math.sin(theta)
+      x: r * Math.cos(point.y),
+      y: r * Math.sin(point.y)
     };
   },
 
@@ -28,15 +27,12 @@ export const forward = {
    * catastrophic mathematical singularity collapses.
    */
 
-  // treating angleOffset strictly as a global rotation anchor after computing the log-radial coordinate.
-  singlePole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
+  // treating coordinates strictly after computing the log-radial coordinate.
+  singlePole: (point: Point2D, scale: number, decayMultiplier: number): Point2D => {
     // Determine exponential radial depth from center
     const r = scale * Math.exp(point.x * decayMultiplier);
 
-    // Step angle cleanly. DO NOT cross-multiply with decay modifiers or scale
-    const theta = point.y + angleOffset;
-
-    return { x: r * Math.cos(theta), y: r * Math.sin(theta) };
+    return { x: r * Math.cos(point.y), y: r * Math.sin(point.y) };
   },
 
   /**
@@ -48,24 +44,22 @@ export const forward = {
   /**
    * COMPONENT-ISOLATED TRANSCENDENTAL MAP
    * Maps tile coordinates to complex sine space to prevent boundary tearing,
-   * applying the angleOffset as a clean rotation to the finalized map coordinates.
    */
-  multiPole: (point: Point2D, scale: number, angleOffset: number, decayMultiplier: number): Point2D => {
+  multiPole: (point: Point2D, scale: number, decayMultiplier: number): Point2D => {
     // 1. Establish structural base scale
     const r = Math.exp(point.x * decayMultiplier);
-    const theta = point.y; // Keep base projection independent of rotation initializations
 
     // 2. Map coordinates into complex numbers
-    const cx = r * Math.cos(theta);
-    const cy = r * Math.sin(theta);
+    const cx = r * Math.cos(point.y);
+    const cy = r * Math.sin(point.y);
 
     // 3. Process through complex analytic sine transformation
     const baseUnitX = Math.sin(cx) * Math.cosh(cy);
     const baseUnitY = Math.cos(cx) * Math.sinh(cy);
 
-    // 4. Multiply by global scale and apply rigid spatial rotation matrix
-    const finalX = scale * (baseUnitX * Math.cos(angleOffset) - baseUnitY * Math.sin(angleOffset));
-    const finalY = scale * (baseUnitX * Math.sin(angleOffset) + baseUnitY * Math.cos(angleOffset));
+    // 4. Multiply by global scale
+    const finalX = scale * baseUnitX;
+    const finalY = scale * baseUnitY;
 
     return { x: finalX, y: finalY };
   },
@@ -75,7 +69,7 @@ export const forward = {
    * Couples the exponential decay directly with a rotational phase shift.
    * This curves the tile grids smoothly into interlocking whirlpool spirals.
    */
-  loxodromic: (point: Point2D, scale: number, angleOffset: number, twistFactor: number, decayMultiplier: number): Point2D => {
+  loxodromic: (point: Point2D, scale: number, twistFactor: number, decayMultiplier: number): Point2D => {
     // 1. Core log-periodic scaling factor mapping grid depth
     const factor = Math.exp(-point.x * decayMultiplier);
     const r = scale * factor;
@@ -84,7 +78,7 @@ export const forward = {
     // We modify theta by adding a structural phase shift proportional to grid position.
     // This smoothly curls the paths without introducing destructive area shear.
     // Twist is injected as a linear phase shift based on depth (point.x).
-    const theta = point.y + angleOffset + (point.x * twistFactor);
+    const theta = point.y + (point.x * twistFactor);
 
     return {
       x: r * Math.cos(theta),

@@ -29,8 +29,6 @@ export interface EngineConfig {
     totalBranches: number;
     maxRings: number;
     globalScale: number;
-    // TODO: Remove global rotation, rotate the finished svg in svg-injection-target
-    globalRotation: number;
     subdivisionLimit: number;
     decayMultiplier: number;
     twistFactor: number;
@@ -180,7 +178,6 @@ export function generateTessellation(config: EngineConfig): string {
   const globalScale = config.layout.globalScale ?? 100;
   const twistFactor = config.layout.twistFactor ?? 0.45;
   const decayMultiplier = config.layout.decayMultiplier ?? 0.35;
-  const nominalAngleOffset = 0.0; // Anchored target reference layer
 
   let phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
   let ringDistanceMultiplier = config.layout.ringDistanceMultiplier ?? 1.0;
@@ -210,14 +207,14 @@ export function generateTessellation(config: EngineConfig): string {
       case 'none':
         return adjustedPt;
       case 'logarithmic':
-        return forward.logarithmic(adjustedPt, globalScale, nominalAngleOffset);
+        return forward.logarithmic(adjustedPt, globalScale);
       case 'single-pole':
-        return forward.singlePole(adjustedPt, globalScale, nominalAngleOffset, decayMultiplier);
+        return forward.singlePole(adjustedPt, globalScale, decayMultiplier);
       case 'multi-pole':
-        return forward.multiPole(adjustedPt, globalScale, nominalAngleOffset, decayMultiplier);
+        return forward.multiPole(adjustedPt, globalScale, decayMultiplier);
       case 'loxodromic':
       default:
-        return forward.loxodromic(adjustedPt, globalScale, nominalAngleOffset, twistFactor, decayMultiplier);
+        return forward.loxodromic(adjustedPt, globalScale, twistFactor, decayMultiplier);
     }
   };
 
@@ -333,17 +330,17 @@ export function generateTessellation(config: EngineConfig): string {
               case "none":
                 return gridSpace;
               case "logarithmic":
-                finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale, config.layout.globalRotation);
+                finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale);
                 break;
               case "single-pole":
-                finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.decayMultiplier);
+                finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier);
                 break;
               case "multi-pole":
-                finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.decayMultiplier);
+                finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier);
                 break;
               case "loxodromic":
               default:
-                finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.globalRotation, config.layout.twistFactor, config.layout.decayMultiplier);
+                finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.twistFactor, config.layout.decayMultiplier);
                 break;
             }
 

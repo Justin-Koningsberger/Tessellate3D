@@ -46,8 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     totalBranchesVal: document.getElementById('totalBranches-val') as HTMLSpanElement,
     maxRings: document.getElementById('maxRings') as HTMLInputElement,
     maxRingsVal: document.getElementById('maxRings-val') as HTMLSpanElement,
-    globalRotation: document.getElementById('globalRotation') as HTMLInputElement,
-    globalRotationVal: document.getElementById('globalRotation-val') as HTMLSpanElement,
     decayMultiplier: document.getElementById('decayMultiplier') as HTMLInputElement,
     decayMultiplierVal: document.getElementById('decayMultiplier-val') as HTMLSpanElement,
     twistFactor: document.getElementById('twistFactor') as HTMLInputElement,
@@ -102,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
       totalBranches: parseInt(els.totalBranches.value, 10),
       maxRings: parseInt(els.maxRings.value, 10),
       globalScale: 1.0, // Hardcoded engine baseline value to satisfy strict configuration types
-      globalRotation: parseFloat(els.globalRotation.value),
       subdivisionLimit: 0.05, // Hardcoded engine baseline value to satisfy strict configuration types
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
@@ -115,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update real-time label values next to sliders
     els.totalBranchesVal.textContent = currentConfig.layout.totalBranches.toFixed(0);
     els.maxRingsVal.textContent = currentConfig.layout.maxRings.toFixed(0);
-    els.globalRotationVal.textContent = currentConfig.layout.globalRotation.toFixed(2);
     els.twistFactorVal.textContent = currentConfig.layout.twistFactor.toFixed(2);
     els.staggerFactorVal.textContent = currentConfig.layout.staggerFactor.toFixed(1);
     els.decayMultiplierVal.textContent = currentConfig.layout.decayMultiplier.toFixed(2);
@@ -357,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.latticeType.value = 'square'
           els.totalBranches.value = '5';
           els.maxRings.value = '6';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '0.35';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
@@ -372,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.latticeType.value = 'square'
           els.totalBranches.value = '4';
           els.maxRings.value = '16';
-          els.globalRotation.value = '0';
           els.decayMultiplier.value = '0.3';
           els.twistFactor.value = '1.5';
           els.staggerFactor.value = '3.0';
@@ -387,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.latticeType.value = 'square'
           els.totalBranches.value = '8';
           els.maxRings.value = '5';
-          els.globalRotation.value = '1.57';
           els.decayMultiplier.value = '0.40';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '1.2';
@@ -403,7 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '6';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '0.00';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
@@ -419,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '6';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.00';
           els.twistFactor.value = '-0.67';
           els.staggerFactor.value = '0.0';
@@ -435,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '20';
           els.maxRings.value = '7';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.58';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
@@ -451,7 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '20';
           els.maxRings.value = '20';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.05';
           els.twistFactor.value = '0.0';
           els.staggerFactor.value = '0.0';
@@ -467,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '10';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.25';
           els.twistFactor.value = '-0.67';
           els.staggerFactor.value = '0.0';
@@ -483,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '14';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.00';
           els.twistFactor.value = '0.0';
           els.staggerFactor.value = '0.0';

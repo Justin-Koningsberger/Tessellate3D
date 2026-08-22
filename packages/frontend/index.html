@@ -138,7 +138,8 @@
       <label>
         <span>Transform Variant Mode<span class="info-icon" title="Changes the layout style (spinning into a spiral or twisting around a core).">ⓘ</span></span>
         <select id="variantMode">
-          <option value="logarithmic" selected>Logarithmic Spiral</option>
+          <option value="none" selected>None</option>
+          <option value="logarithmic">Logarithmic Spiral</option>
           <option value="loxodromic">Loxodromic Twist</option>
           <option value="single-pole">Single-Pole Decay</option>
           <option value="multi-pole">Multi-Pole Hyperbolic</option>
@@ -265,7 +266,7 @@
       </label>
 
       <label class="row">
-        <input type="checkbox" id="applyStroke" />
+        <input type="checkbox" id="applyStroke" checked=true />
         <span>Apply stroke<span class="info-icon" title="Adds a black outline around each tile shape to define its borders and visually separate the colors.">ⓘ</span></span>
       </label>
       <!-- The dynamic color item list slots will be mounted inside this div -->

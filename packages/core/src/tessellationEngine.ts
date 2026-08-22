@@ -4,6 +4,7 @@ import { forward } from './transforms/forward.ts';
 import { inverseWarp } from './transforms/inverse.ts';
 import { packLocalMotifSpace } from './transforms/latticePacking.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
+import { rotateAroundPivot } from './tileSymmetry.ts'
 
 export interface Point2D {
   x: number;
@@ -17,7 +18,7 @@ export interface PathObject {
 }
 
 export interface EngineConfig {
-  variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic";
+  variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic" | "none";
   baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon";
   latticeType: 'square' | 'triangular' | 'hexagonal';
   symmetryGroup: 'p1' | 'p3';
@@ -28,6 +29,7 @@ export interface EngineConfig {
     totalBranches: number;
     maxRings: number;
     globalScale: number;
+    // TODO: Remove global rotation, rotate the finished svg in svg-injection-target
     globalRotation: number;
     subdivisionLimit: number;
     decayMultiplier: number;
@@ -132,60 +134,26 @@ export function applyWallpaperSymmetry(
 ): Point2D {
   const tileWidth = 1.0;
   const tileHeight = (Math.PI * 2) / totalBranches;
-
-  // 1. Compute the standard baseline layout translation vectors
   const continuousHelicalOffset = branch * (tileWidth / totalBranches) * shearSlope;
   const translationX = (ring * tileWidth) + continuousHelicalOffset;
   const translationY = branch * tileHeight;
 
-  switch (symmetryGroup) {
-    case 'p3': {
-      // 2. Compute the 3-fold rotational step index based on current grid location
-      // Using Math.abs to handle negative ring coordinates cleanly
-      const rotationIndex = (Math.abs(ring) + branch) % 3;
+  let transformedPoint = {
+    x: point.x + translationX,
+    y: point.y + translationY
+  };
 
-      if (rotationIndex === 0) {
-        // 0 degrees rotation: return standard translation directly
-        return {
-          x: point.x + translationX,
-          y: point.y + translationY
-        };
-      }
+  // Apply p3 rotational symmetry
+  if (symmetryGroup === 'p3') {
+    const centerX = translationX + tileWidth / 2;
+    const centerY = translationY + tileHeight / 2;
+    const rotationAngle = 120 * (branch % 3); // 0°, 120°, or 240°
 
-      // 3. Determine target angle in radians
-      const angleDegrees = rotationIndex * 120;
-      const radians = (angleDegrees * Math.PI) / 180;
-      const cos = Math.cos(radians);
-      const sin = Math.sin(radians);
-
-      // 4. Calculate local cell center pivot coordinates
-      const pivotX = 0.5;
-      const pivotY = tileHeight * 0.5;
-
-      // 5. Execute 2D rotation matrix around local cell centroid
-      const dx = point.x - pivotX;
-      const dy = point.y - pivotY;
-
-      const rotatedLocalX = dx * cos - dy * sin + pivotX;
-      const rotatedLocalY = dx * sin + dy * cos + pivotY;
-
-      // 6. Map the locally rotated point back to global grid coordinates
-      return {
-        x: rotatedLocalX + translationX,
-        y: rotatedLocalY + translationY
-      };
-    }
-
-    case 'p1':
-    default: {
-      return {
-        x: point.x + translationX,
-        y: point.y + translationY
-      };
-    }
+    transformedPoint = rotateAroundPivot(transformedPoint, { x: centerX, y: centerY }, rotationAngle);
   }
-}
 
+  return transformedPoint;
+}
 /**
  * Master Generator Function
  */
@@ -239,6 +207,8 @@ export function generateTessellation(config: EngineConfig): string {
       adjustedPt.x *= Math.sqrt(3) / 2;
     }
     switch (config.variantMode) {
+      case 'none':
+        return adjustedPt;
       case 'logarithmic':
         return forward.logarithmic(adjustedPt, globalScale, nominalAngleOffset);
       case 'single-pole':
@@ -344,7 +314,7 @@ export function generateTessellation(config: EngineConfig): string {
               y: localY
             };
 
-            let gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
+            let gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope, config.symmetryGroup);
 
             // Dynamically adjust ring-to-ring depth
             if (config.latticeType === 'triangular') {
@@ -360,6 +330,8 @@ export function generateTessellation(config: EngineConfig): string {
 
             let finalPoint: Point2D;
             switch (config.variantMode) {
+              case "none":
+                return gridSpace;
               case "logarithmic":
                 finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale, config.layout.globalRotation);
                 break;

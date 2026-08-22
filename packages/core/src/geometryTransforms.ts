@@ -14,7 +14,7 @@ interface TransformationContext {
  */
 export function transformLocalMotifPoint(
   p: Point2D,
-  config: EngineConfig
+  config: EngineConfig,
   ctx: TransformationContext
 ): Point2D {
   const scaleFactor = config.motifScaleFactor ?? 1.0;

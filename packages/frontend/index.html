@@ -149,13 +149,13 @@
       <label>
         <span>Base Motif Geometry<span class="info-icon" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span></span>
         <select id="baseMotif">
-          <option value="customSymmetricHexagon">Custom Hexagon</option>
+          <option value="customSymmetricHexagon" selected>Custom Hexagon</option>
           <option value="square">Square</option>
           <option value="triangle">Triangle</option>
           <option value="hexagon">Hexagon</option>
           <option value="detailedSquare">Detailed Square</option>
           <option value="detailedTriangle">Detailed Triangle</option>
-          <option value="detailedHexagon" selected>Detailed Hexagon</option>
+          <option value="detailedHexagon">Detailed Hexagon</option>
           <option value="squarePuzzle">Square Puzzle Piece</option>
           <option value="hexPuzzle">Hexagonal Puzzle Piece</option>
           <option value="chevron">Chevron (square based)</option>
@@ -176,8 +176,8 @@
       <label>
         <span>Wallpaper Symmetry Group</span>
         <select id="symmetryGroup">
-          <option value="p1" selected>p1 (Linear Translation)</option>
-          <option value="p3">p3 (3-Fold Rotations)</option>
+          <option value="p1">p1 (Linear Translation)</option>
+          <option value="p3" selected>p3 (3-Fold Rotations)</option>
         </select>
       </label>
 
@@ -188,7 +188,7 @@
       </label>
 
       <button id="btn-open-custom" class="btn-preset" style="background: #4a90e2; color: #fff; margin-top: 5px; margin-bottom: 15px;" type="button">
-        🎨 Design Custom Motif
+        🎨 Design/Update Custom Motif
       </button>
       <hr />
 
@@ -215,8 +215,8 @@
       </label>
 
       <label>
-        <span>Symmetry Arms / Branches: <span id="totalBranches-val">10</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
-        <input type="range" id="totalBranches" min="2" max="30" value="10" />
+        <span>Symmetry Arms / Branches: <span id="totalBranches-val">6</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
+        <input type="range" id="totalBranches" min="2" max="30" value="6" />
       </label>
 
       <label>
@@ -266,7 +266,7 @@
       </label>
 
       <label class="row">
-        <input type="checkbox" id="applyStroke" checked=true />
+        <input type="checkbox" id="applyStroke" checked />
         <span>Apply stroke<span class="info-icon" title="Adds a black outline around each tile shape to define its borders and visually separate the colors.">ⓘ</span></span>
       </label>
       <!-- The dynamic color item list slots will be mounted inside this div -->

@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
 import { inverseWarp } from './transforms/inverse.ts';
+//TODO: Remove inverseWarp, useInverseDebugging mentions and all inverse transforms
 import { packLocalMotifSpace } from './transforms/latticePacking.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
 import { rotateAroundPivot } from './tileSymmetry.ts'
@@ -15,6 +16,7 @@ export interface PathObject {
   d: string;
   compIndex: number;
   color: string;
+  debug?: { ring: number, branch: number, x: number, y: number };
 }
 
 export interface EngineConfig {
@@ -128,7 +130,6 @@ export function applyWallpaperSymmetry(
   branch: number,
   totalBranches: number,
   shearSlope: number,
-  symmetryGroup: 'p1' | 'p3' = 'p1'
 ): Point2D {
   const tileWidth = 1.0;
   const tileHeight = (Math.PI * 2) / totalBranches;
@@ -136,28 +137,16 @@ export function applyWallpaperSymmetry(
   const translationX = (ring * tileWidth) + continuousHelicalOffset;
   const translationY = branch * tileHeight;
 
-  let transformedPoint = {
+  return {
     x: point.x + translationX,
     y: point.y + translationY
   };
-
-  // Apply p3 rotational symmetry
-  if (symmetryGroup === 'p3') {
-    const centerX = translationX + tileWidth / 2;
-    const centerY = translationY + tileHeight / 2;
-    const rotationAngle = 120 * (branch % 3); // 0°, 120°, or 240°
-
-    transformedPoint = rotateAroundPivot(transformedPoint, { x: centerX, y: centerY }, rotationAngle);
-  }
-
-  return transformedPoint;
 }
+
 /**
  * Master Generator Function
  */
 export function generateTessellation(config: EngineConfig): string {
-  console.log("🏭 [Core Engine] generateTessellation invoked. Base Motif targeting:", config.baseMotif, config.symmetryGroup, config.latticeType);
-
   const totalBranches = config.layout.totalBranches;
   const cellHeight = (Math.PI * 2) / totalBranches;
 
@@ -243,6 +232,7 @@ export function generateTessellation(config: EngineConfig): string {
   }
 
   const rawPathObjects: PathObject[] = [];
+  const debugTextElements: string[] = [];
 
   for (let ring = 0; ring < config.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
@@ -263,85 +253,88 @@ export function generateTessellation(config: EngineConfig): string {
         const orientations = config.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
 
         orientations.forEach((orientation) => {
+          const r = cellHeight / 2;
+          const h = r * (Math.sqrt(3) / 2);
+          const localCenter = { x: 0, y: r }; // y is exactly cellHeight / 2
+
           const transformedPoints = componentPoints.map(p => {
-            // Create a local coordinate space clone for manipulation
+            // Check for p3 hexagonal mode first
+            if (config.symmetryGroup === 'p3' && config.latticeType === 'hexagonal') {
+              // 1. Calculate continuous rotational wave progression
+              const baseAngle = (360 - (120 * ring)) % 360;
+              const rotationAngle = branch % 2 === 1 ? (baseAngle + 120) % 360 : baseAngle;
+
+              const rotated = rotateAroundPivot(p, localCenter, rotationAngle);
+
+              // 2. Point-Topped Grid Spacing
+              let flatX = -ring * (2 * h);
+              const flatY = branch * (1.5 * r);
+              if (branch % 2 === 1) {
+                flatX -= h;
+              }
+
+              return { x: rotated.x + flatX, y: rotated.y + flatY };
+            }
+
+            // --- Fallback Pipeline for All Other Base Engine Modes ---
             let localX = p.x;
             let localY = p.y;
 
-            // If we are on a triangular lattice, shape the base motif bounding envelope
             if (config.latticeType === 'triangular') {
-              // Squish the horizontal axis to match equilateral proportions (sqrt(3)/2)
               localX *= Math.sqrt(3) / 2;
-
               // If it's the second orientation, flip/invert the tile to plug the mesh gap
               if (orientation === 'inverted') {
                 localX = ((Math.sqrt(3) / 2) - localX);
                 localY = (cellHeight - localY);
-
                 // 1. Adjust the localized radial spacing gap between triangle pairs
                 localX += (ringDistanceMultiplier - 1.0) * (Math.sqrt(3) / 2) * cellHeight;
 
                 // 2. Adjust the localized circumferential phase offset between triangle pairs
                 localY += (phaseOffset - 0.5) * cellHeight;
               }
-
               // Apply a systematic offset to alternating rows so they slot into place like bricks
               if (ring % 2 === 1) {
                 localY += cellHeight * 0.5;
               }
             }
 
-            // If we are on a hexagonal lattice, implement an alternating branch grid layout
             if (config.latticeType === 'hexagonal') {
-              // Compress the circumferential axis to pack flat side-edges together
               localY *= Math.sqrt(3) / 2;
-
               // Scale the inner motif dimensions to leave padding gaps between neighbors
               const tileScaleFactor = 1.0 / ringDistanceMultiplier;
               localX *= tileScaleFactor;
               localY *= tileScaleFactor;
-
               // Accumulate twist linearly across concentric ring layers
               localY += ring * (phaseOffset - 1.0) * cellHeight;
             }
 
-            // Pass new local points through the structural symmetry engine
             const shearedPoint: Point2D = {
               x: localX + (localY / cellHeight) * shearSlope,
               y: localY
             };
 
-            let gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope, config.symmetryGroup);
+            let gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
 
             // Dynamically adjust ring-to-ring depth
             if (config.latticeType === 'triangular') {
-              const absoluteRingTranslationX = -ring * 1.0; // The 1.0 tileWidth used inside the symmetry engine
+              const absoluteRingTranslationX = -ring * 1.0;
               gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * (Math.sqrt(3) / 2) * ringIntersection);
             }
 
             if (config.latticeType === 'hexagonal') {
               const absoluteRingTranslationX = -ring * 1.0;
-              // Step inward matching the 1.5x flat-packing cell thickness
               gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);
             }
 
+            // --- Unified Conformal Warp Processing ---
             let finalPoint: Point2D;
             switch (config.variantMode) {
-              case "none":
-                return gridSpace;
-              case "logarithmic":
-                finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale);
-                break;
-              case "single-pole":
-                finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier);
-                break;
-              case "multi-pole":
-                finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier);
-                break;
+              case "none": return gridSpace;
+              case "logarithmic": finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale); break;
+              case "single-pole": finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier); break;
+              case "multi-pole": finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier); break;
               case "loxodromic":
-              default:
-                finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.twistFactor, config.layout.decayMultiplier);
-                break;
+              default: finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.twistFactor, config.layout.decayMultiplier); break;
             }
 
             return finalPoint;
@@ -352,8 +345,29 @@ export function generateTessellation(config: EngineConfig): string {
           rawPathObjects.push({
             d: segmentStr,
             compIndex: compIndex,
-            color: currentFill
+            color: currentFill,
+            ring: ring,
+            branch: branch
           });
+
+          // Generate text labels for each shape
+          if (compIndex === 0 && transformedPoints.length > 0) {
+            let labelX = 0;
+            let labelY = 0;
+            const vertexCount = transformedPoints.length - 1;
+
+            for (let i = 0; i < vertexCount; i++) {
+              labelX += transformedPoints[i]!.x;
+              labelY += transformedPoints[i]!.y;
+            }
+            labelX /= vertexCount;
+            labelY /= vertexCount;
+
+            // Save the raw text element using local tile space coordinates
+            debugTextElements.push(
+              `<text x="${labelX.toFixed(2)}" y="${labelY.toFixed(2)}">R${ring} B${branch}</text>`
+            );
+          }
         });
       });
     }
@@ -363,6 +377,7 @@ export function generateTessellation(config: EngineConfig): string {
 
   const groupedPaths: Record<string, string[]> = {};
   const detailPaths: string[] = [];
+  const finalDebugTextElements: string[] = [];
 
   normalizedPaths.forEach(path => {
     if (path.compIndex === 0) {
@@ -373,29 +388,54 @@ export function generateTessellation(config: EngineConfig): string {
         groupedPaths[layerKey] = [];
       }
       groupedPaths[layerKey]!.push(`<path fill-rule="evenodd" clip-rule="evenodd" d="${path.d}" />`);
+
+      // TODO: add debug to config and frontend
+      if ((config.devMode ?? true) && path.ring !== undefined && path.branch !== undefined && path.d) {
+        const coords = path.d.match(/[-.\d]+/g);
+        if (coords && coords.length >= 4) {
+          let sumX = 0;
+          let sumY = 0;
+          let count = 0;
+
+          for (let i = 0; i < coords.length - 1; i += 2) {
+            const xVal = parseFloat(coords[i]!);
+            const yVal = parseFloat(coords[i+1]!);
+            if (!isNaN(xVal) && !isNaN(yVal)) {
+              sumX += xVal;
+              sumY += yVal;
+              count++;
+            }
+          }
+
+          if (count > 0) {
+            finalDebugTextElements.push(
+              `<text x="${(sumX / count).toFixed(2)}" y="${(sumY / count).toFixed(2)}" text-anchor="middle" dominant-baseline="central">R${path.ring}B${path.branch}</text>`
+            );
+          }
+        }
+      }
     } else {
       // Inject explicit stroke vector parameters straight onto the element tag
       detailPaths.push(`<path fill="none" stroke="#000000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" d="${path.d}" />`);
-
     }
   });
 
   let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
-  svgContent += `<svg\n  width="${config.canvas.width}"\n  height="${config.canvas.height}"\n  viewBox="${config.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://www.w3.org/2000/svg">\n`;
+  svgContent += `<svg\n  width="${config.canvas.width}"\n  height="${config.canvas.height}"\n  viewBox="${config.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://www.w3.org/2000/svg"\n xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd">\n`;
   svgContent += calibrationSvg;
 
   Object.keys(groupedPaths).forEach((layerKey) => {
     const structuralLayerGroup = groupedPaths[layerKey];
     if (!structuralLayerGroup || structuralLayerGroup.length === 0) return;
 
-    const [indexStr, cleanId] = layerKey.split('_')
+    const [indexStr, cleanId] = layerKey.split('_');
     const index = parseInt(indexStr!, 10);
     const colorHex = `#${cleanId}`;
 
     // Extract matching open line decorative details (compIndex > 0) that belong to the current color
     const matchingDetails = normalizedPaths
       .filter(path => path.compIndex > 0 && activeColors.indexOf(path.color) === index)
-      .map(path => `<path d="${path.d}" />`)
+      .map(path => `<path d="${path.d}" />`);
 
     svgContent += `  <g id="color_${index + 1}_${cleanId}" fill="${colorHex}" stroke="${config.applyStroke ? '#000000' : 'none'}">\n`;
     svgContent += structuralLayerGroup.join('');
@@ -408,6 +448,13 @@ export function generateTessellation(config: EngineConfig): string {
       svgContent += `  </g>\n`;
     }
   });
+
+  // Overlay for debug text
+  if ((config.devMode ?? true) && finalDebugTextElements.length > 0) {
+    svgContent += `  <g id="lattice_debug_labels" fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" pointer-events="none" sodipodi:insensitive="true">\n`;
+    svgContent += `    ${finalDebugTextElements.join('\n    ')}\n`;
+    svgContent += `  </g>\n`;
+  }
 
   svgContent += `</svg>\n`;
   return svgContent;

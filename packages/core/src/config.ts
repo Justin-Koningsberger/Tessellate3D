@@ -29,7 +29,7 @@ export const CONFIG: EngineConfig = {
     "#e62b12", // Layer 1: Red
     "#f5c107", // Layer 2: Gold
     "#2aa10d", // Layer 3: Green
-    "#000000", // Layer 4: Black
+    "#919191", // Layer 4: Grey
     "#0000FF", // Layer 5: Blue
     "#F97316", // layer 6: Orange
     "#B6FFBB", // layer 7: Mint

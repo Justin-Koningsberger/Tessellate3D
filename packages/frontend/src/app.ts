@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     symmetryGroup: document.getElementById('symmetryGroup') as HTMLSelectElement,
     autoAlignContainer: document.getElementById('auto-align-container') as HTMLLabelElement,
     useAutoAlignment: document.getElementById('useAutoAlignment') as HTMLInputElement,
-    useInverseDebugging: document.getElementById('useInverseDebugging') as HTMLInputElement,
+    showDebugLabels: document.getElementById('showDebugLabels') as HTMLInputElement,
     totalBranches: document.getElementById('totalBranches') as HTMLInputElement,
     totalBranchesVal: document.getElementById('totalBranches-val') as HTMLSpanElement,
     maxRings: document.getElementById('maxRings') as HTMLInputElement,
@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
     currentConfig.symmetryGroup = els.symmetryGroup.value as EngineConfig['symmetryGroup'];
     currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
-    currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
+    currentConfig.showDebugLabels = els.showDebugLabels.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
 
     currentConfig.layout = {

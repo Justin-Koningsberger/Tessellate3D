@@ -1,8 +1,6 @@
 import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
-import { inverseWarp } from './transforms/inverse.ts';
-//TODO: Remove inverseWarp, useInverseDebugging mentions and all inverse transforms
 import { packLocalMotifSpace } from './transforms/latticePacking.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
 import { rotateAroundPivot } from './tileSymmetry.ts'
@@ -16,7 +14,8 @@ export interface PathObject {
   d: string;
   compIndex: number;
   color: string;
-  debug?: { ring: number, branch: number, x: number, y: number };
+  ring?: number;
+  branch?: number;
 }
 
 export interface EngineConfig {
@@ -26,7 +25,7 @@ export interface EngineConfig {
   symmetryGroup: 'p1' | 'p3';
   motifScaleFactor: number;
   useAutoAlignment: boolean;
-  useInverseDebugging: boolean;
+  showDebugLabels: boolean;
   layout: {
     totalBranches: number;
     maxRings: number;
@@ -225,11 +224,12 @@ export function generateTessellation(config: EngineConfig): string {
     subdividePath(comp, adjustedConfig, compIndex, activeWarpProjection, true)
   );
 
-  let calibrationSvg = "";
-  if (config.useInverseDebugging) {
-    calibrationSvg += `  <!-- INVERSE CALIBRATION MESH LINES -->\n`;
-    calibrationSvg += `  <circle cx="0" cy="0" r="${config.layout.globalScale}" fill="none" stroke="#ccc" stroke-dasharray="5,5" stroke-width="2" />\n`;
-  }
+  const continuousStagger = config.layout.staggerFactor ?? 0.0;
+  const shearSlope = (1.0 / totalBranches) * continuousStagger;
+
+  const r = cellHeight / 2;
+  const h = r * (Math.sqrt(3) / 2);
+  const localCenter = { x: 0, y: r }; // y is exactly cellHeight / 2
 
   const rawPathObjects: PathObject[] = [];
   const debugTextElements: string[] = [];
@@ -245,18 +245,11 @@ export function generateTessellation(config: EngineConfig): string {
 
       const currentFill = activeColors[colorIndex] || "#000000";
 
-      const continuousStagger = config.layout.staggerFactor ?? 0.0;
-      const shearSlope = (1.0 / totalBranches) * continuousStagger;
-
       smoothComponents.forEach((componentPoints, compIndex) => {
         // Triangles require two orientations (upright and inverted) to fill a lattice slot
         const orientations = config.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
 
         orientations.forEach((orientation) => {
-          const r = cellHeight / 2;
-          const h = r * (Math.sqrt(3) / 2);
-          const localCenter = { x: 0, y: r }; // y is exactly cellHeight / 2
-
           const transformedPoints = componentPoints.map(p => {
             // Check for p3 hexagonal mode first
             if (config.symmetryGroup === 'p3' && config.latticeType === 'hexagonal') {
@@ -389,8 +382,7 @@ export function generateTessellation(config: EngineConfig): string {
       }
       groupedPaths[layerKey]!.push(`<path fill-rule="evenodd" clip-rule="evenodd" d="${path.d}" />`);
 
-      // TODO: add debug to config and frontend
-      if ((config.devMode ?? true) && path.ring !== undefined && path.branch !== undefined && path.d) {
+      if (config.showDebugLabels && path.compIndex === 0 && path.d) {
         const coords = path.d.match(/[-.\d]+/g);
         if (coords && coords.length >= 4) {
           let sumX = 0;
@@ -422,7 +414,6 @@ export function generateTessellation(config: EngineConfig): string {
 
   let svgContent = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n`;
   svgContent += `<svg\n  width="${config.canvas.width}"\n  height="${config.canvas.height}"\n  viewBox="${config.canvas.viewBox}"\n  version="1.1"\n  xmlns="http://www.w3.org/2000/svg"\n xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd">\n`;
-  svgContent += calibrationSvg;
 
   Object.keys(groupedPaths).forEach((layerKey) => {
     const structuralLayerGroup = groupedPaths[layerKey];
@@ -450,7 +441,7 @@ export function generateTessellation(config: EngineConfig): string {
   });
 
   // Overlay for debug text
-  if ((config.devMode ?? true) && finalDebugTextElements.length > 0) {
+  if ((config.showDebugLabels ?? true) && finalDebugTextElements.length > 0) {
     svgContent += `  <g id="lattice_debug_labels" fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" pointer-events="none" sodipodi:insensitive="true">\n`;
     svgContent += `    ${finalDebugTextElements.join('\n    ')}\n`;
     svgContent += `  </g>\n`;

@@ -64,7 +64,7 @@ function evaluateVariantExtended(
     symmetryGroup: 'p1',
     motifScaleFactor: 1.0,
     useAutoAlignment: true,
-    useInverseDebugging: false,
+    showDebugLabels: false,
     colorPalette: [],
     canvas: { width: "100px", height: "100px", viewBox: "0 0 100 100" },
     layout: {

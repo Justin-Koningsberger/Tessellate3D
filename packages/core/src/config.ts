@@ -3,16 +3,17 @@ import type { EngineConfig } from './tessellationEngine.ts';
 export const CONFIG: EngineConfig = {
   variantMode: "loxodromic",
   baseMotif: "squarewave",
-  useInverseDebugging: false, // True enables absolute canvas tracking via inverse math
   latticeType: 'square',
+  symmetryGroup: 'p1',        // Default to standard translation symmetry
+  motifScaleFactor: 1.0,      // Default to fully interlocking size
   useAutoAlignment: true,
+  showDebugLabels: true,      // True enables absolute canvas tracking via inverse math
 
   // Grid and Symmetry Layout Configuration
   layout: {
     totalBranches: 4,         // Total spiral arms / structural symmetry axis
     maxRings: 6,              // Depth layers (How many rings wrap inward)
     globalScale: 180,         // Overall design magnification size
-    globalRotation: 0,        // Camera spin orientation angle (0 = base alignment)
     subdivisionLimit: 0.05,   // Precision length step for linear smoothing
     decayMultiplier: 0.35,    // Controls how fast tiles shrink as they descend inward. Set to 1.0 to close up the wide center hole completely!
     twistFactor: 0.45,        // With Loxodromic mode: 0.0 = straight rays (pure single-pole). Positive/Negative values introduce clockwise or counter-clockwise logarithmic nautilus twists.
@@ -28,7 +29,7 @@ export const CONFIG: EngineConfig = {
     "#e62b12", // Layer 1: Red
     "#f5c107", // Layer 2: Gold
     "#2aa10d", // Layer 3: Green
-    "#000000", // Layer 4: Black
+    "#919191", // Layer 4: Grey
     "#0000FF", // Layer 5: Blue
     "#F97316", // layer 6: Orange
     "#B6FFBB", // layer 7: Mint

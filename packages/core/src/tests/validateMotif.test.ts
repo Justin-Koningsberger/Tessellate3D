@@ -1,14 +1,23 @@
 import type { Point2D } from '../tessellationEngine.ts';
-import { baseMotifs } from '../baseMotifs.ts';
+import { baseMotifs, type MotifContext } from '../baseMotifs.ts';
 
 /**
  * Validates a single design motif configuration against physical tile matching limits.
  * Third-person narrative tracking ensures boundary synchronization constraints are met.
  */
-function validateMotif(name: string, func: (cellHeight: number) => Point2D[][] | Point2D[]): boolean {
+function validateMotif(name: string, func: (ctx: MotifContext) => Point2D[][] | Point2D[]): boolean {
   console.log(`Checking [${name}]...`);
-  const testHeight = 0.8; // Simulated cellHeight derived from the primary spiral calculation loops
-  const rawData = func(testHeight);
+  const simulatedBranches = 12;
+  const testHeight = (Math.PI * 2) / simulatedBranches; // Evaluates to ~0.5235
+
+  const mockCtx: MotifContext = {
+    cellHeight: testHeight,
+    symmetryGroup: 'p1',
+    latticeType: name.toLowerCase().includes('hex') ? 'hexagonal' : 'triangular'
+    // TODO: add a latticeType property metadata to the motifs themselves
+  };
+
+  const rawData = func(mockCtx);
 
   // Safely extract the outer boundary definition from potential multi-layer components
   const points = Array.isArray(rawData[0])

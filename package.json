@@ -17,7 +17,8 @@
     "test:fuzz": "npm run test:fuzz -w @tessellate3d/core",
     "test:zip": "npm run test:zip -w @tessellate3d/frontend",
     "test:slicer": "npm run test:slicer -w @tessellate3d/slicer-service",
-    "test": "npm run typecheck && npm run test:motifs -w @tessellate3d/core && npm run test:transforms -w @tessellate3d/core && npm run test:fuzz -w @tessellate3d/core && npm run test:zip -w @tessellate3d/frontend && npm run test:slicer -w @tessellate3d/slicer-service",
+    "test:symmetry": "npm run test:symmetry -w @tessellate3d/core",
+    "test": "npm run typecheck && npm run test:motifs -w @tessellate3d/core && npm run test:transforms -w @tessellate3d/core && npm run test:symmetry -w @tessellate3d/core && npm run test:fuzz -w @tessellate3d/core && npm run test:zip -w @tessellate3d/frontend && npm run test:slicer -w @tessellate3d/slicer-service",
     "typecheck": "tsc --build",
     "preview": "npm run preview -w @tessellate3d/frontend",
     "postinstall": "echo \"\n============================================================\n[SECURITY REMINDER] Ignore transitive esbuild/nanoid audit warnings.\nDO NOT RUN 'npm audit fix --force' or 'npm audit fix'.\n============================================================\n\""

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { CONFIG } from './config.ts';
-import { generateEscherTessellation } from './tessellationEngine.ts';
+import { generateTessellation } from './tessellationEngine.ts';
 
 /**
  * Executes a local compilation pipeline to evaluate lattice outputs manually.
@@ -14,7 +14,7 @@ function runLocalPipeline(): void {
 
   try {
     // Generate the complete vector map payload by passing the configuration block down explicitly
-    const outputSvg = generateEscherTessellation(CONFIG);
+    const outputSvg = generateTessellation(CONFIG);
 
     // Commit the resulting SVG buffer to the root-level folder for active analysis
     const targetPath = path.join(process.cwd(), 'escher_output.svg');

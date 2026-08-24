@@ -1,6 +1,12 @@
 import { createUncompressedZip } from './zipUtils.ts';
+import { customWorkspace } from './tileWorkspace.ts';
 import { CONFIG } from '@tessellate3d/core/src/config.ts';
-import { generateEscherTessellation } from '@tessellate3d/core/src/tessellationEngine.ts';
+import { generateTessellation, type Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
+
+import {
+  liveEditorState,
+  updateLiveEditorState
+} from '@tessellate3d/core/src/tileSymmetry.ts';
 
 import type { EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 
@@ -32,15 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
     variantMode: document.getElementById('variantMode') as HTMLSelectElement,
     baseMotif: document.getElementById('baseMotif') as HTMLSelectElement,
     latticeType: document.getElementById('latticeType') as HTMLSelectElement,
+    symmetryGroup: document.getElementById('symmetryGroup') as HTMLSelectElement,
     autoAlignContainer: document.getElementById('auto-align-container') as HTMLLabelElement,
     useAutoAlignment: document.getElementById('useAutoAlignment') as HTMLInputElement,
-    useInverseDebugging: document.getElementById('useInverseDebugging') as HTMLInputElement,
+    showDebugLabels: document.getElementById('showDebugLabels') as HTMLInputElement,
     totalBranches: document.getElementById('totalBranches') as HTMLInputElement,
     totalBranchesVal: document.getElementById('totalBranches-val') as HTMLSpanElement,
     maxRings: document.getElementById('maxRings') as HTMLInputElement,
     maxRingsVal: document.getElementById('maxRings-val') as HTMLSpanElement,
-    globalRotation: document.getElementById('globalRotation') as HTMLInputElement,
-    globalRotationVal: document.getElementById('globalRotation-val') as HTMLSpanElement,
     decayMultiplier: document.getElementById('decayMultiplier') as HTMLInputElement,
     decayMultiplierVal: document.getElementById('decayMultiplier-val') as HTMLSpanElement,
     twistFactor: document.getElementById('twistFactor') as HTMLInputElement,
@@ -71,7 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // EXPORT BUTTON HOOKS
     btnDownloadMaster: document.getElementById('btn-download-master') as HTMLButtonElement,
     btnDownloadSeparatedColors: document.getElementById('btn-download-separated') as HTMLButtonElement,
-    btnDownload3dStl: document.getElementById('btn-download-3d-stl') as HTMLButtonElement
+    btnDownload3dStl: document.getElementById('btn-download-3d-stl') as HTMLButtonElement,
+    btnOpenCustom: document.getElementById('btn-open-custom') as HTMLButtonElement,
+    customModal: document.getElementById('custom-modal') as HTMLDivElement,
+    customCanvas: document.getElementById('custom-canvas') as HTMLCanvasElement,
+    btnCloseCustomSave: document.getElementById('btn-close-custom-save') as HTMLButtonElement,
+    btnClosecustomCancel: document.getElementById('btn-close-custom-cancel') as HTMLButtonElement
   };
 
   /**
@@ -81,15 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.variantMode = els.variantMode.value as EngineConfig['variantMode'];
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
     currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
+    currentConfig.symmetryGroup = els.symmetryGroup.value as EngineConfig['symmetryGroup'];
     currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
-    currentConfig.useInverseDebugging = els.useInverseDebugging.checked;
+    currentConfig.showDebugLabels = els.showDebugLabels.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
 
     currentConfig.layout = {
       totalBranches: parseInt(els.totalBranches.value, 10),
       maxRings: parseInt(els.maxRings.value, 10),
       globalScale: 1.0, // Hardcoded engine baseline value to satisfy strict configuration types
-      globalRotation: parseFloat(els.globalRotation.value),
       subdivisionLimit: 0.05, // Hardcoded engine baseline value to satisfy strict configuration types
       decayMultiplier: parseFloat(els.decayMultiplier.value),
       twistFactor: parseFloat(els.twistFactor.value),
@@ -102,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update real-time label values next to sliders
     els.totalBranchesVal.textContent = currentConfig.layout.totalBranches.toFixed(0);
     els.maxRingsVal.textContent = currentConfig.layout.maxRings.toFixed(0);
-    els.globalRotationVal.textContent = currentConfig.layout.globalRotation.toFixed(2);
     els.twistFactorVal.textContent = currentConfig.layout.twistFactor.toFixed(2);
     els.staggerFactorVal.textContent = currentConfig.layout.staggerFactor.toFixed(1);
     els.decayMultiplierVal.textContent = currentConfig.layout.decayMultiplier.toFixed(2);
@@ -133,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
         els.staggerContainer.style.display = 'flex';
       } else {
         currentConfig.layout.staggerFactor = 0.0;
-        // Remove this if users want the previous stagger to be re-applied when switching back to a supported motif
         els.staggerFactor.value = "0.0";
         els.staggerContainer.style.display =  'none';
       }
@@ -147,16 +155,84 @@ document.addEventListener('DOMContentLoaded', () => {
       els.intersectionContainer.style.display = showSliders ? 'flex' : 'none';
     }
 
+    // TELEMETRY STACK LOGGING
+    console.log("⚙️ [Pipeline] Preparing math execution pass. Final scraped config parameters:", {
+      variantMode: currentConfig.variantMode,
+      baseMotif: currentConfig.baseMotif,
+      symmetryGroup: currentConfig.symmetryGroup,
+      latticeType: currentConfig.latticeType
+    });
+
     try {
+      console.log("⚙️ [Pipeline] Invoking core generateTessellation()...");
       // Execute pure transformation pass natively in-browser
-      const svgString = generateEscherTessellation(currentConfig);
+      const svgString = generateTessellation(currentConfig);
 
       cachedActiveSvgString = svgString;
 
-      els.canvasTarget.innerHTML = svgString;
+      if (els.canvasTarget) {
+        els.canvasTarget.innerHTML = svgString;
+        console.log(`🚀 [Pipeline] Render successful! Injected ${svgString.length} SVG characters into DOM.`);
+      } else {
+        console.error("❌ [Pipeline] DOM target 'els.canvasTarget' is completely missing!");
+      }
     } catch (err) {
-      console.error("Engine generation fault intercepted: ", err);
+      console.error("❌❌ [Pipeline CRASH] Engine generation fault intercepted: ", err);
     }
+  }
+
+  /**
+   * Initializes the interactive custom Symmetry Editor modal, canvas listeners,
+   * and binds the output results back to the master production loop.
+   */
+  function initializeCustomEditor(): void {
+    let customWorkspaceInstance: customWorkspace | null = null;
+
+    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.btnCloseCustomSave || !els.btnClosecustomCancel) {
+      return;
+    }
+
+    els.btnOpenCustom.addEventListener('click', () => {
+      // Reveal modal backdrop window overlay layer
+      els.customModal.style.display = 'flex';
+
+      // Instantiate or redraw the native 2D workspace context state
+      if (!customWorkspaceInstance) {
+        customWorkspaceInstance = new customWorkspace(els.customCanvas, 2.0);
+      } else {
+        customWorkspaceInstance.render();
+      }
+    });
+
+    els.btnCloseCustomSave.addEventListener('click', () => {
+      els.customModal.style.display = 'none';
+
+      currentConfig.baseMotif = "customSymmetricHexagon";
+      currentConfig.symmetryGroup = "p3";
+
+      if (els.baseMotif) {
+        els.baseMotif.value = "customSymmetricHexagon";
+      }
+
+      console.log("🔍 [UI Sync] Configuration mutated: baseMotif='customSymmetricHexagon', symmetryGroup='p3'");
+
+      if (liveEditorState) {
+        console.log("🔍 [UI Sync] liveEditorState exists. Master edge lengths:", {
+          edgeA: liveEditorState.edgeA.length,
+          edgeB: liveEditorState.edgeB.length,
+          edgeC: liveEditorState.edgeC.length
+        });
+      } else {
+        console.warn("⚠️ [UI Sync] liveEditorState is null or undefined prior to pipeline compilation!");
+      }
+
+      console.log("🚀 [UI Sync] Invoking updateEnginePipeline()...");
+      updateEnginePipeline();
+    });
+
+    els.btnClosecustomCancel.addEventListener('click', () => {
+      els.customModal.style.display = 'none';
+    });
   }
 
   /**
@@ -277,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.latticeType.value = 'square'
           els.totalBranches.value = '5';
           els.maxRings.value = '6';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '0.35';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
@@ -292,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.latticeType.value = 'square'
           els.totalBranches.value = '4';
           els.maxRings.value = '16';
-          els.globalRotation.value = '0';
           els.decayMultiplier.value = '0.3';
           els.twistFactor.value = '1.5';
           els.staggerFactor.value = '3.0';
@@ -307,7 +381,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.latticeType.value = 'square'
           els.totalBranches.value = '8';
           els.maxRings.value = '5';
-          els.globalRotation.value = '1.57';
           els.decayMultiplier.value = '0.40';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '1.2';
@@ -323,7 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '6';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '0.00';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
@@ -339,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '6';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.00';
           els.twistFactor.value = '-0.67';
           els.staggerFactor.value = '0.0';
@@ -355,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '20';
           els.maxRings.value = '7';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.58';
           els.twistFactor.value = '0.00';
           els.staggerFactor.value = '0.0';
@@ -371,7 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '20';
           els.maxRings.value = '20';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.05';
           els.twistFactor.value = '0.0';
           els.staggerFactor.value = '0.0';
@@ -387,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '10';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.25';
           els.twistFactor.value = '-0.67';
           els.staggerFactor.value = '0.0';
@@ -403,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
           els.useAutoAlignment.checked = true;
           els.totalBranches.value = '10';
           els.maxRings.value = '14';
-          els.globalRotation.value = '0.00';
           els.decayMultiplier.value = '1.00';
           els.twistFactor.value = '0.0';
           els.staggerFactor.value = '0.0';
@@ -487,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const colorGroups = container.querySelectorAll('g[id^="color_"]');
-      const detailGroup = container.querySelector('g[id="escher_internal_details"]');
+      const detailGroup = container.querySelector('g[id="custom_internal_details"]');
 
       if (colorGroups.length === 0) {
         alert("No printable color groups discovered within the vector memory stream.");
@@ -630,7 +697,8 @@ document.addEventListener('DOMContentLoaded', () => {
     els.debuggingGridRow.style.display = 'none';
   }
 
-
+  initializeCustomEditor();
   renderPaletteUI();
+
   updateEnginePipeline();
 });

@@ -138,9 +138,10 @@
       <label>
         <span>Transform Variant Mode<span class="info-icon" title="Changes the layout style (spinning into a spiral or twisting around a core).">ⓘ</span></span>
         <select id="variantMode">
-          <option value="logarithmic" selected>Logarithmic Spiral</option>
+          <option value="none">None</option>
+          <option value="logarithmic">Logarithmic Spiral</option>
           <option value="loxodromic">Loxodromic Twist</option>
-          <option value="single-pole">Single-Pole Decay</option>
+          <option value="single-pole" selected>Single-Pole Decay</option>
           <option value="multi-pole">Multi-Pole Hyperbolic</option>
         </select>
       </label>
@@ -148,12 +149,13 @@
       <label>
         <span>Base Motif Geometry<span class="info-icon" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span></span>
         <select id="baseMotif">
+          <option value="customSymmetricHexagon" selected>Custom Hexagon</option>
           <option value="square">Square</option>
           <option value="triangle">Triangle</option>
           <option value="hexagon">Hexagon</option>
           <option value="detailedSquare">Detailed Square</option>
           <option value="detailedTriangle">Detailed Triangle</option>
-          <option value="detailedHexagon" selected>Detailed Hexagon</option>
+          <option value="detailedHexagon">Detailed Hexagon</option>
           <option value="squarePuzzle">Square Puzzle Piece</option>
           <option value="hexPuzzle">Hexagonal Puzzle Piece</option>
           <option value="chevron">Chevron (square based)</option>
@@ -171,11 +173,22 @@
         </select>
       </label>
 
-      <!-- Only used locally, for debugging/testing -->
-      <label class="row" id="debugging-grid-row">
-        <input type="checkbox" id="useInverseDebugging" />
-        <span>Enable Inverse Grid Lines</span>
+      <label>
+        <span>Wallpaper Symmetry Group</span>
+        <select id="symmetryGroup">
+          <option value="p1">p1 (Linear Translation)</option>
+          <option value="p3" selected>p3 (3-Fold Rotations)</option>
+        </select>
       </label>
+
+      <label class="row" id="debugging-grid-row">
+        <input type="checkbox" id="showDebugLabels" />
+        <span>Show branch and ring labels</span>
+      </label>
+
+      <button id="btn-open-custom" class="btn-preset" style="background: #4a90e2; color: #fff; margin-top: 5px; margin-bottom: 15px;" type="button">
+        🎨 Design/Update Custom Motif
+      </button>
       <hr />
 
       <div>
@@ -201,8 +214,8 @@
       </label>
 
       <label>
-        <span>Symmetry Arms / Branches: <span id="totalBranches-val">10</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
-        <input type="range" id="totalBranches" min="2" max="30" value="10" />
+        <span>Symmetry Arms / Branches: <span id="totalBranches-val">6</span><span class="info-icon" title="Controls how many branches spin out from the center.">ⓘ</span></span>
+        <input type="range" id="totalBranches" min="2" max="30" value="6" />
       </label>
 
       <label>
@@ -210,11 +223,11 @@
         <input type="range" id="maxRings" min="1" max="30" value="6" />
       </label>
 
-      <label>
-        <!-- 2*Pi Radians tracks a complete 360-degree circular coordinate rotation -->
+    <!-- TODO: add rotation via css -->
+     <!--  <label>
         <span>Camera Rotation: <span id="globalRotation-val">0</span> rad<span class="info-icon" title="Spins the entire pattern around the center.">ⓘ</span></span>
         <input type="range" id="globalRotation" min="0" max="6.28" step="0.01" value="0" />
-      </label>
+      </label> -->
 
       <label id="decayContainer">
         <span>Inward Scale Decay Multiplier: <span id="decayMultiplier-val">0.35</span><span class="info-icon" title="Controls how quickly shapes shrink as they spiral toward the center.">ⓘ</span></span>
@@ -252,7 +265,7 @@
       </label>
 
       <label class="row">
-        <input type="checkbox" id="applyStroke" />
+        <input type="checkbox" id="applyStroke" checked />
         <span>Apply stroke<span class="info-icon" title="Adds a black outline around each tile shape to define its borders and visually separate the colors.">ⓘ</span></span>
       </label>
       <!-- The dynamic color item list slots will be mounted inside this div -->
@@ -285,5 +298,20 @@
   </main>
 
   <script type="module" src="/src/app.ts"></script>
+
+  <!-- INJECT MODAL CREATE CUSTOM MOTIF POPUP -->
+  <div id="custom-modal" class="custom-modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #222; border: 1px solid #444; border-radius: 8px; padding: 20px; text-align: center; max-width: 90vw;">
+      <h3 style="color: #fff; margin-top: 0;">custom Symmetry Node Editor</h3>
+      <p style="color: #aaa; font-size: 13px; margin-bottom: 15px;">Grab and drag the red vertices to distort the primary edges.</p>
+
+      <canvas id="custom-canvas" width="500" height="500" style="background: #111; border: 1px solid #333; border-radius: 4px; display: block; margin: 0 auto; max-width: 100%;"></canvas>
+
+      <div style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+        <button id="btn-close-custom-save" style="background: #28a745; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" type="button">Apply to Spiral Matrix</button>
+        <button id="btn-close-custom-cancel" style="background: #dc3545; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

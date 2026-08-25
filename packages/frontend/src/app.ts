@@ -248,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.customModal.style.display = 'none';
     });
 
+    // TODO: add confirm close dialog
     if (els.btnClosecustomReset) {
       els.btnClosecustomReset.addEventListener('click', () => {
         if (customWorkspaceInstance) {

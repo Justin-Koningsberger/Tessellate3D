@@ -19,7 +19,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic" | "none";
-  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon";
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon"| "lizard";
   latticeType: 'square' | 'triangular' | 'hexagonal';
   symmetryGroup: 'p1' | 'p3';
   motifScaleFactor: number;
@@ -158,6 +158,7 @@ export function generateTessellation(config: EngineConfig): string {
     symmetryGroup: config.symmetryGroup ?? 'p1',
     latticeType: config.latticeType
   }) || [];
+
   const motifComponents = Array.isArray(rawMotifData[0])
     ? (rawMotifData as Point2D[][])
     : [rawMotifData as Point2D[]];

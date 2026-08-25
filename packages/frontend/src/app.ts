@@ -81,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
     customModal: document.getElementById('custom-modal') as HTMLDivElement,
     customCanvas: document.getElementById('custom-canvas') as HTMLCanvasElement,
     btnCloseCustomSave: document.getElementById('btn-close-custom-save') as HTMLButtonElement,
-    btnClosecustomCancel: document.getElementById('btn-close-custom-cancel') as HTMLButtonElement
+    btnClosecustomCancel: document.getElementById('btn-close-custom-cancel') as HTMLButtonElement,
+    btnClosecustomReset: document.getElementById('btn-close-custom-reset') as HTMLButtonElement
   };
 
   /**
@@ -188,6 +189,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function initializeCustomEditor(): void {
     let customWorkspaceInstance: customWorkspace | null = null;
 
+    // Pre-populate global editor memory from localStorage on page load.
+    try {
+      const savedState = localStorage.getItem('tessellate3d_custom_motif');
+      if (savedState) {
+        const parsed = JSON.parse(savedState);
+        updateLiveEditorState(parsed);
+        console.log("🚀 [Lifecycle Sync] Custom motif state successfully loaded from cache on startup.");
+      }
+    } catch (err) {
+      console.warn("⚠️ [Lifecycle Sync] Failed loading startup layout cache:", err);
+    }
+
+
     if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.btnCloseCustomSave || !els.btnClosecustomCancel) {
       return;
     }
@@ -233,6 +247,14 @@ document.addEventListener('DOMContentLoaded', () => {
     els.btnClosecustomCancel.addEventListener('click', () => {
       els.customModal.style.display = 'none';
     });
+
+    if (els.btnClosecustomReset) {
+      els.btnClosecustomReset.addEventListener('click', () => {
+        if (customWorkspaceInstance) {
+          customWorkspaceInstance.resetToDefaultLattice(2.0);
+        }
+      });
+    }
   }
 
   /**

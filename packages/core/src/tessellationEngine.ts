@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
-import { packLocalMotifSpace } from './transforms/latticePacking.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
 import { rotateAroundPivot } from './tileSymmetry.ts'
 

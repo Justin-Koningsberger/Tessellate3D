@@ -15,6 +15,15 @@ export class CanvasProjection {
   }
 
   /**
+   * Updates base width, height, and recalculates the pixel scale ratio dynamically
+   */
+  public updateDimensions(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    this.scale = Math.min(width, height) / 3.0;
+  }
+
+  /**
    * Translates an HTML5 Canvas screen coordinate (pixels) into a normalized vector point
    */
   public screenToVector(screenX: number, screenY: number): Point2D {

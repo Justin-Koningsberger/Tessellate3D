@@ -19,7 +19,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic" | "none";
-  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon"| "lizard";
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon" | "lizard" | "kochSnowflake";
   latticeType: 'square' | 'triangular' | 'hexagonal';
   symmetryGroup: 'p1' | 'p3';
   motifScaleFactor: number;

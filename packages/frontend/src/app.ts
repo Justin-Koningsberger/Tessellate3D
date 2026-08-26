@@ -80,9 +80,19 @@ document.addEventListener('DOMContentLoaded', () => {
     btnOpenCustom: document.getElementById('btn-open-custom') as HTMLButtonElement,
     customModal: document.getElementById('custom-modal') as HTMLDivElement,
     customCanvas: document.getElementById('custom-canvas') as HTMLCanvasElement,
-    btnCloseCustomSave: document.getElementById('btn-close-custom-save') as HTMLButtonElement,
-    btnClosecustomCancel: document.getElementById('btn-close-custom-cancel') as HTMLButtonElement,
-    btnClosecustomReset: document.getElementById('btn-close-custom-reset') as HTMLButtonElement
+    customModalContainer: document.getElementById('custom-modal-container') as HTMLDivElement,
+    viewCompact: document.getElementById('editor-view-compact') as HTMLDivElement,
+    viewMaximized: document.getElementById('editor-view-maximized') as HTMLDivElement,
+    mountCompact: document.getElementById('canvas-container-compact') as HTMLDivElement,
+    mountMaximized: document.getElementById('canvas-container-maximized') as HTMLDivElement,
+    btnMaxCompact: document.getElementById('btn-custom-maximize-compact') as HTMLButtonElement,
+    btnRestoreMax: document.getElementById('btn-custom-restore-maximized') as HTMLButtonElement,
+    btnSaveCompact: document.getElementById('btn-save-compact') as HTMLButtonElement,
+    btnSaveMax: document.getElementById('btn-save-maximized') as HTMLButtonElement,
+    btnCancelCompact: document.getElementById('btn-cancel-compact') as HTMLButtonElement,
+    btnCancelMax: document.getElementById('btn-cancel-maximized') as HTMLButtonElement,
+    btnResetCompact: document.getElementById('btn-reset-compact') as HTMLButtonElement,
+    btnResetMax: document.getElementById('btn-reset-maximized') as HTMLButtonElement,
   };
 
   /**
@@ -201,8 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn("⚠️ [Lifecycle Sync] Failed loading startup layout cache:", err);
     }
 
-
-    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.btnCloseCustomSave || !els.btnClosecustomCancel) {
+    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.customModalContainer) {
       return;
     }
 
@@ -210,15 +219,23 @@ document.addEventListener('DOMContentLoaded', () => {
       // Reveal modal backdrop window overlay layer
       els.customModal.style.display = 'flex';
 
+      // Ensure canvas is cleanly mounted into compact view anchor by default on open
+      if (els.mountCompact && els.customCanvas) {
+        els.mountCompact.appendChild(els.customCanvas);
+        els.customCanvas.style.position = "static";
+      }
+
       // Instantiate or redraw the native 2D workspace context state
       if (!customWorkspaceInstance) {
         customWorkspaceInstance = new customWorkspace(els.customCanvas, 2.0);
       } else {
+        customWorkspaceInstance.resizeWorkspace(500, 500);
         customWorkspaceInstance.render();
       }
     });
 
-    els.btnCloseCustomSave.addEventListener('click', () => {
+    // --- SHARED REUSABLE ACTIONS INTERCEPTORS MAP ---
+    const executeSave = () => {
       els.customModal.style.display = 'none';
 
       currentConfig.baseMotif = "customSymmetricHexagon";
@@ -242,21 +259,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
       console.log("🚀 [UI Sync] Invoking updateEnginePipeline()...");
       updateEnginePipeline();
-    });
+    };
 
-    els.btnClosecustomCancel.addEventListener('click', () => {
+    const executeCancel = () => {
       els.customModal.style.display = 'none';
-    });
+    };
 
-    // TODO: add confirm close dialog
-    if (els.btnClosecustomReset) {
-      els.btnClosecustomReset.addEventListener('click', () => {
-        if (customWorkspaceInstance) {
-          customWorkspaceInstance.resetToDefaultLattice(2.0);
-        }
-      });
-    }
+    const executeReset = () => {
+      if (!customWorkspaceInstance) return;
+      if (window.confirm("Are you sure you want to reset your geometry? This will completely clear all your custom points.")) {
+        customWorkspaceInstance.resetToDefaultLattice(2.0);
+      }
+    };
+
+    // Bind actions to buttons across both independent component views
+    if (els.btnSaveCompact) els.btnSaveCompact.addEventListener('click', executeSave);
+    if (els.btnSaveMax) els.btnSaveMax.addEventListener('click', executeSave);
+    if (els.btnCancelCompact) els.btnCancelCompact.addEventListener('click', executeCancel);
+    if (els.btnCancelMax) els.btnCancelMax.addEventListener('click', executeCancel);
+    if (els.btnResetCompact) els.btnResetCompact.addEventListener('click', executeReset);
+    if (els.btnResetMax) els.btnResetMax.addEventListener('click', executeReset);
+
+    // --- TOGGLE HANDLERS (DYNAMIC CANVAS PORTING LAYER) ---
+    const toggleLayoutMode = (toMaximized: boolean) => {
+      if (!customWorkspaceInstance || !els.customModalContainer || !els.customCanvas) return;
+
+      els.customModalContainer.classList.toggle('maximized-mode-active', toMaximized);
+
+      if (toMaximized) {
+        if (els.mountMaximized) els.mountMaximized.appendChild(els.customCanvas);
+
+        const availableWidth = window.innerWidth - 320 - 80;
+        const availableHeight = window.innerHeight - 80;
+        customWorkspaceInstance.resizeWorkspace(availableWidth, availableHeight);
+      } else {
+        if (els.mountCompact) els.mountCompact.appendChild(els.customCanvas);
+
+        customWorkspaceInstance.resizeWorkspace(500, 500);
+      }
+    };
+
+
+    if (els.btnMaxCompact) els.btnMaxCompact.addEventListener('click', () => toggleLayoutMode(true));
+    if (els.btnRestoreMax) els.btnRestoreMax.addEventListener('click', () => toggleLayoutMode(false));
   }
+
+  // TODO: Make the palette and later color options open in a model to save space in the settings
 
   /**
    * Dynamically renders color input swatches based on the active config array.

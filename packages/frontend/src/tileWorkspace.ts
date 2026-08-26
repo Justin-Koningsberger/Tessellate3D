@@ -232,6 +232,29 @@ export class customWorkspace {
 
     }
 
+    // --- PHASE 0: DRAW THE UN-DEFORMED BASE LATTICE REFERENCE GUIDES ---
+    const originalEdges = [
+      { start: this.state.v1, end: this.state.v2 }, // Base Edge A
+      { start: this.state.v2, end: this.state.v3 }, // Base Edge B
+      { start: this.state.v3, end: this.state.v4 }, // Base Twin B
+      { start: this.state.v4, end: this.state.v5 }, // Base Edge C
+      { start: this.state.v5, end: this.state.v6 }, // Base Twin C
+      { start: this.state.v6, end: this.state.v1 }  // Base Twin A
+    ];
+
+    this.ctx.save();
+    this.ctx.lineWidth = 1.5;
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.11)'; // Faint visual baseline anchor
+    originalEdges.forEach(edge => {
+      this.ctx.beginPath();
+      const startScreen = this.projection.vectorToScreen(edge.start);
+      const endScreen = this.projection.vectorToScreen(edge.end);
+      this.ctx.moveTo(startScreen.x, startScreen.y);
+      this.ctx.lineTo(endScreen.x, endScreen.y);
+      this.ctx.stroke();
+    });
+    this.ctx.restore();
+
     // 1. RENDER THE USER-INTERACTIVE EDGES
     const masterSequences = [
       [this.state.v1, ...this.state.edgeA, this.state.v2],
@@ -313,6 +336,17 @@ export class customWorkspace {
     } catch (err) {}
 
     this.initializeHexagonAnchors(cellHeight);
+    this.render();
+  }
+
+  /**
+   * Dynamically resizes the drawing layout bounds while enforcing strict 1:1 square aspect metrics
+   */
+  public resizeWorkspace(newWidth: number, newHeight: number): void {
+    const squareSize = Math.max(300, Math.min(newWidth, newHeight));
+    this.canvas.width = squareSize;
+    this.canvas.height = squareSize;
+    this.projection.updateDimensions(squareSize, squareSize);
     this.render();
   }
 }

@@ -4,7 +4,7 @@ This document outlines the architectural milestones, mathematical features, and 
 
 ---
 
-## 🏁 PHASE 1: Core Precision, Linear Framework & TypeScript Migration `[COMPLETE]`
+## 🏁 PHASE 1: Core Precision, Linear Framework & Interactive Workspace `[COMPLETE]`
 * **Strict NodeNext ES Module & Node 24 Architecture:** Migrated all core transformation modules, matrix loops, and layout engines into stateless, strongly typed TypeScript files (`.ts`) targeting modern ECMAScript specifications natively on the **Node.js v24** runtime.
 * **Horizontal Affine Shear Matrix:** Implemented dynamic transformation loops inside `tessellationEngine.ts` to ensure seamless alignment along structural symmetry axes.
 * **Binary Snap Validation:** Integrated strict `0.0` or `1.0` boundary enforcement filters in `applyWallpaperSymmetry` using explicit `EngineConfig` parameters to eliminate rounding drift.
@@ -12,29 +12,31 @@ This document outlines the architectural milestones, mathematical features, and 
 * **Pure Conformal Twin Mapping Matrices:** Fully synchronized and locked down the stateless mathematical forward/inverse equations (`single-pole` and `multi-pole`), completely isolating global rotation angles from interactive spatial multipliers.
 * **Decoupled Automated QA Harness:** Re-engineered verification scripts into an isolated testing suite (`validateMotif.test.ts`, `validateTransforms.test.ts`, `fuzzEngine.test.ts`, `zipUtils.test.ts`).
 * **Multi-Component Layering & Color Linking:** Fully resolved internal detail extraction bugs. The system now parses custom element sub-paths natively, separating closed master interlocking structural boundaries (`compIndex === 0`) from open decorative gray stroke segments (`compIndex > 0`) with complete namespace validation.
- **Warped-Space Adaptive Subdivision Engine:** Upgraded `subdividePath` to dynamically sample post-transformation distances. It auto-scales resolution limit thresholds using the active `decayMultiplier`, decreasing SVG file size (the hero svg in /assets went from 99kb down to 69kb) while completely sealing sub-pixel fractures.
+* **Warped-Space Adaptive Subdivision Engine:** Upgraded `subdividePath` to dynamically sample post-transformation distances. It auto-scales resolution limit thresholds using the active `decayMultiplier`, decreasing SVG file size while completely sealing sub-pixel fractures.
+* **Interactive Motif Designer (Phase 2 UI Workflow):** Delivered a workspace module supporting multi-point handle creation (**Alt + Click**) and node destruction (**Shift + Click**) backed by a cold-boot `localStorage` recovery cache and clean vertical layout protections.
 
 ---
 
-## 🎨 PHASE 2: Resolution Independence & Multi-Material 3D Extrusion `[UP NEXT]`
-Transition the engine from strictly linear point arrays to native smooth vector geometries.
-* [ ] **Parametric Curve Blueprinting Framework:** Expand the `baseMotifs.ts` dictionary to accept analytical parametric equations (e.g., ellipses, cycloids) alongside linear paths, ensuring smooth interior details can be evaluated procedurally.
-* [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
-* [ ] **Post-Transformation Vectorization Filter:** Implement an optimization pass that compresses dense point sequences back into SVG cubic Bézier segments *after* they are projected into screen space, keeping files tiny while preventing boundary tearing.
-* [ ] **Adaptive Detail Stroke-Weight Scaling:** Implement dynamic `stroke-width` scaling specifically targeting detail sub-groups (`compIndex > 0`) to taper line thicknesses toward center poles, preventing open arcs from bleeding or overlapping as log-polar spatial coordinates compress near zero.
+## 🎨 PHASE 2: Universal Multi-Lattice Framework & Studio Workspace `[UP NEXT]`
+Transition the custom motif designer from a single-grid environment into a universal vector layout engine that adapts dynamically to all supported tiles and symmetries.
+* [ ] **Dynamic Base Grid Template Switching:** Expand the interactive custom workspace to automatically swap background guidelines and editing rules based on the active project grid selection.
+  * **Square Lattices (p1):** Display square guideline frames where editing an interactive edge automatically shifts its linear vector twin on the opposite side.
+  * **Triangular Lattices:** Adapt drawing baselines to triangles, automatically calculating and mirroring mouse coordinates across reflection and flip lanes natively.
+* [ ] **In-Memory Design Vault Collection:** Build a pattern management library block inside the maximized right-hand settings panel sidebar to let users save, name, and switch between multiple custom tile configurations in a single session without overwriting main cache blocks.
+* [ ] **Interactive Grid Snapping Engine:** Introduce an adjustable layout constraint toggle to easily snap manual handle nodes directly onto baseline guideline shapes or precise fractional intervals.
 * [x] **Library-Free ASCII STL Builder (`src/stlBuilder.ts`):** Complete the server-side manifold extrusion script to map completed 2D vector coordinate arrays directly into 3D triangles capped to explicit target canvas height, producing robust multi-material STL files compatible with any standard slicer or 3D software.
 * [ ] **Headless Slicer Command Assembly:** Wire up the automated backend `prusa-slicer` binary runtime script with the `--merge` parameter block inside an `xvfb-run` container environment to package independent, server-extruded STL plates into unified multi-material `.3mf` projects.
 
 ---
 
-## 🔌 PHASE 3: Dynamic Geometry & Native Asset Ingestion
-Allow artists to feed custom vector artwork straight into the engine without modifying the codebase.
-* [X] **Color-Linked Internal Detail Serialization**
-      * **Why it matters:** Internal details are grouped into a details layer (colorIndex_hexColor_details) per color used. This allows allows users to easily change the color used for details instead of forcing a single color across the entire design.
-* [ ] **Multi-Path Native Typing Integration:** Coordinate the SVG ingestion parser to output standard multi-path arrays natively recognized by the `compIndex` pipeline and `src/tests/validateMotif.test.ts`.
-* [ ] **Arbitrary SVG Ingestion Engine:** Build an XML file-stream parser to automatically extract, strip, and flatten compound transformation matrices from external `.svg` source graphics.
-* [ ] **Boundary Complementarity Verification Algorithm:** Programmatically parse an imported asset's bounding path to ensure its Top profile functions as a flawless mathematical complement to its Bottom profile.
-* [ ] **Automatic Bounding Box Normalization:** Calculate scale differentials to compress, stretch, and fit any external vector shape cleanly into localized grid boundaries ranging from `X[0.0 - 1.0]` and `Y[0.0 - cellHeight]`.
+## 🔌 PHASE 3: Parametric Blueprints & Smooth Vector Ingestion
+Allow artists to feed custom vector artwork straight into the engine or build smooth mathematical details without relying on dense line fragments.
+* [X] **Color-Linked Internal Detail Serialization:** Group internal structural details into an isolated details layer per color used, allowing users to easily modify individual palette elements instead of forcing a single color weight across the entire system.
+* [ ] **Parametric Curve Blueprinting Framework:** Expand the `baseMotifs.ts` dictionary to accept analytical parametric equations (e.g., ellipses, cycloids) alongside linear paths, ensuring smooth interior details can be evaluated procedurally.
+* [ ] **Upstream Path Compiler Refactor:** Rewrite the SVG path generation loops to dynamically map and output `'C'` (Cubic), `'Q'` (Quadratic), and `'S'` (Shorthand) vector strings instead of joining lines with `'L'`.
+* [ ] **Post-Transformation Vectorization Filter:** Implement an optimization pass that compresses dense point sequences back into SVG cubic Bézier segments *after* they are projected into screen space, keeping files tiny while preventing boundary tearing.
+* [ ] **Adaptive Detail Stroke-Weight Scaling:** Implement dynamic `stroke-width` scaling specifically targeting detail sub-groups (`compIndex > 0`) to taper line thicknesses toward center poles, preventing open arcs from bleeding or overlapping as log-polar spatial coordinates compress near zero.
+* [ ] **Arbitrary SVG Ingestion Engine:** Build an XML file-stream parser to automatically extract, strip, and flatten compound transformation matrices from external `.svg` source graphics into standard multi-path arrays natively recognized by the `compIndex` pipeline and `src/tests/validateMotif.test.ts`.
 
 ---
 

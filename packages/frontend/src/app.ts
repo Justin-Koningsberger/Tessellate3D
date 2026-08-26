@@ -198,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   function initializeCustomEditor(): void {
     let customWorkspaceInstance: customWorkspace | null = null;
+    let isMaximized = false;
 
     // Pre-populate global editor memory from localStorage on page load.
     try {
@@ -216,6 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     els.btnOpenCustom.addEventListener('click', () => {
+      isMaximized = false;
+      if (els.customModalContainer) {
+        els.customModalContainer.classList.remove('maximized-mode-active');
+      }
+
       // Reveal modal backdrop window overlay layer
       els.customModal.style.display = 'flex';
 
@@ -284,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleLayoutMode = (toMaximized: boolean) => {
       if (!customWorkspaceInstance || !els.customModalContainer || !els.customCanvas) return;
 
+      isMaximized = toMaximized;
       els.customModalContainer.classList.toggle('maximized-mode-active', toMaximized);
 
       if (toMaximized) {

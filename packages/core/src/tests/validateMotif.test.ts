@@ -54,8 +54,8 @@ function validateMotif(name: string, func: (ctx: MotifContext) => Point2D[][] | 
   }
 
   // Evaluate structural constraints based on layout geometry
-  // TODO: Add latticeType information directly to basemotif type
-  const isHexagonAsset = name.toLowerCase().includes('hex');
+  // TODO: Add latticeType information directly to basemotif type to create a clean guard clause
+  const isHexagonAsset = name.toLowerCase().includes('hex') || name === 'lizard' || name === 'kochSnowflake';
   if (isHexagonAsset) {
     if (bottomLeft.x !== 0.0 || bottomLeft.y !== 0.0) {
       console.error(`❌ Error: Hexagonal loops must close completely back at the origin axis {x: 0, y: 0}. Found:`, bottomLeft);

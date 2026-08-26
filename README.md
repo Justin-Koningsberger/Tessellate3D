@@ -16,6 +16,8 @@ I also see a deep structural link between 3D printing and classical relief print
 
 # Architecture Documentation: Escher Spiral Vector Engine
 
+*Accessibility Note: This project's interface tries to conform to modern accessibility guidelines.*
+
 ## Forward vs. Backward Mapping Foundations
 
 ### 1. Raster-Based Mapping Methods
@@ -31,7 +33,7 @@ I also see a deep structural link between 3D printing and classical relief print
 
 ---
 
-## Stable Pipeline Components (Phase 1 Conformal Architecture Core)
+## Stable Pipeline Components (Core)
 * **`[Base Motif]`**
   * *Definition:* Resolution-independent vector matrices supporting multi-component elements (outer boundaries and fine internal (open) detail paths).
 * **`[Subdivision Engine (subdividePath)]`**
@@ -56,8 +58,21 @@ I also see a deep structural link between 3D printing and classical relief print
   * *Grouping Output:* Organizes arrays of mapped coordinates dynamically into structured collections sorted by their deterministic sorting layer keys.
 
 ---
+## Interactive Custom Motif Designer (New UI Feature)
 
-## Automated 3D Slicing & Manufacturing Pipeline (New Core Feature)
+* **`[Custom Motif Shapes]`**
+  * *Shape Customization:* Create custom repeating tiles by grabbing and dragging the interactive red handles on the canvas.
+  * *Adding & Removing Points:* Fine-tune designs by holding **Alt + Clicking** lines to add fresh control points, or holding **Shift + Clicking** nodes to delete them.
+  * *Solid Geometry Guides:* Draws a faint, clean hexagon outline behind your design to act as a zero-point baseline for path alignment. Includes a confirmation prompt on reset to prevent accidental design losses.
+  * *Page Load Persistence:* Automatically saves your layout state to browser cache so your custom shapes stay active across page reloads and edits.
+
+* **`[Maximized Studio Workspace Portal]`**
+  * *Expanded Canvas View:* Features a **Maximize** toggle that shifts the popup card into a fullscreen, side-by-side studio view.
+  * *Purpose:* Teleports the drawing area to the left to maximize canvas design space, moving settings, text instructions, and actions into a right-hand panel. This sidebar layout provides breathing room for advanced tool modules and features down the line.
+
+---
+
+## Automated 3D Slicing & Manufacturing Pipeline
 
 * **`[Microscopic Alignment Matrix Engine]`**
   * *Purpose:* Guarantees perfect alignment between changing color fields in 3D slicers.
@@ -97,5 +112,4 @@ This project is compiled under a modern, strict `NodeNext` ECMAScript specificat
 4. **Mathematical Regression Test:** `npm run test:transforms` *(Asserts forward coordinate vectors against exact algebraic checkpoints)*
 5. **Engine Telemetry Fuzzer:** `npm run test:fuzz` *(Runs a deep dual-progression random sweep across varying depth limits and ring layers)*
 6. **ZIP Binary Signature Test:** `npm run test:zip` *(Validates PKWARE local file headers, byte offsets, and CRC32 integrity checks)*
-7. ** TODO: Add frontend documentation **
-8. **Containerized Slicer Microservice:** run `docker compose up -d --build` from the root folder *(Launches Fastify server with a STL generator route)*
+7. **Containerized Slicer Microservice:** run `docker compose up -d --build` from the root folder *(Launches Fastify server with a STL generator route)*

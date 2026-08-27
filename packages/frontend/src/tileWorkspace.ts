@@ -185,11 +185,6 @@ export class customWorkspace {
     // Intercept Alt + Click for precision point addition
     if (e.altKey) {
       const mouseVector = this.projection.screenToVector(mouseScreen.x, mouseScreen.y);
-      const targetEdges: { key: 'A' | 'B' | 'C'; start: Point2D; end: Point2D }[] = [
-        { key: 'A', start: this.state.v1, end: this.state.v2 },
-        { key: 'B', start: this.state.v2, end: this.state.v3 },
-        { key: 'C', start: this.state.v4, end: this.state.v5 }
-      ];
 
       for (const edge of interactiveEdges) {
         const rawPoints = this.state[edge.key] || [];
@@ -230,11 +225,6 @@ export class customWorkspace {
       e.clientX - rect.left,
       e.clientY - rect.top
     );
-
-    if (this.currentLatticeType === 'square') {
-      if (this.activeDragEdge === 'edgeTop') vectorPos.y = 0.0;
-      if (this.activeDragEdge === 'edgeLeft') vectorPos.x = 0.0;
-    }
 
     this.state[this.activeDragEdge][this.activeDragIndex] = vectorPos;
 
@@ -281,59 +271,8 @@ export class customWorkspace {
       });
       this.ctx.restore();
 
-      // --- PHASE 2: CALCULATE AND RENDER AUTOMATED TWINS & MIDPOINT ROTATION ---
-      if (this.currentLatticeType === 'triangular') {
-        const interlockList = this.state['edgeInterlock'] || [];
-        const spineList = this.state['edgeSpine'] || [];
-
-        // 2A. Render the Bottom Half of the Left Spine Axis (Anti-Symmetric Twin)
-        this.ctx.save();
-        this.ctx.setLineDash([6, 4]);
-        this.ctx.strokeStyle = '#ff7675';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-
-        // Start drawing from the midpoint down to the bottom vertex v4
-        const midScreen = this.projection.vectorToScreen({ x: 0.0, y: this.cellHeight * 0.5 });
-        this.ctx.moveTo(midScreen.x, midScreen.y);
-
-        // Apply half-turn central inversion symmetry: (x, y) becomes (-x, cellHeight - y)
-        for (let i = spineList.length - 1; i >= 0; i--) {
-          const pt = spineList[i];
-          const invertedPt = { x: -pt.x, y: this.cellHeight - pt.y };
-          const screenPt = this.projection.vectorToScreen(invertedPt);
-          this.ctx.lineTo(screenPt.x, screenPt.y);
-        }
-        const bottomScreen = this.projection.vectorToScreen(this.state.v4);
-        this.ctx.lineTo(bottomScreen.x, bottomScreen.y);
-        this.ctx.stroke();
-        this.ctx.restore();
-
-        // 2B. Render the Bottom-Right Angled Edge (Reflected Interlock Twin)
-        this.ctx.save();
-        this.ctx.setLineDash([6, 4]);
-        this.ctx.strokeStyle = '#ff7675';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-
-        // Start drawing the twin from the Right Vertex down to the Bottom Apex
-        const triWidth = (Math.sqrt(3) / 2) * this.cellHeight;
-        const startTwin = this.projection.vectorToScreen({ x: triWidth, y: this.cellHeight * 0.5 });
-        this.ctx.moveTo(startTwin.x, startTwin.y);
-
-        // Map every point on the upper angled edge down to its mirrored lower counterpart
-        for (let i = interlockList.length - 1; i >= 0; i--) {
-          const pt = interlockList[i];
-          // Mirror coordinate across the y = cellHeight * 0.5 horizontal symmetry plane
-          const mirroredPt = { x: pt.x, y: this.cellHeight - pt.y };
-          const screenPt = this.projection.vectorToScreen(mirroredPt);
-          this.ctx.lineTo(screenPt.x, screenPt.y);
-        }
-        const endTwin = this.projection.vectorToScreen(this.state.v4);
-        this.ctx.lineTo(endTwin.x, endTwin.y);
-        this.ctx.stroke();
-        this.ctx.restore();
-      }
+      // Execute strategy twin path calculation loops dynamically from registry
+      latticeDef.renderTwins(this.ctx, this.state, this.projection, this.cellHeight);
 
       // Render the active interactive lines for squares or triangles
       this.ctx.save();

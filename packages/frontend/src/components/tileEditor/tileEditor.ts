@@ -105,6 +105,7 @@ export class tileEditorComponent {
       if (!this.workspaceInstance) return;
       if (window.confirm('Are you sure you want to reset the geometry? This will completely clear all your custom points.')) {
         this.workspaceInstance.resetToDefaultLattice(2.0);
+        this.ctx.updateEnginePipeline(); // Sync master canvas immediately
       }
     };
 

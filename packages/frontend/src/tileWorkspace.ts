@@ -5,6 +5,7 @@ import {
 } from '@tessellate3d/core/src/tileSymmetry.ts';
 import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 import { CanvasProjection } from './utils/canvasProjection.ts';
+import { LATTICE_REGISTRY, type LatticeType } from './utils/latticeRegistry.ts';
 
 // Using a class here because the canvas needs continuous state tracking
 // (drag handles, active indices, mouse listeners). Keeps it performant,
@@ -14,14 +15,18 @@ export class customWorkspace {
   private ctx: CanvasRenderingContext2D;
   private projection: CanvasProjection;
 
-  private state!: ModularEditorState;
-  private activeDragEdge: 'A' | 'B' | 'C' | null = null;
+  // TODO: Update this to a proper editorState type once all lattices are supported
+  private state!: any;
+  private activeDragEdge: string | null = null;
   private activeDragIndex: number | null = null;
   private pixelInteractionThreshold = 14;
   private storageKey = 'tessellate3d_custom_motif';
+  private currentLatticeType: LatticeType = 'hexagonal';
+  private cellHeight: number;
 
   constructor(canvas: HTMLCanvasElement, cellHeight: number = 2.0) {
     this.canvas = canvas;
+    this.cellHeight = cellHeight;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Could not acquire 2D canvas context');
     this.ctx = context;
@@ -30,8 +35,29 @@ export class customWorkspace {
     const scale = Math.min(canvas.width, canvas.height) / 3.0;
     this.projection = new CanvasProjection(canvas.width, canvas.height, scale);
 
-    this.initializeHexagonAnchors(cellHeight);
+    this.syncActiveLatticeType();
+    this.initializeActiveLattice(cellHeight);
     this.setupEventListeners();
+    this.render();
+  }
+
+  private syncActiveLatticeType(): void {
+    try {
+      const saved = localStorage.getItem(this.storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        this.currentLatticeType = parsed.latticeType || 'hexagonal';
+      }
+    } catch (e) {
+      this.currentLatticeType = 'hexagonal';
+    }
+  }
+
+  public switchLatticeSystem(type: LatticeType, cellHeight: number = 2.0): void {
+    this.currentLatticeType = type;
+    this.cellHeight = cellHeight;
+    this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+    this.persistAndSyncState();
     this.render();
   }
 
@@ -48,11 +74,12 @@ export class customWorkspace {
   }
 
 
-  private initializeHexagonAnchors(cellHeight: number): void {
+  private initializeActiveLattice(cellHeight: number): void {
     try {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         this.state = JSON.parse(saved);
+        this.currentLatticeType = this.state.latticeType || 'hexagonal';
         updateLiveEditorState(this.state);
         return;
       }
@@ -60,25 +87,7 @@ export class customWorkspace {
       console.warn('⚠️ [Storage] Failed parsing stored motif. Resetting layout.', err);
     }
 
-    const r = cellHeight / 2;
-    const h = r * (Math.sqrt(3) / 2);
-    const centerYOffset = 1.0;
-
-    const v1 = { x: 0.0, y: 0.0 - centerYOffset };
-    const v2 = { x: h,   y: (r * 0.5) - centerYOffset };
-    const v3 = { x: h,   y: (cellHeight - r * 0.5) - centerYOffset };
-    const v4 = { x: 0.0, y: cellHeight - centerYOffset };
-    const v5 = { x: -h,  y: (cellHeight - r * 0.5) - centerYOffset };
-    const v6 = { x: -h,  y: (r * 0.5) - centerYOffset };
-
-    this.state = {
-      v1, v2, v3, v4, v5, v6,
-
-      edgeA: [{ x: (v1.x + v2.x) / 2, y: (v1.y + v2.y) / 2 }], // Handle 0: Top-Right
-      edgeB: [{ x: (v2.x + v3.x) / 2, y: (v2.y + v3.y) / 2 }], // Handle 1: Right-Vertical
-      edgeC: [{ x: (v4.x + v5.x) / 2, y: (v4.y + v5.y) / 2 }]  // Handle 2: Bottom-Left (for Step 3)
-    };
-
+    this.state = LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
     this.persistAndSyncState();
   }
 
@@ -139,15 +148,6 @@ export class customWorkspace {
     return Math.hypot(ptScreen.x - projX, ptScreen.y - projY);
   }
 
-  /**
-   * Clean state selector utility to reduce redundant ternary operations across loops
-   */
-  private getEdgePoints(key: 'A' | 'B' | 'C'): Point2D[] {
-    if (key === 'A') return this.state.edgeA;
-    if (key === 'B') return this.state.edgeB;
-    return this.state.edgeC;
-  }
-
   private handlePointerDown(e: PointerEvent): void {
     const rect = this.canvas.getBoundingClientRect();
     const mouseScreen: Point2D = {
@@ -155,12 +155,13 @@ export class customWorkspace {
       y: e.clientY - rect.top
     };
 
-    const edgeKeys: ('A' | 'B' | 'C')[] = ['A', 'B', 'C'];
+    const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
+    const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
 
     // Intercept Shift + Click for handle deletion
     if (e.shiftKey) {
-      for (const edge of edgeKeys) {
-        const pointList = this.getEdgePoints(edge);
+      for (const edge of interactiveEdges) {
+        const pointList = this.state[edge.key] || [];
         const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
 
         if (idx !== null) {
@@ -182,17 +183,15 @@ export class customWorkspace {
         { key: 'C', start: this.state.v4, end: this.state.v5 }
       ];
 
-      for (const edgeConfig of targetEdges) {
-        const rawPoints = this.getEdgePoints(edgeConfig.key);
-        const fullSequence = [edgeConfig.start, ...rawPoints, edgeConfig.end];
+      for (const edge of interactiveEdges) {
+        const rawPoints = this.state[edge.key] || [];
+        const fullSequence = [edge.start, ...rawPoints, edge.end];
 
         for (let i = 0; i < fullSequence.length - 1; i++) {
           const distancePx = this.getDistanceToSegmentPx(mouseVector, fullSequence[i]!, fullSequence[i + 1]!);
 
           if (distancePx < this.pixelInteractionThreshold) {
-            if (edgeConfig.key === 'A') this.state.edgeA.splice(i, 0, mouseVector);
-            if (edgeConfig.key === 'B') this.state.edgeB.splice(i, 0, mouseVector);
-            if (edgeConfig.key === 'C') this.state.edgeC.splice(i, 0, mouseVector);
+            rawPoints.splice(i, 0, mouseVector);
 
             this.persistAndSyncState();
             this.render();
@@ -203,12 +202,12 @@ export class customWorkspace {
       return;
     }
 
-    for (const edge of edgeKeys) {
-      const pointList = this.getEdgePoints(edge);
+    for (const edge of interactiveEdges) {
+      const pointList = this.state[edge.key] || [];
       const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
 
       if (idx !== null) {
-        this.activeDragEdge = edge;
+        this.activeDragEdge = edge.key;
         this.activeDragIndex = idx;
         return;
       }
@@ -224,7 +223,14 @@ export class customWorkspace {
       e.clientY - rect.top
     );
 
-    this.getEdgePoints(this.activeDragEdge)[this.activeDragIndex] = vectorPos;
+    if (this.currentLatticeType === 'square') {
+      if (this.activeDragEdge === 'edgeTop') vectorPos.y = 0.0;
+      if (this.activeDragEdge === 'edgeLeft') vectorPos.x = 0.0;
+    } else if (this.currentLatticeType === 'triangular') {
+      if (this.activeDragEdge === 'edgeLeft') vectorPos.x = 0.0;
+    }
+
+    this.state[this.activeDragEdge][this.activeDragIndex] = vectorPos;
 
     this.persistAndSyncState();
     this.render();
@@ -367,11 +373,18 @@ export class customWorkspace {
    * Purge storage and reset vectors back to a regular point-topped hexagon
    */
   public resetToDefaultLattice(cellHeight: number): void {
+    // 1. Completely decouple and drop active memory object bindings
+    this.state = null as any;
+    this.activeDragEdge = null;
+    this.activeDragIndex = null;
+
+    // 2. Clear out the persistent disk buffer layout definitions
     try {
       localStorage.removeItem(this.storageKey);
     } catch (err) {}
 
-    this.initializeHexagonAnchors(cellHeight);
+    // 3. Re-execute initialization with a completely clean environment
+    this.initializeActiveLattice(cellHeight);
     this.render();
   }
 

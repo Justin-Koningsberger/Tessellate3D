@@ -1,5 +1,7 @@
 import { createUncompressedZip } from './zipUtils.ts';
 import { customWorkspace } from './tileWorkspace.ts';
+import { tileEditorComponent } from './components/tileEditor/tileEditor.ts';
+
 import { CONFIG } from '@tessellate3d/core/src/config.ts';
 import { generateTessellation, type Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 
@@ -192,124 +194,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /**
-   * Initializes the interactive custom Symmetry Editor modal, canvas listeners,
-   * and binds the output results back to the master production loop.
-   */
-  function initializeCustomEditor(): void {
-    let customWorkspaceInstance: customWorkspace | null = null;
-    let isMaximized = false;
+/* Initializes the interactive tileEditor subsystem, mapping its internal state
+ * mutations back into the engine compilation cycle.
+ */
+function initializeTileEditor(): void {
+  if (!els.btnOpenCustom) return;
 
-    // Pre-populate global editor memory from localStorage on page load.
-    try {
-      const savedState = localStorage.getItem('tessellate3d_custom_motif');
-      if (savedState) {
-        const parsed = JSON.parse(savedState);
-        updateLiveEditorState(parsed);
-        console.log("🚀 [Lifecycle Sync] Custom motif state successfully loaded from cache on startup.");
-      }
-    } catch (err) {
-      console.warn("⚠️ [Lifecycle Sync] Failed loading startup layout cache:", err);
-    }
+  const tileEditor = new tileEditorComponent(document.body, {
+    currentConfig: currentConfig,
+    updateLiveEditorState: updateLiveEditorState,
+    updateEnginePipeline: updateEnginePipeline,
+    getLiveEditorState: () => liveEditorState,
+    baseMotifSelectElement: els.baseMotif || null
+  });
 
-    if (!els.btnOpenCustom || !els.customModal || !els.customCanvas || !els.customModalContainer) {
-      return;
-    }
-
-    els.btnOpenCustom.addEventListener('click', () => {
-      isMaximized = false;
-      if (els.customModalContainer) {
-        els.customModalContainer.classList.remove('maximized-mode-active');
-      }
-
-      // Reveal modal backdrop window overlay layer
-      els.customModal.style.display = 'flex';
-
-      // Ensure canvas is cleanly mounted into compact view anchor by default on open
-      if (els.mountCompact && els.customCanvas) {
-        els.mountCompact.appendChild(els.customCanvas);
-        els.customCanvas.style.position = "static";
-      }
-
-      // Instantiate or redraw the native 2D workspace context state
-      if (!customWorkspaceInstance) {
-        customWorkspaceInstance = new customWorkspace(els.customCanvas, 2.0);
-      } else {
-        customWorkspaceInstance.resizeWorkspace(500, 500);
-        customWorkspaceInstance.render();
-      }
-    });
-
-    // --- SHARED REUSABLE ACTIONS INTERCEPTORS MAP ---
-    const executeSave = () => {
-      els.customModal.style.display = 'none';
-
-      currentConfig.baseMotif = "customSymmetricHexagon";
-      currentConfig.symmetryGroup = "p3";
-
-      if (els.baseMotif) {
-        els.baseMotif.value = "customSymmetricHexagon";
-      }
-
-      console.log("🔍 [UI Sync] Configuration mutated: baseMotif='customSymmetricHexagon', symmetryGroup='p3'");
-
-      if (liveEditorState) {
-        console.log("🔍 [UI Sync] liveEditorState exists. Master edge lengths:", {
-          edgeA: liveEditorState.edgeA.length,
-          edgeB: liveEditorState.edgeB.length,
-          edgeC: liveEditorState.edgeC.length
-        });
-      } else {
-        console.warn("⚠️ [UI Sync] liveEditorState is null or undefined prior to pipeline compilation!");
-      }
-
-      console.log("🚀 [UI Sync] Invoking updateEnginePipeline()...");
-      updateEnginePipeline();
-    };
-
-    const executeCancel = () => {
-      els.customModal.style.display = 'none';
-    };
-
-    const executeReset = () => {
-      if (!customWorkspaceInstance) return;
-      if (window.confirm("Are you sure you want to reset your geometry? This will completely clear all your custom points.")) {
-        customWorkspaceInstance.resetToDefaultLattice(2.0);
-      }
-    };
-
-    // Bind actions to buttons across both independent component views
-    if (els.btnSaveCompact) els.btnSaveCompact.addEventListener('click', executeSave);
-    if (els.btnSaveMax) els.btnSaveMax.addEventListener('click', executeSave);
-    if (els.btnCancelCompact) els.btnCancelCompact.addEventListener('click', executeCancel);
-    if (els.btnCancelMax) els.btnCancelMax.addEventListener('click', executeCancel);
-    if (els.btnResetCompact) els.btnResetCompact.addEventListener('click', executeReset);
-    if (els.btnResetMax) els.btnResetMax.addEventListener('click', executeReset);
-
-    // --- TOGGLE HANDLERS (DYNAMIC CANVAS PORTING LAYER) ---
-    const toggleLayoutMode = (toMaximized: boolean) => {
-      if (!customWorkspaceInstance || !els.customModalContainer || !els.customCanvas) return;
-
-      isMaximized = toMaximized;
-      els.customModalContainer.classList.toggle('maximized-mode-active', toMaximized);
-
-      if (toMaximized) {
-        if (els.mountMaximized) els.mountMaximized.appendChild(els.customCanvas);
-
-        const availableWidth = window.innerWidth - 320 - 80;
-        const availableHeight = window.innerHeight - 80;
-        customWorkspaceInstance.resizeWorkspace(availableWidth, availableHeight);
-      } else {
-        if (els.mountCompact) els.mountCompact.appendChild(els.customCanvas);
-
-        customWorkspaceInstance.resizeWorkspace(500, 500);
-      }
-    };
-
-
-    if (els.btnMaxCompact) els.btnMaxCompact.addEventListener('click', () => toggleLayoutMode(true));
-    if (els.btnRestoreMax) els.btnRestoreMax.addEventListener('click', () => toggleLayoutMode(false));
-  }
+  els.btnOpenCustom.addEventListener('click', () => {
+    tileEditor.open();
+  });
+}
 
   // TODO: Make the palette and later color options open in a model to save space in the settings
 
@@ -775,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
     els.debuggingGridRow.style.display = 'none';
   }
 
-  initializeCustomEditor();
+  initializeTileEditor();
   renderPaletteUI();
 
   updateEnginePipeline();

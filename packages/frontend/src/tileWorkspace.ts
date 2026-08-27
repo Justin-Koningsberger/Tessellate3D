@@ -101,7 +101,7 @@ export class customWorkspace {
       } catch (err) {
         // Safe bypass if pointer capture was dropped implicitly
       }
-      this.handlePointerUp(e);
+      this.handlePointerUp();
     });
 
     // Fallback block if system windows override gestures (e.g. push notification alerts)
@@ -109,7 +109,7 @@ export class customWorkspace {
       try {
         this.canvas.releasePointerCapture(e.pointerId);
       } catch (err) {}
-      this.handlePointerUp(e);
+      this.handlePointerUp();
     });
   }
 
@@ -326,6 +326,17 @@ export class customWorkspace {
       this.ctx.lineWidth = 1.5;
       this.ctx.stroke();
     });
+
+    // Draw a dot in the center of the original motif
+    const motifCenterVector = { x: 0.0, y: 0.0 };
+    const centerScreenCoords = this.projection.vectorToScreen(motifCenterVector);
+
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.arc(centerScreenCoords.x, centerScreenCoords.y, 4, 0, Math.PI * 2);
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'; // Soft, faint gray marker
+    this.ctx.fill();
+    this.ctx.restore();
   }
 
   /**
@@ -368,10 +379,13 @@ export class customWorkspace {
    * Dynamically resizes the drawing layout bounds while enforcing strict 1:1 square aspect metrics
    */
   public resizeWorkspace(newWidth: number, newHeight: number): void {
-    const squareSize = Math.max(300, Math.min(newWidth, newHeight));
-    this.canvas.width = squareSize;
-    this.canvas.height = squareSize;
-    this.projection.updateDimensions(squareSize, squareSize);
+    // Let the width expand horizontally while tracking the height to maintain proper aspect ratio scaling
+    const fluidWidth = Math.max(300, newWidth);
+    const fluidHeight = Math.max(300, newHeight);
+
+    this.canvas.width = fluidWidth;
+    this.canvas.height = fluidHeight;
+    this.projection.updateDimensions(fluidWidth, fluidHeight);
     this.render();
   }
 }

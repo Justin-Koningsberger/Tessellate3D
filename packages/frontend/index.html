@@ -94,6 +94,23 @@
       margin-left: 4px;
       font-style: normal;
     }
+
+    .btn-custom-motif {
+      background: #4a90e2 !important;
+      color: #fff;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      max-height: 75px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s ease;
+    }
+    .btn-custom-motif:hover {
+      background: #357abd !important;
+    }
+
     .preset-header {
       margin: 4px 0 2px 0;
       font-size: 13px;
@@ -154,179 +171,9 @@
       font-size: 13px;
       box-shadow: 0 4px 6px rgba(0,0,0,0.15);
     }
-    .btn-export-master {
-      background: #2563eb;
-    }
-    .btn-export-separated {
-      background: #7c3aed;
-    }
-    .btn-export-stl {
-      background: #059669;
-     }
-
-    /* --- 4. CUSTOM SYMMETRY EDITOR MODAL CLASSES --- */
-    .custom-modal-backdrop {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100dvw; height: 100dvh; /* Upgraded to dynamic viewport to prevent bar jumps */
-      background: rgba(0, 0, 0, 0.75);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden; /* Prevent background window scrolling completely */
-    }
-
-    .custom-modal-container {
-      background: #222;
-      border: 1px solid #444;
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
-      max-width: 90vw;
-      box-sizing: border-box;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Maximized Override State */
-    .custom-modal-container.maximized-mode-active {
-      max-width: 100dvw !important;  /* Strict dynamic viewport tracking */
-      max-height: 100dvh !important;
-      width: 100dvw !important;
-      height: 100dvh !important;
-      border-radius: 0px !important;
-      padding: 0px !important;
-      overflow: hidden;
-    }
-
-    /* Structural Component Views Toggle States */
-    .view-compact-block {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-    }
-    .view-maximized-grid {
-      display: none;
-      grid-template-columns: 1fr 320px; /* Big Canvas Left, Tight Controls Right */
-      width: 100dvw;                     /* Uses dvw/dvh to perfectly hug screen limits */
-      height: 100dvh;
-      box-sizing: border-box;
-      overflow: hidden;
-    }
-
-    /* Media query to split to a stacked row layout on small devices when maximized */
-    @media (max-width: 768px) {
-      .view-maximized-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr auto; /* Canvas top, tools panel bottom */
-      }
-      .editor-sidebar-panel {
-        border-left: none !important;
-        border-top: 1px solid #2d2d3a;
-        padding: 16px 20px !important;
-        height: auto !important;
-      }
-    }
-
-    /* Layout states triggered inside maximized mode */
-    .maximized-mode-active .view-compact-block {
-      display: none !important;
-    }
-    .maximized-mode-active .view-maximized-grid {
-      display: grid !important;
-    }
-
-    /* Sub-Panel Layout Compartments */
-    .editor-sidebar-panel {
-      background: #1e1e24;
-      border-left: 1px solid #2d2d3a; /* Dividers on the left edge */
-      padding: 32px 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-sizing: border-box;
-      height: 100%;
-      overflow-y: auto; /* Allow settings panel to roll if options scale up */
-    }
-    .editor-canvas-viewport {
-      background: #09090b;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      box-sizing: border-box;
-      height: 100%;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Typography & Headers Alignment Layouts */
-    .compact-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%; }
-    .compact-title { color: #fff; margin: 0; flex-grow: 1; text-align: center; padding-left: 70px; }
-    .compact-desc { color: #aaa; font-size: 13px; margin-bottom: 15px; margin-top: 0; text-align: center; }
-    .compact-shortcuts { color: #888; font-size: 12px; margin-bottom: 15px; margin-top: -10px; text-align: center; }
-
-    .maximized-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; width: 100%; }
-    .maximized-title { color: #fff; margin: 0; font-size: 22px; font-weight: bold; }
-    .maximized-desc { color: #94a3b8; font-size: 13px; margin: 8px 0 0 0; text-align: left; line-height: 1.5; }
-    .maximized-shortcuts-line { color: #64748b; font-size: 12px; margin: 12px 0 0 0; text-align: left; line-height: 1.5; }
-
-    /* Interactive Elements & Mounting Zones */
-    .btn-maximize {
-      background: #444; color: #fff; border: 1px solid #666;
-      padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
-    }
-    .btn-maximize:hover { background: #555; }
-
-    .btn-restore-absolute {
-      position: absolute;
-      top: 24px;
-      right: 24px;
-      background: #2d2d3a;
-      color: #fff;
-      border: 1px solid #3f3f46;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      z-index: 1010;
-      transition: background 0.2s;
-    }
-    .btn-restore-absolute:hover { background: #3f3f46; }
-
-    .editor-canvas {
-      background: #111; border: 1px solid #333; border-radius: 4px;
-      max-width: 100%;
-      display: block;
-      margin: 0 auto;
-
-      /* Decouple handle-dragging gestures from browser frame scrolls */
-      touch-action: none;
-
-      /* Disable native long-press popup menus and zoom behaviors on mobile platforms */
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    .canvas-mount-zone { width: 100%; display: flex; justify-content: center; }
-
-    /* Reusable Clean Action Buttons */
-    .compact-footer-row { margin-top: 15px; display: flex; gap: 10px; justify-content: center; width: 100%; }
-    .maximized-footer-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
-
-    .btn-editor-action { color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; text-align: center; width: 100%; box-sizing: border-box; }
-    .btn-action-save { background: #28a745; }
-    .maximized-mode-active .btn-action-save { background: #10b981; }
-    .btn-action-cancel { background: #e67e22; }
-    .maximized-mode-active .btn-action-cancel { background: #ef4444; }
-    .btn-action-reset { background: #dc3545; }
-    .maximized-mode-active .btn-action-reset { background: #f59e0b; }
-
-    .key-hint-cyan { color: #00d2ff; font-weight: bold; }
-    .key-hint-coral { color: #ff7675; font-weight: bold; }
+    .btn-export-master { background: #2563eb; }
+    .btn-export-separated { background: #7c3aed; }
+    .btn-export-stl { background: #059669; }
   </style>
 </head>
 <body>
@@ -406,7 +253,7 @@
         <span>Show branch and ring labels</span>
       </label>
 
-      <button id="btn-open-custom" class="btn-preset" aria-label="Design or update custom motif editor workspace" style="background: #4a90e2; color: #fff; margin-top: 5px; margin-bottom: 15px; max-height: 75px;" type="button">
+      <button id="btn-open-custom" class="btn-preset btn-custom-motif" aria-label="Design or update a custom motif" type="button">
         <span aria-hidden="true">🎨</span> Design/Update Custom Motif
       </button>
       <hr />
@@ -551,63 +398,5 @@
   </main>
 
   <script type="module" src="/src/app.ts"></script>
-
-  <!-- MASTER SYMMETRY EDITOR MODAL SYSTEM OVERLAY -->
-  <div id="custom-modal" class="custom-modal-backdrop">
-    <div id="custom-modal-container" class="custom-modal-container">
-
-      <!-- ================================================================= -->
-      <!-- VIEW 1: COMPACT DIALOGUE CARD INTERFACE                           -->
-      <!-- ================================================================= -->
-      <div id="editor-view-compact" class="view-compact-block">
-        <div class="compact-header-row">
-          <h3 class="compact-title">custom Symmetry Node Editor</h3>
-          <button id="btn-custom-maximize-compact" class="btn-maximize" type="button">Maximize</button>
-        </div>
-        <p class="compact-desc">Grab and drag the red vertices to distort the primary edges.</p>
-        <p class="compact-shortcuts">Hold <span class="key-hint-cyan">Alt</span> and click lines to add points. Hold <span class="key-hint-coral">Shift</span> and click points to remove them.</p>
-
-        <!-- Default Startup Canvas Anchor Placement Node Box -->
-        <div id="canvas-container-compact" class="canvas-mount-zone">
-          <canvas id="custom-canvas" width="500" height="500" class="editor-canvas"></canvas>
-        </div>
-
-        <div class="compact-footer-row">
-          <button id="btn-save-compact" class="btn-editor-action btn-action-save" type="button">Apply Custom Motif</button>
-          <button id="btn-cancel-compact" class="btn-editor-action btn-action-cancel" type="button">Cancel</button>
-          <button id="btn-reset-compact" class="btn-editor-action btn-action-reset" type="button">Reset Geometry</button>
-        </div>
-      </div>
-
-      <!-- ================================================================= -->
-      <!-- VIEW 2: MAXIMIZED FULL-SCREEN DESKTOP DASHBOARD (Studio split)    -->
-      <!-- ================================================================= -->
-      <div id="editor-view-maximized" class="view-maximized-grid">
-
-        <!-- FIRST COLUMN: GIANT FULL-BLEED WORKSPACE REGION ON THE LEFT -->
-        <div id="canvas-container-maximized" class="editor-canvas-viewport">
-          <!-- Restore Button pinned in the top-right corner of the canvas viewport area -->
-          <button id="btn-custom-restore-maximized" class="btn-restore-absolute" type="button">Restore ❐</button>
-        </div>
-
-        <!-- SECOND COLUMN: SETTINGS SIDEBAR CONTROL PANEL ON THE RIGHT -->
-        <div class="editor-sidebar-panel">
-          <div>
-            <div class="maximized-header-row">
-              <h3 class="maximized-title">Symmetry Editor</h3>
-            </div>
-            <p class="maximized-desc">Grab and drag the red vertices to distort the primary edges.</p>
-            <p class="maximized-shortcuts-line">Hold <span class="key-hint-cyan">Alt</span> and click lines to add points.<br>Hold <span class="key-hint-coral">Shift</span> and click points to remove them.</p>
-          </div>
-
-          <div class="maximized-footer-row">
-            <button id="btn-save-maximized" class="btn-editor-action btn-action-save" type="button">Apply Custom Motif</button>
-            <button id="btn-reset-maximized" class="btn-editor-action btn-action-reset" type="button">Reset Geometry</button>
-            <button id="btn-cancel-maximized" class="btn-editor-action btn-action-cancel" type="button">Cancel</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </body>
 </html>

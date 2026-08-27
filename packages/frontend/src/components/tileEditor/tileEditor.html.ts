@@ -1,0 +1,68 @@
+export const tileEditorTemplate = `
+  <div id="customTileModal" class="custom-modal-backdrop">
+    <div id="customModalContainer" class="custom-modal-container">
+
+      <!-- COMPACT LAYOUT ENGINE CARD -->
+      <div class="view-compact-block">
+        <div class="compact-header-row">
+          <h3 class="compact-title">Symmetric Motif Vector Editor</h3>
+          <button type="button" id="btnMaxCompact" class="btn-maximize">Maximize Studio</button>
+        </div>
+        <p class="compact-desc">Design a custom interlocking base motif</p>
+        <p class="compact-shortcuts">
+          Use <span class="key-hint-cyan">Alt + Click</span> to add a node handle.
+          Use <span class="key-hint-coral">Shift + Click</span> to remove a handle.
+        </p>
+
+        <div id="mountCompact" class="canvas-mount-zone">
+          <!-- Canvas dynamic mount core -->
+        </div>
+
+        <div class="compact-footer-row">
+          <button type="button" id="btnSaveCompact" class="btn-editor-action btn-action-save">Apply Motif</button>
+          <button type="button" id="btnCancelCompact" class="btn-editor-action btn-action-cancel">Cancel</button>
+          <button type="button" id="btnResetCompact" class="btn-editor-action btn-action-reset">Reset Base Motif</button>
+        </div>
+      </div>
+
+      <!-- FULL-SCREEN STUDIO LAYOUT GRID -->
+      <div class="view-maximized-grid">
+        <div id="mountMaximized" class="editor-canvas-viewport">
+          <button type="button" id="btnRestoreMax" class="btn-restore-absolute">Restore Compact view</button>
+          <!-- Canvas shifts here seamlessly via app ports -->
+        </div>
+
+        <div class="editor-sidebar-panel">
+          <!-- Structural Skeleton Loading State Placeholder -->
+          <div id="sidebarSkeletonPlaceholder" class="sidebar-skeleton-wrapper">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-text-long"></div>
+            <div class="skeleton-line skeleton-text-short"></div>
+            <div class="skeleton-line skeleton-button"></div>
+          </div>
+
+          <!-- High Fidelity Core Content Area -->
+          <div id="sidebarActualContent" class="sidebar-content-loaded" style="display: none;">
+            <div>
+              <div class="maximized-header-row">
+                <h2 class="maximized-title">Symmetric Motif Vector Editor</h2>
+                <button type="button" id="btnRestoreMax" class="btn-restore-inline">Restore View</button>
+              </div>
+              <p class="maximized-desc">
+                Design a custom interlocking base motif.
+              </p>
+              <p class="maximized-shortcuts-line">
+                • <span class="key-hint-cyan">Alt + Click</span> on a blue line segment splits the line and adds a new control handle.<br>
+                • <span class="key-hint-coral">Shift + Click</span> on a red control handle to delete it.
+              </p>
+            </div>
+            <div class="maximized-footer-row">
+              <button type="button" id="btnSaveMax" class="btn-editor-action btn-action-save">Apply Motif</button>
+              <button type="button" id="btnCancelMax" class="btn-editor-action btn-action-cancel">Cancel</button>
+              <button type="button" id="btnResetMax" class="btn-editor-action btn-action-reset">Reset base Motif</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+`;

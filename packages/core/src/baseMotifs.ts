@@ -114,7 +114,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     ];
   },
 
-  // Detailed hexagon with lizzard details
+  // Hexagon with lizzard drawing
   detailedHexagon: (ctx: MotifContext): Point2D[][] => {
     const components: Point2D[][] = [];
     const r = ctx.cellHeight / 2;

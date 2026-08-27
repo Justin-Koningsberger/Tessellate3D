@@ -169,11 +169,12 @@
       display: none;
       position: fixed;
       top: 0; left: 0;
-      width: 100vw; height: 100vh;
+      width: 100dvw; height: 100dvh; /* Upgraded to dynamic viewport to prevent bar jumps */
       background: rgba(0, 0, 0, 0.75);
       z-index: 1000;
       align-items: center;
       justify-content: center;
+      overflow: hidden; /* Prevent background window scrolling completely */
     }
 
     .custom-modal-container {
@@ -191,12 +192,13 @@
 
     /* Maximized Override State */
     .custom-modal-container.maximized-mode-active {
-      max-width: 100vw !important;
-      max-height: 100vh !important;
-      width: 100vw !important;
-      height: 100vh !important;
+      max-width: 100dvw !important;  /* Strict dynamic viewport tracking */
+      max-height: 100dvh !important;
+      width: 100dvw !important;
+      height: 100dvh !important;
       border-radius: 0px !important;
       padding: 0px !important;
+      overflow: hidden;
     }
 
     /* Structural Component Views Toggle States */
@@ -209,9 +211,24 @@
     .view-maximized-grid {
       display: none;
       grid-template-columns: 1fr 320px; /* Big Canvas Left, Tight Controls Right */
-      width: 100vw;
-      height: 100vh;
+      width: 100dvw;                     /* Uses dvw/dvh to perfectly hug screen limits */
+      height: 100dvh;
       box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* Media query to split to a stacked row layout on small devices when maximized */
+    @media (max-width: 768px) {
+      .view-maximized-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto; /* Canvas top, tools panel bottom */
+      }
+      .editor-sidebar-panel {
+        border-left: none !important;
+        border-top: 1px solid #2d2d3a;
+        padding: 16px 20px !important;
+        height: auto !important;
+      }
     }
 
     /* Layout states triggered inside maximized mode */
@@ -232,6 +249,7 @@
       justify-content: space-between;
       box-sizing: border-box;
       height: 100%;
+      overflow-y: auto; /* Allow settings panel to roll if options scale up */
     }
     .editor-canvas-viewport {
       background: #09090b;
@@ -242,6 +260,7 @@
       box-sizing: border-box;
       height: 100%;
       position: relative;
+      overflow: hidden;
     }
 
     /* Typography & Headers Alignment Layouts */
@@ -283,6 +302,14 @@
       max-width: 100%;
       display: block;
       margin: 0 auto;
+
+      /* Decouple handle-dragging gestures from browser frame scrolls */
+      touch-action: none;
+
+      /* Disable native long-press popup menus and zoom behaviors on mobile platforms */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     .canvas-mount-zone { width: 100%; display: flex; justify-content: center; }
 
@@ -328,8 +355,8 @@
         <div class="input-row-with-icon">
           <select id="baseMotif" aria-describedby="motif-help-text">
             <option value="customSymmetricHexagon" selected>Custom Hexagon</option>
-            <option value="lizard">Lizard Preset</option>
-            <option value="kochSnowflake">Koch Snowflake Preset</option>
+            <option value="lizard">Lizard</option>
+            <option value="kochSnowflake">Koch Snowflake</option>
             <option value="square">Square</option>
             <option value="triangle">Triangle</option>
             <option value="hexagon">Hexagon</option>
@@ -338,9 +365,9 @@
             <option value="detailedHexagon">Detailed Hexagon</option>
             <option value="squarePuzzle">Square Puzzle Piece</option>
             <option value="hexPuzzle">Hexagonal Puzzle Piece</option>
-            <option value="chevron">Chevron (square based)</option>
-            <option value="sinewave">Sine Wavelet (square based)</option>
-            <option value="squarewave">Square Wave / Battlement (square based)</option>
+            <option value="chevron">Chevron</option>
+            <option value="sinewave">Sine Wavelet</option>
+            <option value="squarewave">Square Wave</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span>
         </div>

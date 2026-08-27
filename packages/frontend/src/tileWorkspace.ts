@@ -83,9 +83,34 @@ export class customWorkspace {
   }
 
   private setupEventListeners(): void {
-    this.canvas.addEventListener('pointerdown', this.handlePointerDown.bind(this));
+    // Pointerdown hooks tracking elements
+    this.canvas.addEventListener('pointerdown', (e: PointerEvent) => {
+      // Locks mobile contact to this specific canvas node,
+      // preventing the browser from dropping tracking if a fast-moving finger leaves the bounds.
+      this.canvas.setPointerCapture(e.pointerId);
+
+      this.handlePointerDown(e);
+    });
+
     this.canvas.addEventListener('pointermove', this.handlePointerMove.bind(this));
-    this.canvas.addEventListener('pointerup', this.handlePointerUp.bind(this));
+
+    this.canvas.addEventListener('pointerup', (e: PointerEvent) => {
+      // Safely release the locked pointer context
+      try {
+        this.canvas.releasePointerCapture(e.pointerId);
+      } catch (err) {
+        // Safe bypass if pointer capture was dropped implicitly
+      }
+      this.handlePointerUp(e);
+    });
+
+    // Fallback block if system windows override gestures (e.g. push notification alerts)
+    this.canvas.addEventListener('pointercancel', (e: PointerEvent) => {
+      try {
+        this.canvas.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+      this.handlePointerUp(e);
+    });
   }
 
   /**

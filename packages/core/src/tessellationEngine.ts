@@ -177,7 +177,7 @@ export function generateTessellation(config: EngineConfig): string {
 
     // Compute structural phase offset mapping for triangular grids
     const isOdd = totalBranches % 2 !== 0;
-    phaseOffset = (Math.round(-totalBranches) / 2) + Math.floor(totalBranches / 4) - (isOdd ? 0.5 : 0);
+    phaseOffset = config.variantMode === "none" ? 1.0 : (Math.round(-totalBranches) / 2) + Math.floor(totalBranches / 4) - (isOdd ? 0.5 : 0);
   }
 
   if (config.symmetryGroup === "p3" && config.latticeType === 'hexagonal' && config.useAutoAlignment) {

@@ -1,4 +1,5 @@
 import { customWorkspace } from '../../tileWorkspace.ts';
+import { type LatticeType } from '../../utils/latticeRegistry.ts';
 import { tileEditorTemplate } from './tileEditor.html.ts';
 import './tileEditor.css';
 
@@ -44,6 +45,7 @@ export class tileEditorComponent {
       btnCancelMax: document.getElementById('btnCancelMax'),
       btnResetCompact: document.getElementById('btnResetCompact'),
       btnResetMax: document.getElementById('btnResetMax'),
+      editorLatticeSelect: document.getElementById('editorLatticeSelect'),
     };
   }
 
@@ -75,6 +77,11 @@ export class tileEditorComponent {
     } else {
       this.workspaceInstance.resizeWorkspace(500, 500);
       this.workspaceInstance.render();
+    }
+
+    // Synchronize sidebar dropdown selector state with active memory metrics on open
+    if (this.els.editorLatticeSelect && (this.workspaceInstance as any).currentLatticeType) {
+      (this.els.editorLatticeSelect as HTMLSelectElement).value = (this.workspaceInstance as any).currentLatticeType;
     }
   }
 
@@ -115,6 +122,25 @@ export class tileEditorComponent {
     this.els.btnCancelMax?.addEventListener('click', executeCancel);
     this.els.btnResetCompact?.addEventListener('click', executeReset);
     this.els.btnResetMax?.addEventListener('click', executeReset);
+
+    // --- STRATEGY SWAP EVENT WATCHER ---
+    this.els.editorLatticeSelect?.addEventListener('change', (e: Event) => {
+      if (!this.workspaceInstance) return;
+
+      const targetType = (e.target as HTMLSelectElement).value as LatticeType;
+
+      // 1. Hot-swap workspace coordinate system and dimensions maps
+      this.workspaceInstance.switchLatticeSystem(targetType, 2.0);
+
+      // 2. Reflect selected parameters back into master selector down in the page layer
+      if (this.ctx.baseMotifSelectElement) {
+        // TODO: Add customSymmetricSquare and tiranle to baseMotifs
+        this.ctx.baseMotifSelectElement.value = targetType === 'hexagonal' ? 'customSymmetricHexagon' : targetType;
+      }
+
+      // 3. Keep master rendering loops perfectly in line
+      this.ctx.updateEnginePipeline();
+    });
 
     this.els.btnMaxCompact?.addEventListener('click', () => this.toggleLayoutMode(true));
     this.els.btnRestoreMax?.addEventListener('click', () => this.toggleLayoutMode(false));

@@ -29,7 +29,6 @@ export const tileEditorTemplate = `
       <div class="view-maximized-grid">
         <div id="mountMaximized" class="editor-canvas-viewport">
           <button type="button" id="btnRestoreMax" class="btn-restore-absolute">Restore Compact view</button>
-          <!-- Canvas shifts here seamlessly via app ports -->
         </div>
 
         <div class="editor-sidebar-panel">
@@ -46,7 +45,6 @@ export const tileEditorTemplate = `
             <div>
               <div class="maximized-header-row">
                 <h2 class="maximized-title">Symmetric Motif Vector Editor</h2>
-                <button type="button" id="btnRestoreMax" class="btn-restore-inline">Restore View</button>
               </div>
               <p class="maximized-desc">
                 Design a custom interlocking base motif.
@@ -55,6 +53,15 @@ export const tileEditorTemplate = `
                 • <span class="key-hint-cyan">Alt + Click</span> on a blue line segment splits the line and adds a new control handle.<br>
                 • <span class="key-hint-coral">Shift + Click</span> on a red control handle to delete it.
               </p>
+              <!-- LATTICE SELECTION SYSTEM MODULE -->
+              <div class="sidebar-setting-group">
+                <label for="editorLatticeSelect" class="sidebar-setting-label">Active Lattice Grid System</label>
+                <select id="editorLatticeSelect" class="sidebar-setting-dropdown">
+                  <option value="hexagonal">Hexagonal (p3 Framework)</option>
+                  <option value="square">Square (p1 Framework)</option>
+                  <option value="triangular">Triangular (Glide reflection) Framework</option>
+                </select>
+              </div>
             </div>
             <div class="maximized-footer-row">
               <button type="button" id="btnSaveMax" class="btn-editor-action btn-action-save">Apply Motif</button>

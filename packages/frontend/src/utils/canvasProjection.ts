@@ -7,6 +7,7 @@ export class CanvasProjection {
   private width: number;
   private height: number;
   private scale: number; // Pixels per normalized unit
+  private centerOffset: Point2D = { x: 0.0, y: 0.0 }; // Added tracking parameter
 
   constructor(width: number, height: number, scale: number = 150) {
     this.width = width;
@@ -24,11 +25,20 @@ export class CanvasProjection {
   }
 
   /**
-   * Translates an HTML5 Canvas screen coordinate (pixels) into a normalized vector point
+   * Dynamically mutates visual centering tracking targets inside calculations
+   */
+  public setCenterOffset(offset: Point2D): void {
+    this.centerOffset = { x: offset.x, y: offset.y };
+  }
+
+  /**
+   * Translates a HTML5 Canvas screen coordinate (pixels) into a normalized vector point
    */
   public screenToVector(screenX: number, screenY: number): Point2D {
-    const centerX = this.width / 2;
-    const centerY = this.height / 2;
+    // Factoring the offset directly inside the inverse screen transform equations
+    const centerX = (this.width / 2) + (this.centerOffset.x * this.scale);
+    const centerY = (this.height / 2) + (this.centerOffset.y * this.scale);
+
 
     return {
       x: (screenX - centerX) / this.scale,
@@ -40,8 +50,9 @@ export class CanvasProjection {
    * Translates a normalized vector point back into an HTML5 Canvas screen coordinate (pixels)
    */
   public vectorToScreen(vectorPt: Point2D): Point2D {
-    const centerX = this.width / 2;
-    const centerY = this.height / 2;
+    // Factoring the offset directly inside the forward projection draw equations
+    const centerX = (this.width / 2) + (this.centerOffset.x * this.scale);
+    const centerY = (this.height / 2) + (this.centerOffset.y * this.scale);
 
     return {
       x: centerX + (vectorPt.x * this.scale),

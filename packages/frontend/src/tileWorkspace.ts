@@ -36,6 +36,9 @@ export class customWorkspace {
     this.projection = new CanvasProjection(canvas.width, canvas.height, scale);
 
     this.syncActiveLatticeType();
+    const initialOffset = LATTICE_REGISTRY[this.currentLatticeType].getCenterOffset(this.cellHeight);
+    this.projection.setCenterOffset(initialOffset);
+
     this.initializeActiveLattice(cellHeight);
     this.setupEventListeners();
     this.render();
@@ -56,6 +59,11 @@ export class customWorkspace {
   public switchLatticeSystem(type: LatticeType, cellHeight: number = 2.0): void {
     this.currentLatticeType = type;
     this.cellHeight = cellHeight;
+
+    // Update projection centering matrices instantly on hot-swapping types
+    const dynamicOffset = LATTICE_REGISTRY[type].getCenterOffset(cellHeight);
+    this.projection.setCenterOffset(dynamicOffset);
+
     this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
     this.persistAndSyncState();
     this.render();
@@ -226,8 +234,6 @@ export class customWorkspace {
     if (this.currentLatticeType === 'square') {
       if (this.activeDragEdge === 'edgeTop') vectorPos.y = 0.0;
       if (this.activeDragEdge === 'edgeLeft') vectorPos.x = 0.0;
-    } else if (this.currentLatticeType === 'triangular') {
-      if (this.activeDragEdge === 'edgeLeft') vectorPos.x = 0.0;
     }
 
     this.state[this.activeDragEdge][this.activeDragIndex] = vectorPos;
@@ -244,10 +250,134 @@ export class customWorkspace {
   public render(): void {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw the compiled symmetry polygon path
-    const components = compileSymmetricTile(this.state);
-    const perimeter = components[0];
+    let perimeter: Point2D[] | undefined = undefined;
 
+    // DEFENSIVE GUARD: Only run the hexagonal compilation system
+    // if the active workspace grid model is explicitly set to hexagonal.
+    if (this.currentLatticeType === 'hexagonal') {
+      const components = compileSymmetricTile(this.state);
+      perimeter = components[0];
+    }
+
+    // ==========================================================================
+    // 1. RENDER NON-HEXAGONAL BASE LATTICE SYSTEMS
+    // ==========================================================================
+    if (this.currentLatticeType !== 'hexagonal') {
+      const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
+      const baseEdges = latticeDef.getBaseEdges(this.cellHeight);
+      const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
+
+      // Draw the un-deformed layout guidelines for non-hexagonal grids
+      this.ctx.save();
+      this.ctx.lineWidth = 1.5;
+      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.11)'; // Faint visual backing grid
+      baseEdges.forEach(edge => {
+        this.ctx.beginPath();
+        const startScreen = this.projection.vectorToScreen(edge.start);
+        const endScreen = this.projection.vectorToScreen(edge.end);
+        this.ctx.moveTo(startScreen.x, startScreen.y);
+        this.ctx.lineTo(endScreen.x, endScreen.y);
+        this.ctx.stroke();
+      });
+      this.ctx.restore();
+
+      // --- PHASE 2: CALCULATE AND RENDER AUTOMATED TWINS & MIDPOINT ROTATION ---
+      if (this.currentLatticeType === 'triangular') {
+        const interlockList = this.state['edgeInterlock'] || [];
+        const spineList = this.state['edgeSpine'] || [];
+
+        // 2A. Render the Bottom Half of the Left Spine Axis (Anti-Symmetric Twin)
+        this.ctx.save();
+        this.ctx.setLineDash([6, 4]);
+        this.ctx.strokeStyle = '#ff7675';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+
+        // Start drawing from the midpoint down to the bottom vertex v4
+        const midScreen = this.projection.vectorToScreen({ x: 0.0, y: this.cellHeight * 0.5 });
+        this.ctx.moveTo(midScreen.x, midScreen.y);
+
+        // Apply half-turn central inversion symmetry: (x, y) becomes (-x, cellHeight - y)
+        for (let i = spineList.length - 1; i >= 0; i--) {
+          const pt = spineList[i];
+          const invertedPt = { x: -pt.x, y: this.cellHeight - pt.y };
+          const screenPt = this.projection.vectorToScreen(invertedPt);
+          this.ctx.lineTo(screenPt.x, screenPt.y);
+        }
+        const bottomScreen = this.projection.vectorToScreen(this.state.v4);
+        this.ctx.lineTo(bottomScreen.x, bottomScreen.y);
+        this.ctx.stroke();
+        this.ctx.restore();
+
+        // 2B. Render the Bottom-Right Angled Edge (Reflected Interlock Twin)
+        this.ctx.save();
+        this.ctx.setLineDash([6, 4]);
+        this.ctx.strokeStyle = '#ff7675';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+
+        // Start drawing the twin from the Right Vertex down to the Bottom Apex
+        const triWidth = (Math.sqrt(3) / 2) * this.cellHeight;
+        const startTwin = this.projection.vectorToScreen({ x: triWidth, y: this.cellHeight * 0.5 });
+        this.ctx.moveTo(startTwin.x, startTwin.y);
+
+        // Map every point on the upper angled edge down to its mirrored lower counterpart
+        for (let i = interlockList.length - 1; i >= 0; i--) {
+          const pt = interlockList[i];
+          // Mirror coordinate across the y = cellHeight * 0.5 horizontal symmetry plane
+          const mirroredPt = { x: pt.x, y: this.cellHeight - pt.y };
+          const screenPt = this.projection.vectorToScreen(mirroredPt);
+          this.ctx.lineTo(screenPt.x, screenPt.y);
+        }
+        const endTwin = this.projection.vectorToScreen(this.state.v4);
+        this.ctx.lineTo(endTwin.x, endTwin.y);
+        this.ctx.stroke();
+        this.ctx.restore();
+      }
+
+      // Render the active interactive lines for squares or triangles
+      this.ctx.save();
+      this.ctx.lineWidth = 2.5;
+      this.ctx.strokeStyle = '#00d2ff'; // Primary editing blue color
+      interactiveEdges.forEach(edge => {
+        const pointList = this.state[edge.key] || [];
+        const fullSequence = [edge.start, ...pointList, edge.end];
+
+        this.ctx.beginPath();
+        const start = this.projection.vectorToScreen(fullSequence[0]!);
+        this.ctx.moveTo(start.x, start.y);
+        for (let i = 1; i < fullSequence.length; i++) {
+          const pt = this.projection.vectorToScreen(fullSequence[i]!);
+          this.ctx.lineTo(pt.x, pt.y);
+        }
+        this.ctx.stroke();
+      });
+      this.ctx.restore();
+
+      // Draw interactive handle nodes for alternative lattice geometries
+      this.ctx.save();
+      this.ctx.lineWidth = 1.5;
+      interactiveEdges.forEach(edge => {
+        const pointList = this.state[edge.key] || [];
+        pointList.forEach(node => {
+          const screenPos = this.projection.vectorToScreen(node);
+          this.ctx.beginPath();
+          this.ctx.arc(screenPos.x, screenPos.y, 5, 0, Math.PI * 2);
+          this.ctx.fillStyle = '#ff3b30';
+          this.ctx.fill();
+          this.ctx.strokeStyle = '#ffffff';
+          this.ctx.lineWidth = 1.5;
+          this.ctx.stroke();
+        });
+      });
+      this.ctx.restore();
+
+      return;
+    }
+
+    // ==========================================================================
+    // EXISTING HEXAGONAL RENDER FLOW
+    // ==========================================================================
     if (perimeter && perimeter.length > 0) {
       this.ctx.beginPath();
       const start = this.projection.vectorToScreen(perimeter[0]!);

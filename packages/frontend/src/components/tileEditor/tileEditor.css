@@ -64,7 +64,7 @@
   display: grid !important;
 }
 
-.editor-sidebar-panel {
+.tile-sidebar-panel {
   background: #1e1e24;
   border-left: 1px solid #2d2d3a;
   padding: 32px 24px;
@@ -76,12 +76,12 @@
   overflow-y: auto;
 }
 
-.editor-canvas-viewport {
+.tile-canvas-viewport {
   background: #09090b;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 12px;
   box-sizing: border-box;
   height: 100%;
   position: relative;
@@ -144,7 +144,7 @@
 .btn-action-save { background: #28a745; }
 .maximized-mode-active .btn-action-save { background: #10b981; }
 .btn-action-cancel { background: #e67e22; }
-.maximized-mode-active .btn-action-cancel { background: #f59e0b; }
+.maximized-mode-active .btn-action-cancel { background: #e67e22; }
 .btn-action-reset { background: #dc3545; }
 .maximized-mode-active .btn-action-reset { background: #ef4444; }
 
@@ -157,7 +157,7 @@
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
   }
-  .editor-sidebar-panel {
+  .tile-sidebar-panel {
     border-left: none;
     border-top: 1px solid #2d2d3a;
     padding: 16px 20px;
@@ -226,4 +226,47 @@
 @keyframes sidebar-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- LATTICE CONTROLS SIDEBAR SELECTION SYSTEM --- */
+.sidebar-setting-group {
+  margin-top: 24px;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sidebar-setting-label {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.sidebar-setting-dropdown {
+  width: 100%;
+  background: #2d2d3a;
+  color: #fff;
+  border: 1px solid #3f3f46;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.sidebar-setting-dropdown:focus {
+  border-color: #4a90e2;
+  background-color: #333344;
+}
+
+.sidebar-setting-dropdown option {
+  background: #222;
+  color: #fff;
 }

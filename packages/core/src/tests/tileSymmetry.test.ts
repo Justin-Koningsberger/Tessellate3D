@@ -32,6 +32,7 @@ describe('Custom Symmetry Matrix Engine', () => {
     const h = r * (Math.sqrt(3) / 2);
 
     const mockState: ModularEditorState = {
+      latticeType: 'hexagonal', // FIX 1: Satisfy the strict type contract parameter
       v1: { x: 0.0, y: 0.0 },
       v2: { x: h,   y: r * 0.5 },
       v3: { x: h,   y: cellHeight - r * 0.5 },
@@ -58,11 +59,19 @@ describe('Custom Symmetry Matrix Engine', () => {
     const gapDistance = Math.hypot(lastPoint.x - firstPoint.x, lastPoint.y - firstPoint.y);
 
     assert.strictEqual(gapDistance, 0);
-    assert.strictEqual(firstPoint.x, mockState.v1.x);
-    assert.strictEqual(firstPoint.y, mockState.v1.y);
+    // Use safe optional chaining since v1 is optional in the interface
+    assert.strictEqual(firstPoint.x, mockState.v1?.x);
+    assert.strictEqual(firstPoint.y, mockState.v1?.y);
 
-    // 2. Traversal Count Check
-    const expectedPointsCount = 1 + mockState.edgeA.length + 1 + mockState.edgeB.length + 1 + mockState.edgeC.length + 1 + mockState.edgeA.length + 1 + mockState.edgeB.length + 1 + mockState.edgeC.length + 1;
+    const expectedPointsCount =
+      1 + (mockState.edgeA?.length || 0) +
+      1 + (mockState.edgeB?.length || 0) +
+      1 + (mockState.edgeB?.length || 0) + // rotatedB matches edgeB size
+      1 + (mockState.edgeC?.length || 0) +
+      1 + (mockState.edgeC?.length || 0) + // rotatedC matches edgeC size
+      1 + (mockState.edgeA?.length || 0) + // rotatedA matches edgeA size
+      1;
+
     assert.strictEqual(perimeterPath.length, expectedPointsCount);
   });
 });

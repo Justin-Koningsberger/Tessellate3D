@@ -1,20 +1,39 @@
 import type { Point2D } from './tessellationEngine.ts';
 
-/**
- * Tracks the raw, user-editable nodes for the 3 primary edges of a hexagonal tile.
- */
-export interface ModularEditorState {
-  v1: Point2D; // Top Apex Anchor
-  v2: Point2D; // Top Right Vertex
-  v3: Point2D; // Bottom Right Vertex
-  v4: Point2D; // Bottom Apex Anchor
-  v5: Point2D; // Bottom Left Vertex
-  v6: Point2D; // Top Left Vertex
-
-  edgeA: Point2D[]; // Sits between v1 and v2
-  edgeB: Point2D[]; // Sits between v2 and v3
-  edgeC: Point2D[]; // Sits between v3 and v4
+export interface BaseEditorState {
+  v1: Point2D; // Base origin node anchor common across shapes
+  v4: Point2D; // Base height node anchor common across shapes
 }
+
+export interface HexagonalEditorState extends BaseEditorState {
+  latticeType: 'hexagonal';
+  v2: Point2D;
+  v3: Point2D;
+  v5: Point2D;
+  v6: Point2D;
+  edgeA: Point2D[];
+  edgeB: Point2D[];
+  edgeC: Point2D[];
+}
+
+export interface SquareEditorState extends BaseEditorState {
+  latticeType: 'square';
+  edgeTop: Point2D[];
+  edgeLeft: Point2D[];
+}
+
+export interface TriangularEditorState extends BaseEditorState {
+  latticeType: 'triangular';
+  v2: Point2D; // Right corner node
+  edgeSpine: Point2D[];
+  edgeInterlock: Point2D[];
+}
+
+/**
+ * Universal Discriminated Union representing the state contract.
+ * Checking state.latticeType automatically unpacks the exact required properties.
+ */
+export type ModularEditorState = HexagonalEditorState | SquareEditorState | TriangularEditorState;
 
 // Global active tracking state pointers
 export let liveEditorState: ModularEditorState | null = null;
@@ -40,68 +59,94 @@ export function rotateAroundPivot(point: Point2D, pivot: Point2D, angleDegrees: 
 }
 
 /**
- * Compiles custom editor states into a nested component array.
- * Component represents the perfect interlocking closed perimeter loop.
- * Pairs adjacent sides around alternating pivot vertices (v1, v3, v5).
+ * Specialized compiler pass producing a closed interlocking loop for Hexagonal tiles.
+ */
+function compileHexagonalTile(state: HexagonalEditorState): Point2D[] {
+  const path: Point2D[] = [];
+
+  path.push({ x: state.v1.x, y: state.v1.y });
+  state.edgeA.forEach(p => path.push({ x: p.x, y: p.y }));
+  path.push({ x: state.v2.x, y: state.v2.y });
+  state.edgeB.forEach(p => path.push({ x: p.x, y: p.y }));
+
+  path.push({ x: state.v3.x, y: state.v3.y });
+  state.edgeB.map(p => rotateAroundPivot(p, state.v3, -120)).reverse().forEach(p => path.push(p));
+
+  path.push({ x: state.v4.x, y: state.v4.y });
+  state.edgeC.forEach(p => path.push({ x: p.x, y: p.y }));
+  path.push({ x: state.v5.x, y: state.v5.y });
+
+  state.edgeC.map(p => rotateAroundPivot(p, state.v5, -120)).reverse().forEach(p => path.push(p));
+  path.push({ x: state.v6.x, y: state.v6.y });
+
+  state.edgeA.map(p => rotateAroundPivot(p, state.v1, 120)).reverse().forEach(p => path.push(p));
+  path.push({ x: state.v1.x, y: state.v1.y });
+  return path;
+}
+
+/**
+ * Specialized compiler pass producing a closed interlocking loop for Triangular tiles.
+ */
+function compileTriangularTile(state: TriangularEditorState): Point2D[] {
+  const path: Point2D[] = [];
+  const cellHeight = state.v4.y;
+  const triWidth = (Math.sqrt(3) / 2) * cellHeight;
+
+  path.push({ x: state.v1.x, y: state.v1.y });
+  state.edgeInterlock.forEach(p => path.push({ x: p.x, y: p.y }));
+  path.push({ x: triWidth, y: cellHeight * 0.5 });
+
+  state.edgeInterlock.forEach(pt => path.push({ x: triWidth - pt.x, y: pt.y + (cellHeight * 0.5) }));
+  path.push({ x: state.v4.x, y: state.v4.y });
+
+  for (let i = state.edgeSpine.length - 1; i >= 0; i--) {
+    path.push({ x: -state.edgeSpine[i]!.x, y: state.edgeSpine[i]!.y + (cellHeight * 0.5) });
+  }
+  path.push({ x: 0.0, y: cellHeight * 0.5 });
+  for (let i = state.edgeSpine.length - 1; i >= 0; i--) {
+    path.push({ x: state.edgeSpine[i]!.x, y: state.edgeSpine[i]!.y });
+  }
+  path.push({ x: state.v1.x, y: state.v1.y });
+  return path;
+}
+
+/**
+ * Specialized compiler pass producing a closed interlocking loop for Square tiles.
+ */
+function compileSquareTile(state: SquareEditorState): Point2D[] {
+  const path: Point2D[] = [];
+  const cellHeight = state.v4.y;
+
+  path.push({ x: state.v1.x, y: state.v1.y });
+  state.edgeTop.forEach(p => path.push({ x: p.x, y: p.y }));
+  path.push({ x: cellHeight, y: 0.0 });
+
+  state.edgeLeft.forEach(p => path.push({ x: p.x + cellHeight, y: p.y }));
+  path.push({ x: cellHeight, y: cellHeight });
+
+  for (let i = state.edgeTop.length - 1; i >= 0; i--) {
+    path.push({ x: state.edgeTop[i]!.x, y: state.edgeTop[i]!.y + cellHeight });
+  }
+  path.push({ x: 0.0, y: cellHeight });
+  for (let i = state.edgeLeft.length - 1; i >= 0; i--) {
+    path.push({ x: state.edgeLeft[i]!.x, y: state.edgeLeft[i]!.y });
+  }
+  path.push({ x: state.v1.x, y: state.v1.y });
+  return path;
+}
+
+/**
+ * Polymorphic router compiling custom editor states into a nested component path loop matrix.
+ * Leveraging the Discriminated Union allows TypeScript to narrow types inside the branches perfectly.
  */
 export function compileSymmetricTile(state: ModularEditorState): Point2D[][] {
-  const components: Point2D[][] = [];
-  const perimeterPath: Point2D[] = [];
-
-  // ==========================================
-  // PHASE 1: MASTER INPUT HANDLES & CORNERS
-  // ==========================================
-
-  // 1. Top Apex Pivot A (v1) -> Master Edge A -> Top-Right Corner (v2)
-  perimeterPath.push({ x: state.v1.x, y: state.v1.y });
-  for (let i = 0; i < state.edgeA.length; i++) {
-    perimeterPath.push({ x: state.edgeA[i]!.x, y: state.edgeA[i]!.y });
+  switch (state.latticeType) {
+    case 'triangular':
+      return [compileTriangularTile(state)];
+    case 'square':
+      return [compileSquareTile(state)];
+    case 'hexagonal':
+    default:
+      return [compileHexagonalTile(state)];
   }
-
-  // 2. Top-Right Corner (v2) -> Master Edge B -> Bottom-Right Pivot C (v3)
-  perimeterPath.push({ x: state.v2.x, y: state.v2.y });
-  for (let i = 0; i < state.edgeB.length; i++) {
-    perimeterPath.push({ x: state.edgeB[i]!.x, y: state.edgeB[i]!.y });
-  }
-
-  // 3. Bottom-Right Pivot C Corner (v3)
-  perimeterPath.push({ x: state.v3.x, y: state.v3.y });
-
-  // Twin B: Rotate Edge B by -120° around pivot v3 to build the Bottom-Right edge
-  const rotatedB = state.edgeB.map((p: Point2D) => rotateAroundPivot(p, state.v3, -120)).reverse();
-  for (let i = 0; i < rotatedB.length; i++) {
-    perimeterPath.push(rotatedB[i]!);
-  }
-
-  // 4. Bottom Apex (v4) -> Master Edge C -> Bottom-Left Pivot B (v5)
-  perimeterPath.push({ x: state.v4.x, y: state.v4.y });
-  for (let i = 0; i < state.edgeC.length; i++) {
-    perimeterPath.push({ x: state.edgeC[i]!.x, y: state.edgeC[i]!.y });
-  }
-
-  // 5. Bottom-Left Pivot B Corner (v5)
-  perimeterPath.push({ x: state.v5.x, y: state.v5.y });
-
-  // ==========================================
-  // PHASE 2: REMAINING LEFT-SIDE SYMMETRY SEALS
-  // ==========================================
-
-  // Twin C: Rotate Edge C by -120° around pivot v5 to build the Left-Vertical edge
-  const rotatedC = state.edgeC.map((p: Point2D) => rotateAroundPivot(p, state.v5, -120)).reverse();
-  for (let i = 0; i < rotatedC.length; i++) {
-    perimeterPath.push(rotatedC[i]!);
-  }
-  perimeterPath.push({ x: state.v6.x, y: state.v6.y });
-
-  // Twin A: Rotate Edge A by 120° around pivot v1 to build the Top-Left slope edge
-  const rotatedA = state.edgeA.map((p: Point2D) => rotateAroundPivot(p, state.v1, 120)).reverse();
-  for (let i = 0; i < rotatedA.length; i++) {
-    perimeterPath.push(rotatedA[i]!);
-  }
-
-  // 6. Perfect Manifold Seam Closure Weld
-  perimeterPath.push({ x: state.v1.x, y: state.v1.y });
-
-  components.push(perimeterPath);
-  return components;
 }

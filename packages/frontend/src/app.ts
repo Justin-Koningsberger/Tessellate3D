@@ -1,5 +1,5 @@
 import { createUncompressedZip } from './zipUtils.ts';
-import { customWorkspace } from './tileWorkspace.ts';
+import { CustomWorkspace } from './tileWorkspace.ts';
 import { tileEditorComponent } from './components/tileEditor/tileEditor.ts';
 
 import { CONFIG } from '@tessellate3d/core/src/config.ts';

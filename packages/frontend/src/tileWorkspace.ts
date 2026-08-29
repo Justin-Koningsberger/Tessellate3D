@@ -1,5 +1,4 @@
 import {
-  compileSymmetricTile,
   updateLiveEditorState,
   type ModularEditorState
 } from '@tessellate3d/core/src/tileSymmetry.ts';
@@ -7,16 +6,14 @@ import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 import { CanvasProjection } from './utils/canvasProjection.ts';
 import { LATTICE_REGISTRY, type LatticeType } from './utils/latticeRegistry.ts';
 
-// Using a class here because the canvas needs continuous state tracking
-// (drag handles, active indices, mouse listeners). Keeps it performant,
-// self-contained, and easy to port to a framework later if needed.
-export class customWorkspace {
+// Self-contained high-performance workspace context managing canvas layout transforms,
+// multi-lattice selection states, drag interactions, and disk storage sync loops.
+export class CustomWorkspace {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private projection: CanvasProjection;
 
-  // TODO: Update this to a proper editorState type once all lattices are supported
-  private state!: any;
+  private state!: ModularEditorState;
   private activeDragEdge: string | null = null;
   private activeDragIndex: number | null = null;
   private pixelInteractionThreshold = 14;
@@ -31,7 +28,7 @@ export class customWorkspace {
     if (!context) throw new Error('Could not acquire 2D canvas context');
     this.ctx = context;
 
-    // Zoom setup: Scale to comfortably fit the 500x500 frame window boundaries
+    // Zoom setup: Scale to comfortably fit the canvas frame window boundaries
     const scale = Math.min(canvas.width, canvas.height) / 3.0;
     this.projection = new CanvasProjection(canvas.width, canvas.height, scale);
 
@@ -65,6 +62,7 @@ export class customWorkspace {
     this.projection.setCenterOffset(dynamicOffset);
 
     this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+
     this.persistAndSyncState();
     this.render();
   }
@@ -81,7 +79,6 @@ export class customWorkspace {
     }
   }
 
-
   private initializeActiveLattice(cellHeight: number): void {
     try {
       const saved = localStorage.getItem(this.storageKey);
@@ -91,8 +88,8 @@ export class customWorkspace {
         updateLiveEditorState(this.state);
         return;
       }
-    } catch (err) {
-      console.warn('⚠️ [Storage] Failed parsing stored motif. Resetting layout.', err);
+    } catch {
+      // Graceful silent fallback to default generation state if local storage parses corruptly
     }
 
     this.state = LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
@@ -100,32 +97,28 @@ export class customWorkspace {
   }
 
   private setupEventListeners(): void {
-    // Pointerdown hooks tracking elements
     this.canvas.addEventListener('pointerdown', (e: PointerEvent) => {
-      // Locks mobile contact to this specific canvas node,
-      // preventing the browser from dropping tracking if a fast-moving finger leaves the bounds.
       this.canvas.setPointerCapture(e.pointerId);
-
       this.handlePointerDown(e);
     });
 
     this.canvas.addEventListener('pointermove', this.handlePointerMove.bind(this));
 
     this.canvas.addEventListener('pointerup', (e: PointerEvent) => {
-      // Safely release the locked pointer context
       try {
         this.canvas.releasePointerCapture(e.pointerId);
-      } catch (err) {
-        // Safe bypass if pointer capture was dropped implicitly
+      } catch {
+        // Safe bypass if pointer capture dropped implicitly
       }
       this.handlePointerUp();
     });
 
-    // Fallback block if system windows override gestures (e.g. push notification alerts)
     this.canvas.addEventListener('pointercancel', (e: PointerEvent) => {
       try {
         this.canvas.releasePointerCapture(e.pointerId);
-      } catch (err) {}
+      } catch {
+        // Safe bypass if overridden by OS window alerts
+      }
       this.handlePointerUp();
     });
   }
@@ -166,12 +159,12 @@ export class customWorkspace {
     const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
     const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
 
-    // Intercept Shift + Click for handle deletion
     if (e.shiftKey) {
       for (const edge of interactiveEdges) {
-        const pointList = this.state[edge.key] || [];
-        const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
+        const pointList = (this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[] | undefined;
+        if (!pointList) continue;
 
+        const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
         if (idx !== null) {
           pointList.splice(idx, 1);
           this.persistAndSyncState();
@@ -182,20 +175,19 @@ export class customWorkspace {
       return;
     }
 
-    // Intercept Alt + Click for precision point addition
     if (e.altKey) {
       const mouseVector = this.projection.screenToVector(mouseScreen.x, mouseScreen.y);
 
       for (const edge of interactiveEdges) {
-        const rawPoints = this.state[edge.key] || [];
-        const fullSequence = [edge.start, ...rawPoints, edge.end];
+        const rawPoints = (this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[] | undefined;
+        if (!rawPoints) continue;
 
+        const fullSequence = [edge.start, ...rawPoints, edge.end];
         for (let i = 0; i < fullSequence.length - 1; i++) {
           const distancePx = this.getDistanceToSegmentPx(mouseVector, fullSequence[i]!, fullSequence[i + 1]!);
 
           if (distancePx < this.pixelInteractionThreshold) {
             rawPoints.splice(i, 0, mouseVector);
-
             this.persistAndSyncState();
             this.render();
             return;
@@ -206,9 +198,10 @@ export class customWorkspace {
     }
 
     for (const edge of interactiveEdges) {
-      const pointList = this.state[edge.key] || [];
-      const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
+      const pointList = (this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[] | undefined;
+      if (!pointList) continue;
 
+      const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
       if (idx !== null) {
         this.activeDragEdge = edge.key;
         this.activeDragIndex = idx;
@@ -226,10 +219,12 @@ export class customWorkspace {
       e.clientY - rect.top
     );
 
-    this.state[this.activeDragEdge][this.activeDragIndex] = vectorPos;
-
-    this.persistAndSyncState();
-    this.render();
+    const targetEdgeList = (this.state[this.activeDragEdge as keyof ModularEditorState] as unknown) as Point2D[] | undefined;
+    if (targetEdgeList && targetEdgeList[this.activeDragIndex]) {
+      targetEdgeList[this.activeDragIndex] = vectorPos;
+      this.persistAndSyncState();
+      this.render();
+    }
   }
 
   private handlePointerUp(): void {
@@ -238,114 +233,20 @@ export class customWorkspace {
   }
 
   public render(): void {
+    // 1. Clear the canvas and retrieve the current lattice configuration
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    let perimeter: Point2D[] | undefined = undefined;
+    const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
+    if (!latticeDef) return;
 
-    // DEFENSIVE GUARD: Only run the hexagonal compilation system
-    // if the active workspace grid model is explicitly set to hexagonal.
-    if (this.currentLatticeType === 'hexagonal') {
-      const components = compileSymmetricTile(this.state);
-      perimeter = components[0];
-    }
+    const baseEdges = latticeDef.getBaseEdges(this.cellHeight);
+    const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
 
-    // ==========================================================================
-    // 1. RENDER NON-HEXAGONAL BASE LATTICE SYSTEMS
-    // ==========================================================================
-    if (this.currentLatticeType !== 'hexagonal') {
-      const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
-      const baseEdges = latticeDef.getBaseEdges(this.cellHeight);
-      const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
-
-      // Draw the un-deformed layout guidelines for non-hexagonal grids
-      this.ctx.save();
-      this.ctx.lineWidth = 1.5;
-      this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.11)'; // Faint visual backing grid
-      baseEdges.forEach(edge => {
-        this.ctx.beginPath();
-        const startScreen = this.projection.vectorToScreen(edge.start);
-        const endScreen = this.projection.vectorToScreen(edge.end);
-        this.ctx.moveTo(startScreen.x, startScreen.y);
-        this.ctx.lineTo(endScreen.x, endScreen.y);
-        this.ctx.stroke();
-      });
-      this.ctx.restore();
-
-      // Execute strategy twin path calculation loops dynamically from registry
-      latticeDef.renderTwins(this.ctx, this.state, this.projection, this.cellHeight);
-
-      // Render the active interactive lines for squares or triangles
-      this.ctx.save();
-      this.ctx.lineWidth = 2.5;
-      this.ctx.strokeStyle = '#00d2ff'; // Primary editing blue color
-      interactiveEdges.forEach(edge => {
-        const pointList = this.state[edge.key] || [];
-        const fullSequence = [edge.start, ...pointList, edge.end];
-
-        this.ctx.beginPath();
-        const start = this.projection.vectorToScreen(fullSequence[0]!);
-        this.ctx.moveTo(start.x, start.y);
-        for (let i = 1; i < fullSequence.length; i++) {
-          const pt = this.projection.vectorToScreen(fullSequence[i]!);
-          this.ctx.lineTo(pt.x, pt.y);
-        }
-        this.ctx.stroke();
-      });
-      this.ctx.restore();
-
-      // Draw interactive handle nodes for alternative lattice geometries
-      this.ctx.save();
-      this.ctx.lineWidth = 1.5;
-      interactiveEdges.forEach(edge => {
-        const pointList = this.state[edge.key] || [];
-        pointList.forEach(node => {
-          const screenPos = this.projection.vectorToScreen(node);
-          this.ctx.beginPath();
-          this.ctx.arc(screenPos.x, screenPos.y, 5, 0, Math.PI * 2);
-          this.ctx.fillStyle = '#ff3b30';
-          this.ctx.fill();
-          this.ctx.strokeStyle = '#ffffff';
-          this.ctx.lineWidth = 1.5;
-          this.ctx.stroke();
-        });
-      });
-      this.ctx.restore();
-
-      return;
-    }
-
-    // ==========================================================================
-    // EXISTING HEXAGONAL RENDER FLOW
-    // ==========================================================================
-    if (perimeter && perimeter.length > 0) {
-      this.ctx.beginPath();
-      const start = this.projection.vectorToScreen(perimeter[0]!);
-      this.ctx.moveTo(start.x, start.y);
-
-      for (let i = 1; i < perimeter.length; i++) {
-        const pt = this.projection.vectorToScreen(perimeter[i]!);
-        this.ctx.lineTo(pt.x, pt.y);
-      }
-
-      this.ctx.fillStyle = 'rgba(74, 144, 226, 0.15)';
-      this.ctx.fill();
-
-    }
-
-    // --- PHASE 0: DRAW THE UN-DEFORMED BASE LATTICE REFERENCE GUIDES ---
-    const originalEdges = [
-      { start: this.state.v1, end: this.state.v2 }, // Base Edge A
-      { start: this.state.v2, end: this.state.v3 }, // Base Edge B
-      { start: this.state.v3, end: this.state.v4 }, // Base Twin B
-      { start: this.state.v4, end: this.state.v5 }, // Base Edge C
-      { start: this.state.v5, end: this.state.v6 }, // Base Twin C
-      { start: this.state.v6, end: this.state.v1 }  // Base Twin A
-    ];
-
+    // 2. Draw the un-deformed base background reference layout guidelines (Faint grey markers)
     this.ctx.save();
     this.ctx.lineWidth = 1.5;
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.11)'; // Faint visual baseline anchor
-    originalEdges.forEach(edge => {
+    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.11)';
+    baseEdges.forEach(edge => {
       this.ctx.beginPath();
       const startScreen = this.projection.vectorToScreen(edge.start);
       const endScreen = this.projection.vectorToScreen(edge.end);
@@ -355,113 +256,91 @@ export class customWorkspace {
     });
     this.ctx.restore();
 
-    // 1. RENDER THE USER-INTERACTIVE EDGES
-    const masterSequences = [
-      [this.state.v1, ...this.state.edgeA, this.state.v2],
-      [this.state.v2, ...this.state.edgeB, this.state.v3],
-      [this.state.v4, ...this.state.edgeC, this.state.v5]
-    ];
+    // 3. Delegate automated parallel / mirrored twin loops to the strategy registry (Red dashed lines)
+    latticeDef.renderTwins(this.ctx, this.state, this.projection, this.cellHeight);
 
+    // 4. Render the active user-interactive blue boundary line segments
+    this.ctx.save();
     this.ctx.lineWidth = 2.5;
     this.ctx.strokeStyle = '#00d2ff';
-    masterSequences.forEach(seq => {
+    interactiveEdges.forEach(edge => {
+      const pointList = ((this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[]) || [];
+      const fullSequence = [edge.start, ...pointList, edge.end];
+
       this.ctx.beginPath();
-      const start = this.projection.vectorToScreen(seq[0]!);
+      const start = this.projection.vectorToScreen(fullSequence[0]!);
       this.ctx.moveTo(start.x, start.y);
-      for (let i = 1; i < seq.length; i++) {
-        const pt = this.projection.vectorToScreen(seq[i]!);
+      for (let i = 1; i < fullSequence.length; i++) {
+        const pt = this.projection.vectorToScreen(fullSequence[i]!);
         this.ctx.lineTo(pt.x, pt.y);
       }
       this.ctx.stroke();
     });
+    this.ctx.restore();
 
-    // 2. RENDER THE NON-INTERACTIVE MIRRORED TWINS
-    if (perimeter && perimeter.length > 0) {
-      this.ctx.save();
-      this.ctx.setLineDash([6, 4]);
-      this.ctx.strokeStyle = '#ff7675';
-      this.ctx.lineWidth = 2;
+    // 5. Render interactive circular handle points uniformly across all active grid options
+    this.ctx.save();
+    this.ctx.lineWidth = 1.5;
+    interactiveEdges.forEach(edge => {
+      const pointList = ((this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[]) || []
+      pointList.forEach((node: Point2D) => {
+        const screenPos = this.projection.vectorToScreen(node);
+        this.ctx.beginPath();
+        this.ctx.arc(screenPos.x, screenPos.y, 5, 0, Math.PI * 2);
+        this.ctx.fillStyle = '#ff3b30';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.stroke();
+      });
+    });
+    this.ctx.restore();
 
-      this.drawSubSegment(perimeter, this.state.v3, this.state.v4);
-      this.drawSubSegment(perimeter, this.state.v5, this.state.v6);
-      this.drawSubSegment(perimeter, this.state.v6, this.state.v1);
+    // 6. Draw a node marker directly over the true visual center of the shape body
+    let visualCenter: Point2D = { x: 0.0, y: 0.0 };
 
-      this.ctx.restore();
+    if (this.currentLatticeType === 'hexagonal' || this.currentLatticeType === 'square') {
+      visualCenter = {
+        x: this.currentLatticeType === 'square' ? (this.cellHeight * 0.5) : 0.0,
+        y: this.cellHeight * 0.5
+      };
+    } else if (this.currentLatticeType === 'triangular') {
+      const triWidth = (Math.sqrt(3) / 2) * this.cellHeight;
+      visualCenter = {
+        x: triWidth / 3,
+        y: this.cellHeight * 0.5
+      };
     }
 
-    // Draw interactive circular handle points
-    const masterNodes = [...this.state.edgeA, ...this.state.edgeB, ...this.state.edgeC];
-    masterNodes.forEach(node => {
-      const screenPos = this.projection.vectorToScreen(node);
-      this.ctx.beginPath();
-      this.ctx.arc(screenPos.x, screenPos.y, 5, 0, Math.PI * 2);
-      this.ctx.fillStyle = '#ff3b30';
-      this.ctx.fill();
-      this.ctx.strokeStyle = '#ffffff';
-      this.ctx.lineWidth = 1.5;
-      this.ctx.stroke();
-    });
-
-    // Draw a dot in the center of the original motif
-    const motifCenterVector = { x: 0.0, y: 0.0 };
-    const centerScreenCoords = this.projection.vectorToScreen(motifCenterVector);
-
+    const centerScreenCoords = this.projection.vectorToScreen(visualCenter);
     this.ctx.save();
     this.ctx.beginPath();
     this.ctx.arc(centerScreenCoords.x, centerScreenCoords.y, 4, 0, Math.PI * 2);
-    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.22)'; // Soft, faint gray marker
+    this.ctx.fillStyle = '#ffffff';
     this.ctx.fill();
+    this.ctx.strokeStyle = '#1e1e1e';
+    this.ctx.lineWidth = 1.5;
+    this.ctx.stroke();
     this.ctx.restore();
   }
 
   /**
-   * Helper method to render isolated sub-sections of the perimeter loop without overlapping master edges.
+   * Purge storage and reset vectors back to the default state
    */
-  private drawSubSegment(perimeter: Point2D[], targetStart: Point2D, targetEnd: Point2D): void {
-    let startIndex = -1;
-    let endIndex = -1;
-
-    for (let i = 0; i < perimeter.length; i++) {
-      if (perimeter[i]!.x === targetStart.x && perimeter[i]!.y === targetStart.y) startIndex = i;
-      if (perimeter[i]!.x === targetEnd.x && perimeter[i]!.y === targetEnd.y) endIndex = i;
-    }
-
-    if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
-      this.ctx.beginPath();
-      const first = this.projection.vectorToScreen(perimeter[startIndex]!);
-      this.ctx.moveTo(first.x, first.y);
-      for (let i = startIndex + 1; i <= endIndex; i++) {
-        const pt = this.projection.vectorToScreen(perimeter[i]!);
-        this.ctx.lineTo(pt.x, pt.y);
-      }
-      this.ctx.stroke();
-    }
-  }
-
-  /**
-   * Purge storage and reset vectors back to a regular point-topped hexagon
-   */
-  public resetToDefaultLattice(cellHeight: number): void {
-    // 1. Completely decouple and drop active memory object bindings
-    this.state = null as any;
+    public resetToDefaultLattice(cellHeight: number): void {
     this.activeDragEdge = null;
     this.activeDragIndex = null;
 
-    // 2. Clear out the persistent disk buffer layout definitions
     try {
       localStorage.removeItem(this.storageKey);
-    } catch (err) {}
+    } catch {
+      // Safe silent bypass if local storage write/delete is blocked
+    }
 
-    // 3. Re-execute initialization with a completely clean environment
     this.initializeActiveLattice(cellHeight);
     this.render();
   }
 
-  /**
-   * Dynamically resizes the drawing layout bounds while enforcing strict 1:1 square aspect metrics
-   */
   public resizeWorkspace(newWidth: number, newHeight: number): void {
-    // Let the width expand horizontally while tracking the height to maintain proper aspect ratio scaling
     const fluidWidth = Math.max(300, newWidth);
     const fluidHeight = Math.max(300, newHeight);
 
@@ -469,5 +348,9 @@ export class customWorkspace {
     this.canvas.height = fluidHeight;
     this.projection.updateDimensions(fluidWidth, fluidHeight);
     this.render();
+  }
+
+  public getCurrentLatticeType(): LatticeType {
+    return this.currentLatticeType;
   }
 }

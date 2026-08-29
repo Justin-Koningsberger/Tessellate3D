@@ -19,7 +19,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic" | "none";
-  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customSymmetricHexagon" | "lizard" | "kochSnowflake";
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customTileCompiler" | "lizard" | "kochSnowflake";
   latticeType: 'square' | 'triangular' | 'hexagonal';
   symmetryGroup: 'p1' | 'p3';
   motifScaleFactor: number;
@@ -183,6 +183,7 @@ export function generateTessellation(config: EngineConfig): string {
   if (config.symmetryGroup === "p3" && config.latticeType === 'hexagonal' && config.useAutoAlignment) {
     ringIntersection = 1.0 + (2.10 / totalBranches);
     ringDistanceMultiplier = 1.30;
+    // With 6 branches, 1.50 is rotated CCW, 2.50 is rotated CW, 3.50 is more random looking
     phaseOffset = 1.50;
   }
 

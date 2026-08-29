@@ -1,21 +1,22 @@
-import { customWorkspace } from '../../tileWorkspace.ts';
+import { CustomWorkspace } from '../../tileWorkspace.ts';
 import { type LatticeType } from '../../utils/latticeRegistry.ts';
 import { tileEditorTemplate } from './tileEditor.html.ts';
+import type { ModularEditorState } from '@tessellate3d/core/src/tileSymmetry.ts';
 import './tileEditor.css';
 
 // Interface representing the global application context configuration state
 interface EditorPipelineContext {
   currentConfig: { baseMotif: string; symmetryGroup: string };
-  updateLiveEditorState: (state: any) => void;
+  updateLiveEditorState: (state: ModularEditorState) => void;
   updateEnginePipeline: () => void;
-  getLiveEditorState: () => any;
+  getLiveEditorState: () => ModularEditorState | null;
   baseMotifSelectElement: HTMLSelectElement | null;
 }
 
 export class tileEditorComponent {
   private container: HTMLDivElement;
   private els: Record<string, HTMLElement | null> = {};
-  private workspaceInstance: customWorkspace | null = null;
+  private workspaceInstance: CustomWorkspace | null = null;
   private isMaximized = false;
   private ctx: EditorPipelineContext;
 
@@ -73,32 +74,39 @@ export class tileEditorComponent {
     }
 
     if (!this.workspaceInstance) {
-      this.workspaceInstance = new customWorkspace(canvas, 2.0);
+      this.workspaceInstance = new CustomWorkspace(canvas, 2.0);
     } else {
       this.workspaceInstance.resizeWorkspace(500, 500);
       this.workspaceInstance.render();
     }
 
     // Synchronize sidebar dropdown selector state with active memory metrics on open
-    if (this.els.editorLatticeSelect && (this.workspaceInstance as any).currentLatticeType) {
-      (this.els.editorLatticeSelect as HTMLSelectElement).value = (this.workspaceInstance as any).currentLatticeType;
+    if (this.els.editorLatticeSelect && this.workspaceInstance) {
+      const workspace = this.workspaceInstance as CustomWorkspace;
+      (this.els.editorLatticeSelect as HTMLSelectElement).value = workspace.getCurrentLatticeType();
     }
   }
 
   private bindActionInterceptors(): void {
     const executeSave = () => {
       if (this.els.modal) this.els.modal.style.display = 'none';
-      this.ctx.currentConfig.baseMotif = 'customSymmetricHexagon';
+      this.ctx.currentConfig.baseMotif = 'customTileCompiler';
       this.ctx.currentConfig.symmetryGroup = 'p3';
 
       if (this.ctx.baseMotifSelectElement) {
-        this.ctx.baseMotifSelectElement.value = 'customSymmetricHexagon';
+        this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
       }
 
       const activeState = this.ctx.getLiveEditorState();
       if (activeState) {
         console.log('🔍 [UI Sync] Live state handles verified on save:', {
-          edgeA: activeState.edgeA.length, edgeB: activeState.edgeB.length, edgeC: activeState.edgeC.length
+          edgeA: ('edgeA' in activeState) ? activeState.edgeA.length : 0,
+          edgeB: ('edgeB' in activeState) ? activeState.edgeB.length : 0,
+          edgeC: ('edgeC' in activeState) ? activeState.edgeC.length : 0,
+          edgeTop: ('edgeTop' in activeState) ? activeState.edgeTop.length : 0,
+          edgeLeft: ('edgeLeft' in activeState) ? activeState.edgeLeft.length : 0,
+          edgeSpine: ('edgeSpine' in activeState) ? activeState.edgeSpine.length : 0,
+          edgeInterlock: ('edgeInterlock' in activeState) ? activeState.edgeInterlock.length : 0
         });
       }
       this.ctx.updateEnginePipeline();
@@ -132,10 +140,9 @@ export class tileEditorComponent {
       // 1. Hot-swap workspace coordinate system and dimensions maps
       this.workspaceInstance.switchLatticeSystem(targetType, 2.0);
 
-      // 2. Reflect selected parameters back into master selector down in the page layer
+      // 2. Force the master compiler pass to target the custom tile motif
       if (this.ctx.baseMotifSelectElement) {
-        // TODO: Add customSymmetricSquare and tiranle to baseMotifs
-        this.ctx.baseMotifSelectElement.value = targetType === 'hexagonal' ? 'customSymmetricHexagon' : targetType;
+        this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
       }
 
       // 3. Keep master rendering loops perfectly in line
@@ -167,7 +174,9 @@ export class tileEditorComponent {
       const availableWidth = isMobileScreen ? window.innerWidth - 40 : window.innerWidth - 320 - 80;
       const availableHeight = isMobileScreen ? (window.innerHeight * 0.6) : window.innerHeight - 80;
 
-      this.workspaceInstance.resizeWorkspace(availableWidth, availableHeight);
+      // Clamp workspace measurements to a strict square aspect to keep mouse tracking unified
+      const uniformSize = Math.min(availableWidth, availableHeight);
+      this.workspaceInstance.resizeWorkspace(uniformSize, uniformSize);
 
       // Swap placeholder out for content fluidly after layout engine calculation completes
       setTimeout(() => {

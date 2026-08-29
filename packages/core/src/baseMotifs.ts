@@ -7,38 +7,24 @@ import {
 } from './tileSymmetry.ts';
 
 /**
- * Normalizes custom workspace paths relative to its true origin anchor (v1).
- * Maps shapes to ensure they start and end exactly at {x: 0, y: 0}.
+ * Universally normalizes custom shape workspace paths relative to their true structural origin.
+ * Maps coordinates safely across squares, triangles, and hexagons to prevent nested property crashes.
  */
-export function normalizeWorkspaceHexagon(components: Point2D[][], state: ModularEditorState, cellHeight: number): Point2D[][] {
+export function normalizeWorkspaceTile(components: Point2D[][], state: ModularEditorState, cellHeight: number): Point2D[][] {
   if (components.length === 0 || components[0]!.length === 0) return components;
 
-  // 1. Establish the workspace origin offset relative to v1
-  const originX = state.v1.x;
-  const originY = state.v1.y;
-
-  // 2. Measure the total expected height of the design workspace bounds
-  // Using the distance from top apex (v1) to bottom apex (v4) to define height scale
-  const workspaceHeight = state.v4.y - state.v1.y;
+  const originX = state.v1?.x ?? 0.0;
+  const originY = state.v1?.y ?? 0.0;
+  const workspaceHeight = state.v4.y - originY;
   if (workspaceHeight === 0) return components;
 
-  // The aspect scaling ratio relative to cellHeight
   const scale = cellHeight / workspaceHeight;
 
   return components.map(component => {
-    const totalPoints = component.length;
-
+    const total = component.length;
     return component.map((pt, idx) => {
-      // Rule 3 Validation Requirement: Force absolute boundary anchors to 0,0
-      if (idx === 0 || idx === totalPoints - 1) {
-        return { x: 0.0, y: 0.0 };
-      }
-
-      // Translate coordinates to relative origin, then scale into engine space
-      return {
-        x: (pt.x - originX) * scale,
-        y: (pt.y - originY) * scale
-      };
+      if (idx === 0 || idx === total - 1) return { x: 0.0, y: 0.0 };
+      return { x: (pt.x - originX) * scale, y: (pt.y - originY) * scale };
     });
   });
 }
@@ -50,34 +36,36 @@ export interface MotifContext {
 }
 
 export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Point2D[]> = {
-  customSymmetricHexagon: (ctx: MotifContext): Point2D[][] => {
-    console.log(`📊 [Motif Engine] Generating customSymmetricHexagon. cellHeight: ${ctx.cellHeight.toFixed(4)}`);
-
+  customTileCompiler: (ctx: MotifContext): Point2D[][] => {
     if (!liveEditorState) {
-      console.warn("⚠️ [Motif Engine] No liveEditorState found. Falling back to default static hexagon asset.");
-      const hexagonFn = baseMotifs["hexagon"];
-      if (!hexagonFn) return [[]];
-      return hexagonFn(ctx) as Point2D[][];
+      console.warn(`⚠️ [Motif Engine] No liveEditorState found. Falling back to default static ${ctx.latticeType} asset.`);
+
+      let fallbackKey = ctx.latticeType as string;
+      if (ctx.latticeType === 'hexagonal') fallbackKey = 'hexagon';
+      if (ctx.latticeType === 'triangular') fallbackKey = 'triangle';
+
+      const fallbackFn = baseMotifs[fallbackKey];
+      if (!fallbackFn) {
+        console.error(`❌ [Motif Engine Fail] Could not find static asset key matching: "${fallbackKey}"`);
+        return [[]];
+      }
+
+      const result = fallbackFn(ctx);
+      if (!result || result.length === 0) return [[]];
+
+      if (result.length > 0 && !Array.isArray(result[0])) {
+        return [result as Point2D[]];
+      }
+
+      return result as Point2D[][];
     }
 
-    // 1. Trace the compilation of the raw user path loops
+    // Force background layout configurations to match live state choices instantly when active in the UI
+    ctx.latticeType = liveEditorState.latticeType;
+    ctx.symmetryGroup = liveEditorState.latticeType === 'square' ? 'p1' : 'p3';
+
     const rawTile = compileSymmetricTile(liveEditorState);
-    console.log(`📊 [Motif Engine] compileSymmetricTile complete. Total component loops: ${rawTile.length}, Perimeter points: ${rawTile[0]?.length ?? 0}`);
-
-    // 2. Trace the normalization step
-    const normalizedTile = normalizeWorkspaceHexagon(rawTile, liveEditorState, ctx.cellHeight);
-
-    if (normalizedTile[0] && normalizedTile[0].length > 0) {
-      console.log("📊 [Motif Engine] Normalization success. Sample normalized coordinates:", {
-        startPoint: normalizedTile[0][0],
-        midPoint: normalizedTile[0][Math.floor(normalizedTile[0].length / 2)],
-        endPoint: normalizedTile[0][normalizedTile[0].length - 1]
-      });
-    } else {
-      console.error("❌ [Motif Engine] Normalization returned an empty or corrupt point sequence!");
-    }
-
-    return normalizedTile;
+    return normalizeWorkspaceTile(rawTile, liveEditorState, ctx.cellHeight);
   },
 
   // Square motif
@@ -401,6 +389,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
 
   lizard: (ctx: MotifContext): Point2D[][] => {
     const lizardState: ModularEditorState = {
+      latticeType: 'hexagonal',
       v1: { x: 0, y: -1 },
       v2: { x: 0.8660254037844386, y: -0.5 },
       v3: { x: 0.8660254037844386, y: 0.5 },
@@ -445,11 +434,12 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     };
 
     const rawTile = compileSymmetricTile(lizardState);
-    return normalizeWorkspaceHexagon(rawTile, lizardState, ctx.cellHeight);
+    return normalizeWorkspaceTile(rawTile, lizardState, ctx.cellHeight);
   },
 
   kochSnowflake: (ctx: MotifContext): Point2D[][] => {
     const snowflakeState: ModularEditorState = {
+      latticeType: 'hexagonal',
       v1: { x: 0, y: -1 },
       v2: { x: 0.8660254037844386, y: -0.5 },
       v3: { x: 0.8660254037844386, y: 0.5 },
@@ -495,6 +485,6 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     };
 
     const rawTile = compileSymmetricTile(snowflakeState);
-    return normalizeWorkspaceHexagon(rawTile, snowflakeState, ctx.cellHeight);
+    return normalizeWorkspaceTile(rawTile, snowflakeState, ctx.cellHeight);
   },
 };

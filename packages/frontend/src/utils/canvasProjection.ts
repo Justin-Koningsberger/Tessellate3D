@@ -39,7 +39,6 @@ export class CanvasProjection {
     const centerX = (this.width / 2) + (this.centerOffset.x * this.scale);
     const centerY = (this.height / 2) + (this.centerOffset.y * this.scale);
 
-
     return {
       x: (screenX - centerX) / this.scale,
       y: (screenY - centerY) / this.scale
@@ -47,10 +46,9 @@ export class CanvasProjection {
   }
 
   /**
-   * Translates a normalized vector point back into an HTML5 Canvas screen coordinate (pixels)
+   * Translates a normalized vector point back into an HTML5 Canvas screen coordinate point
    */
   public vectorToScreen(vectorPt: Point2D): Point2D {
-    // Factoring the offset directly inside the forward projection draw equations
     const centerX = (this.width / 2) + (this.centerOffset.x * this.scale);
     const centerY = (this.height / 2) + (this.centerOffset.y * this.scale);
 

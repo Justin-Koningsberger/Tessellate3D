@@ -161,7 +161,8 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
       ctx.beginPath();
       ctx.moveTo(v2s({ x: w, y: 0.0 }).x, v2s({ x: w, y: 0.0 }).y);
       for (const pt of state.edgeLeft) {
-        ctx.lineTo(v2s({ x: pt.x, y: pt.y + cellHeight }).x, v2s({ x: pt.x, y: pt.y + cellHeight }).y);
+        // Shift right on X by full width bounds, maintain raw Y tracking
+        ctx.lineTo(v2s({ x: pt.x + w, y: pt.y }).x, v2s({ x: pt.x + w, y: pt.y }).y);
       }
       ctx.lineTo(v2s({ x: w, y: cellHeight }).x, v2s({ x: w, y: cellHeight }).y);
       ctx.stroke();

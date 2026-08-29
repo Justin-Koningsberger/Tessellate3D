@@ -487,4 +487,53 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     const rawTile = compileSymmetricTile(snowflakeState);
     return normalizeWorkspaceTile(rawTile, snowflakeState, ctx.cellHeight);
   },
+
+  JSquare: (ctx: MotifContext): Point2D[][] => {
+    const puzzleState: ModularEditorState = {
+      latticeType: 'square',
+      v1: { x: 0.0, y: 0.0 },
+      v4: { x: 0.0, y: ctx.cellHeight },
+
+      // 1. Top Edge Interactive Path Handle Sequence (Indices 1 to 27)
+      edgeTop: [
+        { x: 0.5942846103040692, y: 0.1654572130890624 },
+        { x: 0.9335766168917667, y: 0.011519173063162544 },
+        { x: 0.9178686536238178, y: 0.07749261878854821 },
+        { x: 0.6382669074543263, y: 0.5393067388662478 },
+        { x: 0.6696828339902241, y: 0.6681120376634293 },
+        { x: 0.5880014249968896, y: 0.6963863715457375 },
+        { x: 0.5031784233499651, y: 0.6995279641993273 },
+        { x: 0.4183554217030408, y: 0.6461208890883007 },
+        { x: 0.3523819759776551, y: 0.5581562947877866 },
+        { x: 0.415213829049451,  y: 0.520457182944709 },
+        { x: 0.490612052735606,  y: 0.4701917004872723 },
+        { x: 0.5314527572322733, y: 0.3979350694547071 },
+        { x: 0.5126032013107346, y: 0.2848377339254745 },
+        { x: 0.4403465702781693, y: 0.2220058808536787 },
+        { x: 0.324107642095347,  y: 0.19687313962496034 },
+        { x: 0.2518510110627817, y: 0.22828906616085826 },
+        { x: 0.1984439359517552, y: 0.3036872898470133 },
+        { x: 0.1481784534943185, y: 0.4042182547618867 },
+        { x: 0.1324704902263696, y: 0.5016076270231703 },
+        { x: 0.1670280094158573, y: 0.6021385919380436 },
+        { x: 0.2392846404484225, y: 0.7403686686959945 },
+        { x: 0.3586651612848346, y: 0.8723155601467658 },
+        { x: 0.5471607205002222, y: 0.975988117715229 },
+        { x: 1.0718066936497175, y: 0.8817403381075352 },
+        { x: 0.795346540133816,  y: 0.5612978874413763 },
+        { x: 0.9744173213884341, y: 0.08691739674931757 },
+        { x: 1.005833247924332,  y: 0.020943951023931925 }
+      ],
+
+      // 2. Left Edge Interactive Path Handle Sequence (Indices 59 down to 61)
+      edgeLeft: [
+        { x: -0.1031489587928649, y: 0.5487315168270172 },
+        { x: 0.1136209343048308,  y: 0.8911651160683045 }
+      ]
+    };
+
+    // 3. Compile and normalize dynamically matching your standard structural pipeline
+    const rawTile = compileSymmetricTile(puzzleState);
+    return normalizeWorkspaceTile(rawTile, puzzleState, ctx.cellHeight);
+  }
 };

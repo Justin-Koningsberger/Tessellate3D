@@ -44,8 +44,8 @@ function evaluateVariantExtended(
   decay: number,
   twist: number
 ): FuzzResult {
-  // Alternating pass between square and triangular structures independently
-  const testLattice: 'square' | 'triangular' = Math.random() > 0.5 ? 'triangular' : 'square';
+  const lattices: ('square' | 'triangular' | 'hexagonal')[] = ['square', 'triangular', 'hexagonal'];
+  const testLattice = lattices[Math.floor(Math.random() * lattices.length)]!;
 
   // 1. CHOOSE A RANDOM TESTING ANCHOR LAYER WITHIN ACTIVE BOUNDS
   // Pick an arbitrary ring depth and branch track to stress test the internal quadrants
@@ -61,7 +61,7 @@ function evaluateVariantExtended(
     variantMode: name,
     baseMotif: "chevron",
     latticeType: testLattice,
-    symmetryGroup: 'p1',
+    symmetryGroup: testLattice === 'square' ? 'p1' : 'p3',
     motifScaleFactor: 1.0,
     useAutoAlignment: true,
     showDebugLabels: false,

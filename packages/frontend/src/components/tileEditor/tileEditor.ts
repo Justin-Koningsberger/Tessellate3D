@@ -1,4 +1,4 @@
-import { CustomWorkspace } from '../../tileWorkspace.ts';
+import { CustomWorkspace, type MobileInteractionMode } from '../../tileWorkspace.ts';
 import { type LatticeType } from '../../utils/latticeRegistry.ts';
 import { tileEditorTemplate } from './tileEditor.html.ts';
 import type { ModularEditorState } from '@tessellate3d/core/src/tileSymmetry.ts';
@@ -47,6 +47,10 @@ export class tileEditorComponent {
       btnResetCompact: document.getElementById('btnResetCompact'),
       btnResetMax: document.getElementById('btnResetMax'),
       editorLatticeSelect: document.getElementById('editorLatticeSelect'),
+      editorLatticeSelectCompact: document.getElementById('editorLatticeSelectCompact'),
+      btnModeEdit: document.getElementById('btnModeEdit'),
+      btnModeAdd: document.getElementById('btnModeAdd'),
+      btnModeDelete: document.getElementById('btnModeDelete'),
     };
   }
 
@@ -75,6 +79,8 @@ export class tileEditorComponent {
 
     if (!this.workspaceInstance) {
       this.workspaceInstance = new CustomWorkspace(canvas, 2.0);
+      // Seamlessly bind the auto-reset listener hook here when instances map
+      this.workspaceInstance.onMobileModeReset = (autoMode) => this.updateMobileModeButtons(autoMode);
     } else {
       this.workspaceInstance.resizeWorkspace(500, 500);
       this.workspaceInstance.render();
@@ -131,23 +137,31 @@ export class tileEditorComponent {
     this.els.btnResetCompact?.addEventListener('click', executeReset);
     this.els.btnResetMax?.addEventListener('click', executeReset);
 
-    // --- STRATEGY SWAP EVENT WATCHER ---
-    this.els.editorLatticeSelect?.addEventListener('change', (e: Event) => {
+    // --- MOBILE INTERACTION MODE INTERCEPTORS ---
+    (['edit', 'add', 'delete'] as MobileInteractionMode[]).forEach(mode => {
+      const capitalized = mode.charAt(0).toUpperCase() + mode.slice(1);
+      this.els[`btnMode${capitalized}`]?.addEventListener('click', () => this.updateMobileModeButtons(mode));
+    });
+
+    // --- UNIFIED STRATEGY SWAP EVENT WATCHER ---
+    const executeLatticeSystemSwap = (e: Event) => {
       if (!this.workspaceInstance) return;
 
       const targetType = (e.target as HTMLSelectElement).value as LatticeType;
 
-      // 1. Hot-swap workspace coordinate system and dimensions maps
       this.workspaceInstance.switchLatticeSystem(targetType, 2.0);
 
-      // 2. Force the master compiler pass to target the custom tile motif
       if (this.ctx.baseMotifSelectElement) {
         this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
       }
 
-      // 3. Keep master rendering loops perfectly in line
+      const selectors = [this.els.editorLatticeSelect, this.els.editorLatticeSelectCompact];
+      selectors.forEach(select => { if (select) (select as HTMLSelectElement).value = targetType; });
       this.ctx.updateEnginePipeline();
-    });
+    };
+
+    this.els.editorLatticeSelect?.addEventListener('change', executeLatticeSystemSwap);
+    this.els.editorLatticeSelectCompact?.addEventListener('change', executeLatticeSystemSwap);
 
     this.els.btnMaxCompact?.addEventListener('click', () => this.toggleLayoutMode(true));
     this.els.btnRestoreMax?.addEventListener('click', () => this.toggleLayoutMode(false));
@@ -170,13 +184,12 @@ export class tileEditorComponent {
 
       if (this.els.mountMaximized) this.els.mountMaximized.appendChild(canvas);
 
-      const isMobileScreen = window.innerWidth <= 768;
-      const availableWidth = isMobileScreen ? window.innerWidth - 40 : window.innerWidth - 320 - 80;
-      const availableHeight = isMobileScreen ? (window.innerHeight * 0.6) : window.innerHeight - 80;
-
-      // Clamp workspace measurements to a strict square aspect to keep mouse tracking unified
-      const uniformSize = Math.min(availableWidth, availableHeight);
-      this.workspaceInstance.resizeWorkspace(uniformSize, uniformSize);
+      // Postpone sizing tracking until the next render cycle allows the CSS grid container tracks to expand fully
+      requestAnimationFrame(() => {
+        if (!this.workspaceInstance || !this.els.mountMaximized) return;
+        const bounds = this.els.mountMaximized.getBoundingClientRect();
+        this.workspaceInstance.resizeWorkspace(bounds.width, bounds.height || 500);
+      });
 
       // Swap placeholder out for content fluidly after layout engine calculation completes
       setTimeout(() => {
@@ -187,5 +200,15 @@ export class tileEditorComponent {
       if (this.els.mountCompact) this.els.mountCompact.appendChild(canvas);
       this.workspaceInstance.resizeWorkspace(500, 500);
     }
+  }
+
+  private updateMobileModeButtons(activeMode: MobileInteractionMode): void {
+    if (!this.workspaceInstance) return;
+    this.workspaceInstance.setInteractionMode(activeMode);
+
+    ['btnModeEdit', 'btnModeAdd', 'btnModeDelete'].forEach(id => {
+      const btn = this.els[id];
+      if (btn) btn.classList.toggle('mode-active', id === `btnMode${activeMode.charAt(0).toUpperCase() + activeMode.slice(1)}`);
+    });
   }
 }

@@ -6,6 +6,8 @@ import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 import { CanvasProjection } from './utils/canvasProjection.ts';
 import { LATTICE_REGISTRY, type LatticeType } from './utils/latticeRegistry.ts';
 
+export type MobileInteractionMode = 'edit' | 'add' | 'delete';
+
 // Self-contained high-performance workspace context managing canvas layout transforms,
 // multi-lattice selection states, drag interactions, and disk storage sync loops.
 export class CustomWorkspace {
@@ -17,6 +19,8 @@ export class CustomWorkspace {
   private activeDragEdge: string | null = null;
   private activeDragIndex: number | null = null;
   private pixelInteractionThreshold = 14;
+  private mobileMode: MobileInteractionMode = 'edit';
+  public onMobileModeReset: ((newMode: MobileInteractionMode) => void) | null = null;
   private storageKey = 'tessellate3d_custom_motif';
   private currentLatticeType: LatticeType = 'hexagonal';
   private cellHeight: number;
@@ -41,6 +45,7 @@ export class CustomWorkspace {
     this.render();
   }
 
+
   private syncActiveLatticeType(): void {
     try {
       const saved = localStorage.getItem(this.storageKey);
@@ -51,20 +56,6 @@ export class CustomWorkspace {
     } catch (e) {
       this.currentLatticeType = 'hexagonal';
     }
-  }
-
-  public switchLatticeSystem(type: LatticeType, cellHeight: number = 2.0): void {
-    this.currentLatticeType = type;
-    this.cellHeight = cellHeight;
-
-    // Update projection centering matrices instantly on hot-swapping types
-    const dynamicOffset = LATTICE_REGISTRY[type].getCenterOffset(cellHeight);
-    this.projection.setCenterOffset(dynamicOffset);
-
-    this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
-
-    this.persistAndSyncState();
-    this.render();
   }
 
   /**
@@ -159,14 +150,21 @@ export class CustomWorkspace {
     const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
     const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
 
-    if (e.shiftKey) {
+    // Pad the click threshold buffer on touch inputs to ensure fingers grab nodes cleanly
+    const currentThreshold = e.pointerType === 'touch'
+      ? this.pixelInteractionThreshold * 2.0
+      : this.pixelInteractionThreshold;
+
+    if (e.shiftKey || this.mobileMode === 'delete') {
       for (const edge of interactiveEdges) {
         const pointList = (this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[] | undefined;
         if (!pointList) continue;
 
-        const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
+        const idx = this.projection.findClosestNode(mouseScreen, pointList, currentThreshold);
         if (idx !== null) {
           pointList.splice(idx, 1);
+          this.mobileMode = 'edit';
+          if (this.onMobileModeReset) this.onMobileModeReset('edit');
           this.persistAndSyncState();
           this.render();
           return;
@@ -175,7 +173,7 @@ export class CustomWorkspace {
       return;
     }
 
-    if (e.altKey) {
+    if (e.altKey || this.mobileMode === 'add') {
       const mouseVector = this.projection.screenToVector(mouseScreen.x, mouseScreen.y);
 
       for (const edge of interactiveEdges) {
@@ -186,8 +184,10 @@ export class CustomWorkspace {
         for (let i = 0; i < fullSequence.length - 1; i++) {
           const distancePx = this.getDistanceToSegmentPx(mouseVector, fullSequence[i]!, fullSequence[i + 1]!);
 
-          if (distancePx < this.pixelInteractionThreshold) {
+          if (distancePx < currentThreshold) {
             rawPoints.splice(i, 0, mouseVector);
+            this.mobileMode = 'edit';
+            if (this.onMobileModeReset) this.onMobileModeReset('edit');
             this.persistAndSyncState();
             this.render();
             return;
@@ -201,7 +201,7 @@ export class CustomWorkspace {
       const pointList = (this.state[edge.key as keyof ModularEditorState] as unknown) as Point2D[] | undefined;
       if (!pointList) continue;
 
-      const idx = this.projection.findClosestNode(mouseScreen, pointList, this.pixelInteractionThreshold);
+      const idx = this.projection.findClosestNode(mouseScreen, pointList, currentThreshold);
       if (idx !== null) {
         this.activeDragEdge = edge.key;
         this.activeDragIndex = idx;
@@ -326,7 +326,7 @@ export class CustomWorkspace {
   /**
    * Purge storage and reset vectors back to the default state
    */
-    public resetToDefaultLattice(cellHeight: number): void {
+  public resetToDefaultLattice(cellHeight: number): void {
     this.activeDragEdge = null;
     this.activeDragIndex = null;
 
@@ -352,5 +352,26 @@ export class CustomWorkspace {
 
   public getCurrentLatticeType(): LatticeType {
     return this.currentLatticeType;
+  }
+
+  public switchLatticeSystem(type: LatticeType, cellHeight: number = 2.0): void {
+    this.currentLatticeType = type;
+    this.cellHeight = cellHeight;
+
+    // Update projection centering matrices instantly on hot-swapping types
+    const dynamicOffset = LATTICE_REGISTRY[type].getCenterOffset(cellHeight);
+    this.projection.setCenterOffset(dynamicOffset);
+
+    this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+
+    this.persistAndSyncState();
+    this.render();
+  }
+
+  public setInteractionMode(mode: MobileInteractionMode): void {
+    this.mobileMode = mode;
+    if (mode === 'add') this.canvas.style.cursor = 'copy';
+    else if (mode === 'delete') this.canvas.style.cursor = 'no-drop';
+    else this.canvas.style.cursor = 'default';
   }
 }

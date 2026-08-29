@@ -14,6 +14,23 @@ export const tileEditorTemplate = `
           Use <span class="key-hint-coral">Shift + Click</span> to remove a handle.
         </p>
 
+        <!-- MOBILE TOOLBAR -->
+        <div class="mobile-interaction-toolbar">
+          <button type="button" id="btnModeEdit" class="btn-mode-toggle mode-active">✨ Move Handle</button>
+          <button type="button" id="btnModeAdd" class="btn-mode-toggle">➕ Add Handle</button>
+          <button type="button" id="btnModeDelete" class="btn-mode-toggle">❌ Delete Handle</button>
+        </div>
+
+        <!-- MOBILE GRID SELECTION LINK -->
+        <div class="compact-lattice-selector-group">
+          <label for="editorLatticeSelectCompact" class="sidebar-setting-label">Active Lattice Grid System</label>
+          <select id="editorLatticeSelectCompact" class="sidebar-setting-dropdown">
+            <option value="hexagonal">Hexagonal (p3 Framework)</option>
+            <option value="square">Square (p1 Framework)</option>
+            <option value="triangular">Triangular (Glide reflection) Framework</option>
+          </select>
+        </div>
+
         <div id="mountCompact" class="canvas-mount-zone">
           <!-- Canvas dynamic mount core -->
         </div>
@@ -27,8 +44,13 @@ export const tileEditorTemplate = `
 
       <!-- FULL-SCREEN STUDIO LAYOUT GRID -->
       <div class="view-maximized-grid">
-        <div id="mountMaximized" class="editor-canvas-viewport">
-          <button type="button" id="btnRestoreMax" class="btn-restore-absolute">Restore Compact view</button>
+        <div class="editor-canvas-viewport">
+          <div class="editor-canvas-container">
+            <div class="editor-viewport-top-bar">
+              <button type="button" id="btnRestoreMax" class="btn-restore-relative">Restore Compact View</button>
+            </div>
+            <div id="mountMaximized" class="canvas-stretch-mount"><!-- Dynamic canvas mount --></div>
+          </div>
         </div>
 
         <div class="editor-sidebar-panel">
@@ -50,9 +72,17 @@ export const tileEditorTemplate = `
                 Design a custom interlocking base motif.
               </p>
               <p class="maximized-shortcuts-line">
-                • <span class="key-hint-cyan">Alt + Click</span> on a blue line segment splits the line and adds a new control handle.<br>
+                • <span class="key-hint-cyan">Alt + Click</span> on a blue line segment to add a new control handle.<br>
                 • <span class="key-hint-coral">Shift + Click</span> on a red control handle to delete it.
               </p>
+
+              <!-- MOBILE TOOLBAR (STUDIO VIEW) -->
+              <div class="mobile-interaction-toolbar maximized-toolbar">
+                <button type="button" id="btnModeEdit" class="btn-mode-toggle mode-active">✨ Move Handle</button>
+                <button type="button" id="btnModeAdd" class="btn-mode-toggle">➕ Add Handle</button>
+                <button type="button" id="btnModeDelete" class="btn-mode-toggle">❌ Delete Handle</button>
+              </div>
+
               <!-- LATTICE SELECTION SYSTEM MODULE -->
               <div class="sidebar-setting-group">
                 <label for="editorLatticeSelect" class="sidebar-setting-label">Active Lattice Grid System</label>

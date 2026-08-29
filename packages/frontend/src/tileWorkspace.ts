@@ -51,7 +51,7 @@ export class CustomWorkspace {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
-        this.currentLatticeType = parsed.latticeType || 'hexagonal';
+        this.currentLatticeType = parsed.activeType || 'hexagonal';
       }
     } catch (e) {
       this.currentLatticeType = 'hexagonal';
@@ -64,7 +64,13 @@ export class CustomWorkspace {
   private persistAndSyncState(): void {
     updateLiveEditorState(this.state);
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(this.state));
+      const vaultRaw = localStorage.getItem(this.storageKey);
+      const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
+
+      vault.activeType = this.currentLatticeType;
+      vault[this.currentLatticeType] = this.state;
+
+      localStorage.setItem(this.storageKey, JSON.stringify(vault));
     } catch (err) {
       console.warn('⚠️ [Storage] Could not write custom motif definition to localStorage:', err);
     }
@@ -74,16 +80,24 @@ export class CustomWorkspace {
     try {
       const saved = localStorage.getItem(this.storageKey);
       if (saved) {
-        this.state = JSON.parse(saved);
-        this.currentLatticeType = this.state.latticeType || 'hexagonal';
+        const vault = JSON.parse(saved);
+        this.state = vault[this.currentLatticeType] || LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
         updateLiveEditorState(this.state);
+
         return;
       }
     } catch {
       // Graceful silent fallback to default generation state if local storage parses corruptly
     }
 
-    this.state = LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
+    // Retrieve this specific lattice's progress from the storage dictionary
+    try {
+      const vaultRaw = localStorage.getItem(this.storageKey);
+      const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
+      this.state = vault[this.currentLatticeType] || LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
+    } catch {
+      this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+    }
     this.persistAndSyncState();
   }
 
@@ -331,7 +345,12 @@ export class CustomWorkspace {
     this.activeDragIndex = null;
 
     try {
-      localStorage.removeItem(this.storageKey);
+      const vaultRaw = localStorage.getItem(this.storageKey);
+      if (vaultRaw) {
+        const vault = JSON.parse(vaultRaw);
+        delete vault[this.currentLatticeType];
+        localStorage.setItem(this.storageKey, JSON.stringify(vault));
+      }
     } catch {
       // Safe silent bypass if local storage write/delete is blocked
     }
@@ -362,7 +381,14 @@ export class CustomWorkspace {
     const dynamicOffset = LATTICE_REGISTRY[type].getCenterOffset(cellHeight);
     this.projection.setCenterOffset(dynamicOffset);
 
-    this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+    // Safely look up if this specific lattice has an existing configuration on disk before creating a blank default
+    try {
+      const vaultRaw = localStorage.getItem(this.storageKey);
+      const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
+      this.state = vault[type] || LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+    } catch {
+      this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+    }
 
     this.persistAndSyncState();
     this.render();

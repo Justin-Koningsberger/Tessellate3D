@@ -191,7 +191,6 @@ export class tileEditorComponent {
         this.workspaceInstance.resizeWorkspace(bounds.width, bounds.height || 500);
       });
 
-      // Swap placeholder out for content fluidly after layout engine calculation completes
       setTimeout(() => {
         if (skeleton) skeleton.style.display = 'none';
         if (actualContent) actualContent.style.display = 'flex';

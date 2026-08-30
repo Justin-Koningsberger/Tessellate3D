@@ -202,20 +202,19 @@
         <div class="input-row-with-icon">
           <select id="baseMotif" aria-describedby="motif-help-text">
             <option value="customTileCompiler" selected>Custom Tile</option>
-            <option value="lizard">Lizard</option>
-            <option value="kochSnowflake">Koch Snowflake</option>
-            <option value="JSquare">J Shaped Square</option>
             <option value="square">Square</option>
             <option value="triangle">Triangle</option>
             <option value="hexagon">Hexagon</option>
+            <option value="cat">Cat</option>
+            <option value="lizard">Lizard</option>
+            <option value="kochSnowflake">Koch Snowflake</option>
             <option value="detailedSquare">Detailed Square</option>
             <option value="detailedTriangle">Detailed Triangle</option>
-            <option value="detailedHexagon">Detailed Hexagon</option>
-            <option value="squarePuzzle">Square Puzzle Piece</option>
             <option value="hexPuzzle">Hexagonal Puzzle Piece</option>
             <option value="chevron">Chevron</option>
             <option value="sinewave">Sine Wavelet</option>
             <option value="squarewave">Square Wave</option>
+            <option value="letters">Letters</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="The fundamental tile shape that repeats to form the larger pattern.">ⓘ</span>
         </div>
@@ -262,26 +261,20 @@
       <div>
         <h3 class="preset-header">Visual Presets</h3>
         <div class="preset-grid">
-          <button class="btn-preset" data-preset="fortress" type="button">Fortress</button>
+          <button class="btn-preset" data-preset="cats" type="button">Cats</button>
           <button class="btn-preset" data-preset="vortex" type="button">Vortex</button>
-          <button class="btn-preset" data-preset="rose" type="button">Fractal Rose</button>
+          <button class="btn-preset" data-preset="typography" type="button">Typography</button>
           <button class="btn-preset" data-preset="mandala" type="button">Mandala</button>
+          <!-- TODO: Create a custom triangle tile to use in cyclone -->
           <button class="btn-preset" data-preset="cyclone" type="button">Cyclone</button>
           <button class="btn-preset" data-preset="mitosis" type="button">Mitosis</button>
-          <button class="btn-preset" data-preset="bismuth" type="button">Bismuth</button>
-          <button class="btn-preset" data-preset="buzzsaw" type="button">Buzzsaw</button>
+          <button class="btn-preset" data-preset="snowflakes" type="button">Snowflakes</button>
+          <button class="btn-preset" data-preset="lizzards" type="button">Lizzards</button>
           <button class="btn-preset" data-preset="hexPuzzle" type="button">Hex Puzzle</button>
 
         </div>
       </div>
       <hr />
-
-      <div class="form-group-accessible row" id="auto-align-container" style="display: none;">
-        <input type="checkbox" id="useAutoAlignment" checked aria-describedby="align-help-text" />
-        <label for="useAutoAlignment">Use Auto-Align</label>
-        <span class="info-icon" aria-hidden="true" title="Choose whether triangles/hexagons align automatically, or display manual adjustment sliders">ⓘ</span>
-        <span id="align-help-text" class="sr-only">Choose whether triangles/hexagons align automatically, or display manual adjustment sliders</span>
-      </div>
 
       <div class="form-group-accessible">
         <label for="totalBranches" class="slider-label-row">Symmetry Arms / Branches: <span id="totalBranches-val" class="slider-value-highlight" aria-live="polite">6</span></label>
@@ -334,6 +327,13 @@
         <span id="stagger-help-text" class="sr-only">Shifts alternating layers sideways to create an offset, interlocking pattern (only works with square and detailed square motifs).</span>
       </div>
 
+      <div class="form-group-accessible row" id="auto-align-container" style="display: flex;">
+        <input type="checkbox" id="useAutoAlignment" checked aria-describedby="align-help-text" />
+        <label for="useAutoAlignment">Use Auto-Align</label>
+        <span class="info-icon" aria-hidden="true" title="Choose whether tiles align automatically, or display manual adjustment sliders">ⓘ</span>
+        <span id="align-help-text" class="sr-only">Choose whether tiles align automatically, or display manual adjustment sliders</span>
+      </div>
+
       <div class="form-group-accessible" id="phaseOffsetContainer">
         <label for="latticePhaseOffset" class="slider-label-row">Isometric Phase Offset: <span id="latticePhaseOffset-val" class="slider-value-highlight" aria-live="polite">1.00</span></label>
         <div class="input-row-with-icon">
@@ -360,6 +360,7 @@
         </div>
         <span id="intersection-help-text" class="sr-only">Adjusts the spacing between rings.</span>
       </div>
+      <hr />
 
       <label>
         <span>Palette</span>

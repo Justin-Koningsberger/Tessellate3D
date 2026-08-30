@@ -121,8 +121,8 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
       const w = cellHeight;
       const v1 = { x: 0.0, y: 0.0 };
       const v2 = { x: w,   y: 0.0 };
-      const v3 = { x: w,   y: cellHeight };
-      const v4 = { x: 0.0, y: cellHeight };
+      const v3 = { x: w,   y: w };
+      const v4 = { x: 0.0, y: w };
       return [{ start: v1, end: v2 }, { start: v2, end: v3 }, { start: v3, end: v4 }, { start: v4, end: v1 }];
     },
     getInteractiveEdges: (state: SquareEditorState, cellHeight: number) => {

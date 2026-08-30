@@ -19,7 +19,7 @@ export interface PathObject {
 
 export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic" | "none";
-  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "squarePuzzle" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customTileCompiler" | "lizard" | "kochSnowflake" | "JSquare";
+  baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customTileCompiler" | "lizard" | "kochSnowflake" | "cat" | "letters";
   latticeType: 'square' | 'triangular' | 'hexagonal';
   symmetryGroup: 'p1' | 'p3';
   motifScaleFactor: number;
@@ -171,6 +171,13 @@ export function generateTessellation(config: EngineConfig): string {
   let ringDistanceMultiplier = config.layout.ringDistanceMultiplier ?? 1.0;
   let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
 
+  if (config.latticeType === 'square' && config.useAutoAlignment) {
+    const squareNormalizationFactor = 1.0 / cellHeight;
+    ringIntersection = squareNormalizationFactor;
+    ringDistanceMultiplier = 1.0;
+    phaseOffset = 1.5;
+  }
+
   if (config.latticeType === 'triangular' && config.useAutoAlignment) {
     ringIntersection = (Math.PI * Math.sqrt(3)) / totalBranches;
     ringDistanceMultiplier = 1.866025 - 0.159155 * totalBranches;
@@ -184,7 +191,7 @@ export function generateTessellation(config: EngineConfig): string {
     ringIntersection = 1.0 + (2.10 / totalBranches);
     ringDistanceMultiplier = 1.30;
     // With 6 branches, 1.50 is rotated CCW, 2.50 is rotated CW, 3.50 is more random looking
-    phaseOffset = 1.50;
+    phaseOffset = 3.50;
   }
 
   if (config.symmetryGroup === "p1" && config.latticeType === 'hexagonal' && config.useAutoAlignment) {
@@ -328,6 +335,12 @@ export function generateTessellation(config: EngineConfig): string {
                 localX *= tileScaleFactor;
                 localY *= tileScaleFactor;
                 localY += ring * (phaseOffset - 1.0) * cellHeight;
+              }
+
+              // Scale square tiles horizontally to align with the dynamic branch step width
+              if (config.latticeType === 'square') {
+                // TODO: Add support for phaseOffset and intra-ring gap
+                localX *= ringIntersection;
               }
 
               const shearedPoint: Point2D = {

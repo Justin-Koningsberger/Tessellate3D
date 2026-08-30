@@ -96,7 +96,8 @@ export class CustomWorkspace {
       const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
       this.state = vault[this.currentLatticeType] || LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
     } catch {
-      this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+      const activeLatticeType = this.currentLatticeType as 'square' | 'triangular' | 'hexagonal';
+      this.state = LATTICE_REGISTRY[activeLatticeType].initializeDefaultState(cellHeight);
     }
     this.persistAndSyncState();
   }

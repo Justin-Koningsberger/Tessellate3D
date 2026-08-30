@@ -64,6 +64,9 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     ctx.latticeType = liveEditorState.latticeType;
     ctx.symmetryGroup = liveEditorState.latticeType === 'square' ? 'p1' : 'p3';
 
+    // Used to add new base motifs
+    // console.log("👉 Live editor state:", JSON.stringify(liveEditorState, null, 2));
+
     const rawTile = compileSymmetricTile(liveEditorState);
     return normalizeWorkspaceTile(rawTile, liveEditorState, ctx.cellHeight);
   },
@@ -71,8 +74,8 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
   // Square motif
   square: (ctx: MotifContext): Point2D[] => [
     { x: 0.0, y: 0.0 },
-    { x: 1.0, y: 0.0 },
-    { x: 1.0, y: ctx.cellHeight },
+    { x: ctx.cellHeight, y: 0.0 },
+    { x: ctx.cellHeight, y: ctx.cellHeight },
     { x: 0.0, y: ctx.cellHeight }
   ],
 
@@ -301,17 +304,18 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     return components;
   },
 
-  // Circle-Junction Square Motif
+  // Circle-Junction Square Motif aligned with the dynamic cellHeight
   detailedSquare: (ctx: MotifContext): Point2D[][] => {
     const components: Point2D[][] = [];
     const r = 0.15 * ctx.cellHeight;
     const stepsPerArc = 16;
+    const w = ctx.cellHeight;
 
     // compIndex === 0: Main square boundary loop
     components.push([
       { x: 0.0, y: 0.0 },
-      { x: 1.0, y: 0.0 },
-      { x: 1.0, y: ctx.cellHeight },
+      { x: w,   y: 0.0 },
+      { x: w,   y: ctx.cellHeight },
       { x: 0.0, y: ctx.cellHeight }
     ]);
 
@@ -324,68 +328,63 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
       return points;
     };
 
-    components.push(generateArcPoints(0.0, 0.0, 0, Math.PI / 2));          // Top-Left
-    components.push(generateArcPoints(1.0, 0.0, Math.PI / 2, Math.PI));     // Top-Right
-    components.push(generateArcPoints(1.0, ctx.cellHeight, Math.PI, (3 * Math.PI) / 2)); // Bottom-Right
+    components.push(generateArcPoints(0.0, 0.0, 0, Math.PI / 2)); // Top-Left
+    components.push(generateArcPoints(w,   0.0, Math.PI / 2, Math.PI)); // Top-Right
+    components.push(generateArcPoints(w,   ctx.cellHeight, Math.PI, (3 * Math.PI) / 2)); // Bottom-Right
     components.push(generateArcPoints(0.0, ctx.cellHeight, (3 * Math.PI) / 2, 2 * Math.PI)); // Bottom-Left
     return components;
   },
 
-  // Chevron base motif
-  chevron: (ctx: MotifContext): Point2D[] => [
-    { x: 0.0, y: 0.0 },                  // Bottom-Left
-    { x: 0.5, y: 0.5 },                  // Bottom-Middle (pushed up)
-    { x: 1.0, y: 0.0 },                  // Bottom-Right
-    { x: 1.0, y: ctx.cellHeight },           // Top-Right
-    { x: 0.5, y: ctx.cellHeight + 0.5 },     // Top-Middle (pushed up)
-    { x: 0.0, y: ctx.cellHeight }            // Top-Left
-  ],
+    // Chevron base motif - Pre-Normalized to use dynamic width and height
+  chevron: (ctx: MotifContext): Point2D[] => {
+    const w = ctx.cellHeight;
+    const h = ctx.cellHeight;
+    return [
+      { x: 0.0,     y: 0.0 },               // Bottom-Left
+      { x: w * 0.5, y: h * 0.5 },           // Bottom-Middle (pushed up)
+      { x: w,       y: 0.0 },               // Bottom-Right
+      { x: w,       y: h },                 // Top-Right
+      { x: w * 0.5, y: h + (h * 0.5) },     // Top-Middle (pushed up relative to height)
+      { x: 0.0,     y: h }                  // Top-Left
+    ];
+  },
 
-  // Smooth Sine Wavelet
-  sinewave: (ctx: MotifContext): Point2D[] => [
-    { x: 0.0,   y: 0.0 },
-    { x: 0.25,  y: -0.2 },                 // Top dip down/up simulation
-    { x: 0.75,  y: 0.2 },                  // Crest/peak of the top curve
-    { x: 1.0,   y: 0.0 },                  // Top-Right End
-    { x: 1.0,   y: ctx.cellHeight },           // Drop to Bottom-Right
-    { x: 0.75,  y: ctx.cellHeight + 0.2 },     // Bottom curve (perfect complement)
-    { x: 0.25,  y: ctx.cellHeight - 0.2 },     // Trough/dip of the bottom curve
-    { x: 0.0,   y: ctx.cellHeight },           // Left side cavity entry
-    { x: 0.0,   y: ctx.cellHeight }            // Explicit Bottom-Left path closer
-  ],
+  // Smooth Sine Wavelet - Pre-Normalized to use dynamic width and height
+  sinewave: (ctx: MotifContext): Point2D[] => {
+    const w = ctx.cellHeight;
+    const h = ctx.cellHeight;
+    return [
+      { x: 0.0,      y: 0.0 },
+      { x: w * 0.25, y: -h * 0.2 },         // Top dip down/up scaled to height
+      { x: w * 0.75, y: h * 0.2 },          // Crest/peak of the top curve scaled to height
+      { x: w,        y: 0.0 },              // Top-Right End
+      { x: w,        y: h },                // Drop to Bottom-Right
+      { x: w * 0.75, y: h + (h * 0.2) },    // Bottom curve (perfect complement)
+      { x: w * 0.25, y: h - (h * 0.2) },    // Trough/dip of the bottom curve
+      { x: 0.0,      y: h },                // Left side cavity entry
+      { x: 0.0,      y: h }                 // Explicit Bottom-Left path closer
+    ];
+  },
 
-  // Castle Battlement / Square Wave Motif
-  squarewave: (ctx: MotifContext): Point2D[] => [
-    { x: 0.0,   y: 0.0 },
-    { x: 0.4,   y: 0.0 },                   // Narrower base wall
-    { x: 0.4,   y: -ctx.cellHeight * 0.4 },     // Taller step height
-    { x: 0.6,   y: -ctx.cellHeight * 0.4 },     // Narrower tooth width
-    { x: 0.6,   y: 0.0 },                   // Step down
-    { x: 1.0,   y: 0.0 },                   // Top-Right
-    { x: 1.0,   y: ctx.cellHeight },            // Right edge down
-    { x: 0.6,   y: ctx.cellHeight },            // Right-side bottom flat wall
-    { x: 0.6,   y: ctx.cellHeight - ctx.cellHeight * 0.4 }, // Matching compact cavity
-    { x: 0.4,   y: ctx.cellHeight - ctx.cellHeight * 0.4 }, // Inside floor of the bottom cavity
-    { x: 0.4,   y: ctx.cellHeight },            // Corner where cavity steps back down
-    { x: 0.0,   y: ctx.cellHeight }             // Bottom-Left
-  ],
-
-  // Proportioned Jigsaw Puzzle Tab preventing Bijectivity Distortion Faults
-  squarePuzzle: (ctx: MotifContext): Point2D[] => [
-    { x: 0.0,   y: 0.0 },
-    { x: 0.5,   y: -ctx.cellHeight * 0.3 },     // Top bubble scaled to height
-    { x: 1.0,   y: 0.0 },                   // Top-Right corner
-    { x: 1.0,   y: ctx.cellHeight * 0.25 },     // Keep X locked to 1.0 wall
-    { x: 1.2,   y: ctx.cellHeight * 0.5 },      // Controlled rightward protrusion
-    { x: 1.0,   y: ctx.cellHeight * 0.75 },     // Right side hook neck return
-    { x: 1.0,   y: ctx.cellHeight },            // Bottom-Right corner
-    { x: 0.5,   y: ctx.cellHeight - ctx.cellHeight * 0.3 }, // Matching bottom bubble cavity
-    { x: 0.0,   y: ctx.cellHeight },            // Bottom-Left corner anchor point
-    { x: 0.0,   y: ctx.cellHeight * 0.75 },     // Keep X locked to 0.0 wall
-    { x: 0.2,   y: ctx.cellHeight * 0.5 },      // Matching internal left cavity
-    { x: 0.0,   y: ctx.cellHeight * 0.25 },     // Left side cavity entry
-    { x: 0.0,   y: ctx.cellHeight }             // Explicit Bottom-Left path closer
-  ],
+  // Castle Battlement / Square Wave Motif - Pre-Normalized to use dynamic width and height
+  squarewave: (ctx: MotifContext): Point2D[] => {
+    const w = ctx.cellHeight;
+    const h = ctx.cellHeight;
+    return [
+      { x: 0.0,      y: 0.0 },
+      { x: w * 0.4,  y: 0.0 },              // Narrower base wall
+      { x: w * 0.4,  y: -h * 0.4 },         // Taller step height
+      { x: w * 0.6,  y: -h * 0.4 },         // Narrower tooth width
+      { x: w * 0.6,  y: 0.0 },              // Step down
+      { x: w,        y: 0.0 },              // Top-Right
+      { x: w,        y: h },                // Right edge down
+      { x: w * 0.6,  y: h },                // Right-side bottom flat wall
+      { x: w * 0.6,  y: h - (h * 0.4) },    // Matching compact cavity
+      { x: w * 0.4,  y: h - (h * 0.4) },    // Inside floor of the bottom cavity
+      { x: w * 0.4,  y: h },                // Corner where cavity steps back down
+      { x: 0.0,      y: h }                 // Bottom-Left
+    ];
+  },
 
   lizard: (ctx: MotifContext): Point2D[][] => {
     const lizardState: ModularEditorState = {
@@ -488,52 +487,146 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     return normalizeWorkspaceTile(rawTile, snowflakeState, ctx.cellHeight);
   },
 
-  JSquare: (ctx: MotifContext): Point2D[][] => {
+  cat: (ctx: MotifContext): Point2D[][] => {
+    const targetHeight = ctx.cellHeight;
+    const originalWorkspaceHeight = 2.0;
+    const scaleFactor = targetHeight / originalWorkspaceHeight;
+
     const puzzleState: ModularEditorState = {
       latticeType: 'square',
       v1: { x: 0.0, y: 0.0 },
-      v4: { x: 0.0, y: ctx.cellHeight },
+      v4: { x: 0.0, y: targetHeight },
 
-      // 1. Top Edge Interactive Path Handle Sequence (Indices 1 to 27)
       edgeTop: [
-        { x: 0.5942846103040692, y: 0.1654572130890624 },
-        { x: 0.9335766168917667, y: 0.011519173063162544 },
-        { x: 0.9178686536238178, y: 0.07749261878854821 },
-        { x: 0.6382669074543263, y: 0.5393067388662478 },
-        { x: 0.6696828339902241, y: 0.6681120376634293 },
-        { x: 0.5880014249968896, y: 0.6963863715457375 },
-        { x: 0.5031784233499651, y: 0.6995279641993273 },
-        { x: 0.4183554217030408, y: 0.6461208890883007 },
-        { x: 0.3523819759776551, y: 0.5581562947877866 },
-        { x: 0.415213829049451,  y: 0.520457182944709 },
-        { x: 0.490612052735606,  y: 0.4701917004872723 },
-        { x: 0.5314527572322733, y: 0.3979350694547071 },
-        { x: 0.5126032013107346, y: 0.2848377339254745 },
-        { x: 0.4403465702781693, y: 0.2220058808536787 },
-        { x: 0.324107642095347,  y: 0.19687313962496034 },
-        { x: 0.2518510110627817, y: 0.22828906616085826 },
-        { x: 0.1984439359517552, y: 0.3036872898470133 },
-        { x: 0.1481784534943185, y: 0.4042182547618867 },
-        { x: 0.1324704902263696, y: 0.5016076270231703 },
-        { x: 0.1670280094158573, y: 0.6021385919380436 },
-        { x: 0.2392846404484225, y: 0.7403686686959945 },
-        { x: 0.3586651612848346, y: 0.8723155601467658 },
-        { x: 0.5471607205002222, y: 0.975988117715229 },
-        { x: 1.0718066936497175, y: 0.8817403381075352 },
-        { x: 0.795346540133816,  y: 0.5612978874413763 },
-        { x: 0.9744173213884341, y: 0.08691739674931757 },
-        { x: 1.005833247924332,  y: 0.020943951023931925 }
+        { x: 0.13609374999999996 * scaleFactor, y: -0.02000000000000006 * scaleFactor },
+        { x: 0.38809374999999996 * scaleFactor, y: -0.026000000000000058 * scaleFactor },
+        { x: 0.73009375 * scaleFactor,          y: 0.045999999999999944 * scaleFactor },
+        { x: 0.88609375 * scaleFactor,          y: 0.20199999999999996 * scaleFactor },
+        { x: 1.07209375 * scaleFactor,          y: 0.27999999999999997 * scaleFactor },
+        { x: 1.25809375 * scaleFactor,          y: 0.21999999999999995 * scaleFactor },
+        { x: 1.3780937500000001 * scaleFactor,  y: 0.09399999999999994 * scaleFactor },
+        { x: 1.3780937500000001 * scaleFactor,  y: 0.712 * scaleFactor },
+        { x: 1.19809375 * scaleFactor,          y: 1.276 * scaleFactor },
+        { x: 1.11409375 * scaleFactor,          y: 1.366 * scaleFactor },
+        { x: 0.98209375 * scaleFactor,          y: 1.3840000000000001 * scaleFactor },
+        { x: 0.87409375 * scaleFactor,          y: 1.3780000000000001 * scaleFactor },
+        { x: 0.8020937499999999 * scaleFactor,  y: 1.3 * scaleFactor },
+        { x: 0.77809375 * scaleFactor,          y: 1.234 * scaleFactor },
+        { x: 0.83809375 * scaleFactor,          y: 1.18 * scaleFactor },
+        { x: 0.84409375 * scaleFactor,          y: 1.096 * scaleFactor },
+        { x: 0.75409375 * scaleFactor,          y: 0.982 * scaleFactor },
+        { x: 0.62209375 * scaleFactor,          y: 0.892 * scaleFactor },
+        { x: 0.47209375 * scaleFactor,          y: 0.85 * scaleFactor },
+        { x: 0.31009374999999995 * scaleFactor, y: 0.922 * scaleFactor },
+        { x: 0.22009374999999995 * scaleFactor, y: 1.03 * scaleFactor },
+        { x: 0.22609374999999995 * scaleFactor, y: 1.192 * scaleFactor },
+        { x: 0.33409374999999997 * scaleFactor, y: 1.342 * scaleFactor },
+        { x: 0.44209374999999995 * scaleFactor, y: 1.432 * scaleFactor },
+        { x: 0.5500937499999999 * scaleFactor,  y: 1.534 * scaleFactor },
+        { x: 0.70609375 * scaleFactor,          y: 1.6119999999999999 * scaleFactor },
+        { x: 0.93409375 * scaleFactor,          y: 1.666 * scaleFactor },
+        { x: 1.16209375 * scaleFactor,          y: 1.6239999999999999 * scaleFactor },
+        { x: 1.32409375 * scaleFactor,          y: 1.456 * scaleFactor },
+        { x: 1.46209375 * scaleFactor,          y: 1.252 * scaleFactor },
+        { x: 1.5700937499999998 * scaleFactor,  y: 1.006 * scaleFactor },
+        { x: 1.91809375 * scaleFactor,          y: 0.015999999999999945 * scaleFactor }
       ],
 
-      // 2. Left Edge Interactive Path Handle Sequence (Indices 59 down to 61)
       edgeLeft: [
-        { x: -0.1031489587928649, y: 0.5487315168270172 },
-        { x: 0.1136209343048308,  y: 0.8911651160683045 }
+        { x: -0.001906250000000057 * scaleFactor, y: 0.32799999999999996 * scaleFactor },
+        { x: 0.13609374999999996 * scaleFactor,   y: 0.292 * scaleFactor },
+        { x: 0.13009374999999995 * scaleFactor,   y: 0.18999999999999995 * scaleFactor },
+        { x: 0.17209374999999996 * scaleFactor,   y: 0.09399999999999994 * scaleFactor },
+        { x: 0.32809374999999996 * scaleFactor,   y: 0.11799999999999995 * scaleFactor },
+        { x: 0.46009374999999997 * scaleFactor,   y: 0.17799999999999996 * scaleFactor },
+        { x: 0.56809375 * scaleFactor,            y: 0.32199999999999995 * scaleFactor },
+        { x: 0.79009375 * scaleFactor,            y: 0.43 * scaleFactor },
+        { x: 0.57409375 * scaleFactor,            y: 0.514 * scaleFactor },
+        { x: 0.50809375 * scaleFactor,            y: 0.61 * scaleFactor },
+        { x: 0.41209375 * scaleFactor,            y: 0.6699999999999999 * scaleFactor },
+        { x: 0.29809374999999994 * scaleFactor,   y: 0.6699999999999999 * scaleFactor },
+        { x: 0.17809374999999994 * scaleFactor,   y: 0.634 * scaleFactor },
+        { x: 0.07609374999999995 * scaleFactor,   y: 0.706 * scaleFactor },
+        { x: -0.013906250000000057 * scaleFactor, y: 1.096 * scaleFactor },
+        { x: 0.21409374999999994 * scaleFactor,   y: 1.432 * scaleFactor },
+        { x: 0.27409374999999997 * scaleFactor,   y: 1.7439999999999998 * scaleFactor },
+        { x: 0.19009374999999995 * scaleFactor,   y: 1.882 * scaleFactor }
       ]
     };
 
-    // 3. Compile and normalize dynamically matching your standard structural pipeline
-    const rawTile = compileSymmetricTile(puzzleState);
-    return normalizeWorkspaceTile(rawTile, puzzleState, ctx.cellHeight);
+    return compileSymmetricTile(puzzleState);
+  },
+
+  // Custom Typographic Interlocking Motif
+  letters: (ctx: MotifContext): Point2D[][] => {
+    const targetHeight = ctx.cellHeight;
+    const originalWorkspaceHeight = 2.0;
+    const scaleFactor = targetHeight / originalWorkspaceHeight;
+
+    const puzzleState: ModularEditorState = {
+      latticeType: 'square',
+      v1: { x: 0.0, y: 0.0 },
+      v4: { x: 0.0, y: targetHeight },
+
+      edgeTop: [
+        { x: 0.25009374999999995 * scaleFactor, y: 0.027999999999999945 * scaleFactor },
+        { x: 0.44809374999999996 * scaleFactor, y: 0.09999999999999995 * scaleFactor },
+        { x: 0.6820937499999999 * scaleFactor,  y: 0.18999999999999995 * scaleFactor },
+        { x: 0.84409375 * scaleFactor,          y: 0.346 * scaleFactor },
+        { x: 0.94609375 * scaleFactor,          y: 0.514 * scaleFactor },
+        { x: 0.95209375 * scaleFactor,          y: 0.664 * scaleFactor },
+        { x: 0.91609375 * scaleFactor,          y: 0.796 * scaleFactor },
+        { x: 0.88009375 * scaleFactor,          y: 0.874 * scaleFactor },
+        { x: 0.79009375 * scaleFactor,          y: 0.928 * scaleFactor },
+        { x: 0.6820937499999999 * scaleFactor,  y: 1.0 * scaleFactor },
+        { x: 0.56809375 * scaleFactor,          y: 1.054 * scaleFactor },
+        { x: 0.72409375 * scaleFactor,          y: 1.144 * scaleFactor },
+        { x: 0.83809375 * scaleFactor,          y: 1.24 * scaleFactor },
+        { x: 0.88609375 * scaleFactor,          y: 1.366 * scaleFactor },
+        { x: 0.91609375 * scaleFactor,          y: 1.5459999999999998 * scaleFactor },
+        { x: 0.89809375 * scaleFactor,          y: 1.654 * scaleFactor },
+        { x: 0.82009375 * scaleFactor,          y: 1.7619999999999998 * scaleFactor },
+        { x: 0.7276312802663438 * scaleFactor,  y: 1.8680387409200967 * scaleFactor },
+        { x: 0.48792183716707016 * scaleFactor, y: 1.9443099273607747 * scaleFactor },
+        { x: 0.13198963377723966 * scaleFactor, y: 1.9878934624697335 * scaleFactor },
+        { x: 0.92809375 * scaleFactor,          y: 1.96 * scaleFactor },
+        { x: 1.31209375 * scaleFactor,          y: 1.8639999999999999 * scaleFactor },
+        { x: 1.51009375 * scaleFactor,          y: 1.7499999999999998 * scaleFactor },
+        { x: 1.70209375 * scaleFactor,          y: 1.6179999999999999 * scaleFactor },
+        { x: 1.8160937499999998 * scaleFactor,  y: 1.408 * scaleFactor },
+        { x: 1.94209375 * scaleFactor,          y: 1.078 * scaleFactor },
+        { x: 1.91209375 * scaleFactor,          y: 0.724 * scaleFactor },
+        { x: 1.8280937499999999 * scaleFactor,  y: 0.472 * scaleFactor },
+        { x: 1.66009375 * scaleFactor,          y: 0.25599999999999995 * scaleFactor },
+        { x: 1.33009375 * scaleFactor,          y: 0.11199999999999995 * scaleFactor },
+        { x: 1.03609375 * scaleFactor,          y: 0.009999999999999943 * scaleFactor },
+        { x: 1.01209375 * scaleFactor,          y: 1.984 * scaleFactor },
+        { x: 1.1260937500000001 * scaleFactor,  y: 1.984 * scaleFactor },
+        { x: 1.96009375 * scaleFactor,          y: 1.93 * scaleFactor }
+      ],
+
+      edgeLeft: [
+        { x: -0.001906250000000057 * scaleFactor, y: 0.25599999999999995 * scaleFactor },
+        { x: 0.22009374999999995 * scaleFactor,   y: 0.298 * scaleFactor },
+        { x: 0.46009374999999997 * scaleFactor,   y: 0.40599999999999997 * scaleFactor },
+        { x: 0.5560937499999999 * scaleFactor,    y: 0.49 * scaleFactor },
+        { x: 0.58609375 * scaleFactor,            y: 0.628 * scaleFactor },
+        { x: 0.50209375 * scaleFactor,            y: 0.73 * scaleFactor },
+        { x: 0.39409374999999996 * scaleFactor,   y: 0.79 * scaleFactor },
+        { x: 0.25009374999999995 * scaleFactor,   y: 0.904 * scaleFactor },
+        { x: 0.0 * scaleFactor,                   y: 1.0 * scaleFactor },
+        { x: 0.004093749999999944 * scaleFactor,  y: 1.15 * scaleFactor },
+        { x: 0.22009374999999995 * scaleFactor,   y: 1.21 * scaleFactor },
+        { x: 0.42409375 * scaleFactor,            y: 1.282 * scaleFactor },
+        { x: 0.52609375 * scaleFactor,            y: 1.3840000000000001 * scaleFactor },
+        { x: 0.56809375 * scaleFactor,            y: 1.498 * scaleFactor },
+        { x: 0.5320937499999999 * scaleFactor,    y: 1.6239999999999999 * scaleFactor },
+        { x: 0.38809374999999996 * scaleFactor,   y: 1.696 * scaleFactor },
+        { x: 0.19609374999999996 * scaleFactor,   y: 1.7619999999999998 * scaleFactor },
+        { x: 0.010093749999999943 * scaleFactor,  y: 1.7979999999999998 * scaleFactor }
+      ]
+    };
+
+    return compileSymmetricTile(puzzleState);
   }
 };

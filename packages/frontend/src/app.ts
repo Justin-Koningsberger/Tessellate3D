@@ -1,6 +1,7 @@
 import { createUncompressedZip } from './zipUtils.ts';
 import { CustomWorkspace } from './tileWorkspace.ts';
 import { tileEditorComponent } from './components/tileEditor/tileEditor.ts';
+import { initializePresetListener } from './utils/presetManager.ts';
 
 import { CONFIG } from '@tessellate3d/core/src/config.ts';
 import { generateTessellation, type Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
@@ -129,22 +130,16 @@ document.addEventListener('DOMContentLoaded', () => {
     els.ringDistanceMultiplierVal.textContent = currentConfig.layout.ringDistanceMultiplier.toFixed(2);
     els.ringIntersectionFactorVal.textContent = currentConfig.layout.ringIntersectionFactor.toFixed(2);
 
-    const currentLattice = els.latticeType.value;
-    const isIsometric = currentLattice === 'triangular' || currentLattice === 'hexagonal';
-    els.autoAlignContainer.style.display = isIsometric ? 'flex' : 'none';
-
     // Dynamically manage control panel visibility based on active variant mode mechanics
     const mode = currentConfig.variantMode;
     if (els.decayContainer) {
-      els.decayContainer.style.display = mode === 'logarithmic' ? 'none' : 'flex';
+      els.decayContainer.style.display = (mode === 'logarithmic' || mode === 'none') ? 'none' : 'flex';
     }
     if (els.twistContainer) {
       els.twistContainer.style.display = mode === 'loxodromic' ? 'flex' : 'none';
     }
 
-    // Dynamically manage control panel visibility based on active base motif
     if (els.staggerContainer) {
-      // The other motifs with interlocking edges do not support stagger yet
       const allowedMotifs = ['square', 'detailedSquare'];
       const isStaggerSupported = allowedMotifs.includes(currentConfig.baseMotif);
 
@@ -159,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dynamically manage control panel visibility based on active lattice layout
     if (els.phaseOffsetContainer) {
-      const showSliders = isIsometric && !els.useAutoAlignment.checked;
+      const showSliders = !els.useAutoAlignment.checked;
       els.phaseOffsetContainer.style.display = showSliders ? 'flex' : 'none';
       els.ringDistanceContainer.style.display = showSliders ? 'flex' : 'none';
       els.intersectionContainer.style.display = showSliders ? 'flex' : 'none';
@@ -312,159 +307,12 @@ function initializeTileEditor(): void {
   }
 
   /**
-   * TASK 3: ONBOARDING VISUAL PRESET LISTENER SYSTEM
-   * Configures math parameters dynamically to showcase specific geometric families.
+   * VISUAL PRESET LISTENER SYSTEM
+   * Configures parameters dynamically to showcase specific geometric families.
    */
-  const presetContainer = document.querySelector('.preset-grid');
-  if (presetContainer) {
-    presetContainer.addEventListener('click', (e) => {
-      const target = e.target as HTMLButtonElement;
-      if (!target.classList.contains('btn-preset')) return;
-
-      const presetName = target.getAttribute('data-preset');
-
-      switch (presetName) {
-        case 'fortress':
-          els.variantMode.value = 'single-pole';
-          els.baseMotif.value = 'squarewave';
-          els.latticeType.value = 'square'
-          els.totalBranches.value = '5';
-          els.maxRings.value = '6';
-          els.decayMultiplier.value = '0.35';
-          els.twistFactor.value = '0.00';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '1.00';
-          els.ringDistanceMultiplier.value = '1.00';
-          els.ringIntersectionFactor.value = '1.00';
-          els.applyStroke.checked = false;
-          break;
-        case 'vortex':
-          els.variantMode.value = 'loxodromic';
-          els.baseMotif.value = 'square';
-          els.latticeType.value = 'square'
-          els.totalBranches.value = '4';
-          els.maxRings.value = '16';
-          els.decayMultiplier.value = '0.3';
-          els.twistFactor.value = '1.5';
-          els.staggerFactor.value = '3.0';
-          els.latticePhaseOffset.value = '1.00';
-          els.ringDistanceMultiplier.value = '1.00';
-          els.ringIntersectionFactor.value = '1.00';
-          els.applyStroke.checked = false;
-          break;
-        case 'rose':
-          els.variantMode.value = 'multi-pole';
-          els.baseMotif.value = 'square';
-          els.latticeType.value = 'square'
-          els.totalBranches.value = '8';
-          els.maxRings.value = '5';
-          els.decayMultiplier.value = '0.40';
-          els.twistFactor.value = '0.00';
-          els.staggerFactor.value = '1.2';
-          els.latticePhaseOffset.value = '1.00';
-          els.ringDistanceMultiplier.value = '1.00';
-          els.ringIntersectionFactor.value = '1.00';
-          els.applyStroke.checked = true;
-          break;
-        case 'mandala':
-          els.variantMode.value = 'logarithmic';
-          els.baseMotif.value = 'detailedTriangle';
-          els.latticeType.value = 'triangular'
-          els.useAutoAlignment.checked = true;
-          els.totalBranches.value = '10';
-          els.maxRings.value = '6';
-          els.decayMultiplier.value = '0.00';
-          els.twistFactor.value = '0.00';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '-5.00';
-          els.ringDistanceMultiplier.value = '0.27';
-          els.ringIntersectionFactor.value = '0.54';
-          els.applyStroke.checked = false;
-          break;
-        case 'cyclone':
-          els.variantMode.value = 'loxodromic';
-          els.baseMotif.value = 'triangle';
-          els.latticeType.value = 'triangular'
-          els.useAutoAlignment.checked = true;
-          els.totalBranches.value = '10';
-          els.maxRings.value = '6';
-          els.decayMultiplier.value = '1.00';
-          els.twistFactor.value = '-0.67';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '-4.00';
-          els.ringDistanceMultiplier.value = '0.27';
-          els.ringIntersectionFactor.value = '0.54';
-          els.applyStroke.checked = false;
-          break;
-        case 'mitosis':
-          els.variantMode.value = 'multi-pole';
-          els.baseMotif.value = 'triangle';
-          els.latticeType.value = 'triangular'
-          els.useAutoAlignment.checked = true;
-          els.totalBranches.value = '20';
-          els.maxRings.value = '7';
-          els.decayMultiplier.value = '1.58';
-          els.twistFactor.value = '0.00';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '4.00';
-          els.ringDistanceMultiplier.value = '-1.31';
-          els.ringIntersectionFactor.value = '0.27';
-          els.applyStroke.checked = false;
-          break;
-        case 'bismuth':
-          els.variantMode.value = 'single-pole';
-          els.baseMotif.value = 'hexagon';
-          els.latticeType.value = 'hexagonal'
-          els.useAutoAlignment.checked = true;
-          els.totalBranches.value = '20';
-          els.maxRings.value = '20';
-          els.decayMultiplier.value = '1.05';
-          els.twistFactor.value = '0.0';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '0.00';
-          els.ringDistanceMultiplier.value = '0.27';
-          els.ringIntersectionFactor.value = '0.54';
-          els.applyStroke.checked = false;
-          break;
-        case 'buzzsaw':
-          els.variantMode.value = 'loxodromic';
-          els.baseMotif.value = 'hexagon';
-          els.latticeType.value = 'hexagonal'
-          els.useAutoAlignment.checked = true;
-          els.totalBranches.value = '10';
-          els.maxRings.value = '10';
-          els.decayMultiplier.value = '1.25';
-          els.twistFactor.value = '-0.67';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '-4.00';
-          els.ringDistanceMultiplier.value = '0.27';
-          els.ringIntersectionFactor.value = '0.54';
-          els.applyStroke.checked = true;
-          break;
-        case 'hexPuzzle':
-          els.variantMode.value = 'logarithmic';
-          els.baseMotif.value = 'hexPuzzle';
-          els.latticeType.value = 'hexagonal'
-          els.useAutoAlignment.checked = true;
-          els.totalBranches.value = '10';
-          els.maxRings.value = '14';
-          els.decayMultiplier.value = '1.00';
-          els.twistFactor.value = '0.0';
-          els.staggerFactor.value = '0.0';
-          els.latticePhaseOffset.value = '2.50';
-          els.ringDistanceMultiplier.value = '-1.29';
-          els.ringIntersectionFactor.value = '0.21';
-          els.applyStroke.checked = true;
-          break;
-        default:
-          return;
-      }
-
-      // Synchronize UI view elements, recompute vectors, and inject fresh vector layouts
-      updateEnginePipeline();
-    });
-  }
-
+  initializePresetListener('.preset-grid', els, () => {
+    updateEnginePipeline();
+  });
 
   /**
    * Launches a native download stream for any binary or text Blob via dynamic document
@@ -499,7 +347,8 @@ function initializeTileEditor(): void {
         activeSvg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n` + activeSvg;
       }
 
-      const fileName = `tessellate3d_${currentConfig.variantMode}_${currentConfig.baseMotif}.svg`;
+      const variantModeName = currentConfig.variantMode === 'none' ? 'flat' : currentConfig.variantMode
+      const fileName = `tessellate3d_${variantModeName}_${currentConfig.baseMotif}.svg`;
 
       // Wrap SVG text contents into a standard W3C compliant vector blob
       const svgBlob = new Blob([activeSvg], { type: 'image/svg+xml;charset=utf-8' });

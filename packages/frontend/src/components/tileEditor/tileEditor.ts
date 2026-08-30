@@ -79,17 +79,18 @@ export class tileEditorComponent {
 
     if (!this.workspaceInstance) {
       this.workspaceInstance = new CustomWorkspace(canvas, 2.0);
-      // Seamlessly bind the auto-reset listener hook here when instances map
       this.workspaceInstance.onMobileModeReset = (autoMode) => this.updateMobileModeButtons(autoMode);
     } else {
       this.workspaceInstance.resizeWorkspace(500, 500);
       this.workspaceInstance.render();
     }
 
-    // Synchronize sidebar dropdown selector state with active memory metrics on open
-    if (this.els.editorLatticeSelect && this.workspaceInstance) {
+    // Synchronize responsive layout dropdown selectors
+    if (this.workspaceInstance) {
       const workspace = this.workspaceInstance as CustomWorkspace;
-      (this.els.editorLatticeSelect as HTMLSelectElement).value = workspace.getCurrentLatticeType();
+      const targetLatticeType = workspace.getCurrentLatticeType();
+      const selectors = [this.els.editorLatticeSelect, this.els.editorLatticeSelectCompact];
+      selectors.forEach(select => { if (select) (select as HTMLSelectElement).value = targetLatticeType; });
     }
   }
 

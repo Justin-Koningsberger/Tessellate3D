@@ -172,19 +172,9 @@ export function generateTessellation(config: EngineConfig): string {
   let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
 
   if (config.latticeType === 'square' && config.useAutoAlignment) {
-    const squareNormalizationFactor = 1.0 / cellHeight;
-    ringIntersection = squareNormalizationFactor;
+    ringIntersection = cellHeight;
     ringDistanceMultiplier = 1.0;
     phaseOffset = 1.5;
-  }
-
-  if (config.latticeType === 'triangular' && config.useAutoAlignment) {
-    ringIntersection = (Math.PI * Math.sqrt(3)) / totalBranches;
-    ringDistanceMultiplier = 1.866025 - 0.159155 * totalBranches;
-
-    // Compute structural phase offset mapping for triangular grids
-    const isOdd = totalBranches % 2 !== 0;
-    phaseOffset = config.variantMode === "none" ? 1.0 : (Math.round(-totalBranches) / 2) + Math.floor(totalBranches / 4) - (isOdd ? 0.5 : 0);
   }
 
   if (config.symmetryGroup === "p3" && config.latticeType === 'hexagonal' && config.useAutoAlignment) {
@@ -260,8 +250,10 @@ export function generateTessellation(config: EngineConfig): string {
       const currentFill = activeColors[colorIndex] || "#000000";
 
       smoothComponents.forEach((componentPoints, compIndex) => {
-        // Triangles require two orientations (upright and inverted) to fill a lattice slot
-        const orientations = config.latticeType === 'triangular' ? ['upright', 'inverted'] : ['standard'];
+        // Triangles in p6m3 require 6 rotational copies around the v2 corner
+        const orientations = config.latticeType === 'triangular'
+          ? ['0', '-60', '-120', '-180', '-240', '-300']
+          : ['standard'];
 
         orientations.forEach((orientation) => {
           const transformedPoints = componentPoints.map(p => {
@@ -317,16 +309,14 @@ export function generateTessellation(config: EngineConfig): string {
               let localY = p.y;
 
               if (config.latticeType === 'triangular') {
-                localX *= Math.sqrt(3) / 2;
-                if (orientation === 'inverted') {
-                  localX = ((Math.sqrt(3) / 2) - localX);
-                  localY = (cellHeight - localY);
-                  localX += (ringDistanceMultiplier - 1.0) * (Math.sqrt(3) / 2) * cellHeight;
-                  localY += (phaseOffset - 0.5) * cellHeight;
-                }
-                if (ring % 2 === 1) {
-                  localY += cellHeight * 0.5;
-                }
+                // 1. Convert the orientation string back to a numeric degree angle
+                const angleDegrees = parseInt(orientation, 10);
+
+                // 2. Rotate the path directly around the true geometric vertex position v2
+                const trueV2 = { x: (Math.sqrt(3) / 2) * cellHeight, y: cellHeight * 0.5 };
+                const rotated = rotateAroundPivot({ x: localX, y: localY }, trueV2, angleDegrees);
+                localX = rotated.x;
+                localY = rotated.y;
               }
 
               if (config.latticeType === 'hexagonal') {
@@ -337,12 +327,6 @@ export function generateTessellation(config: EngineConfig): string {
                 localY += ring * (phaseOffset - 1.0) * cellHeight;
               }
 
-              // Scale square tiles horizontally to align with the dynamic branch step width
-              if (config.latticeType === 'square') {
-                // TODO: Add support for phaseOffset and intra-ring gap
-                localX *= ringIntersection;
-              }
-
               const shearedPoint: Point2D = {
                 x: localX + (localY / cellHeight) * shearSlope,
                 y: localY
@@ -350,9 +334,32 @@ export function generateTessellation(config: EngineConfig): string {
 
               gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
 
+              if (config.latticeType === 'square') {
+                gridSpace.x = (gridSpace.x - (-ring * 1.0)) + (-ring * ringIntersection);
+                gridSpace.y = (gridSpace.y - (branch * cellHeight)) + (branch * cellHeight * ringDistanceMultiplier);
+                gridSpace.y += ring * cellHeight * (phaseOffset - 1.5);
+              }
+
               if (config.latticeType === 'triangular') {
                 const absoluteRingTranslationX = -ring * 1.0;
-                gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * (Math.sqrt(3) / 2) * ringIntersection);
+                const triWidth = (Math.sqrt(3) / 2) * cellHeight;
+
+                // 1. Absolute geometric offsets to drop ring layers into the honeycomb side pockets
+                const perfectRingX = -ring * triWidth * 1.5;
+                const perfectRingY = ring * cellHeight * 0.5;
+
+                // 2. Map coordinates cleanly when Auto-Align is active
+                if (config.useAutoAlignment) {
+                  const autoIntersection = 1.0;
+                  const autoGap = 1.5;
+                  const autoPhase = 2.0;
+                  gridSpace.x = localX + (branch * triWidth * autoIntersection) + (ring * triWidth * autoPhase);
+                  gridSpace.y = localY + (branch * cellHeight * autoGap) - (ring * cellHeight * (autoPhase * 0.5 - 1.0));
+                } else {
+                  // Keep manual slider tracking control mapping clean and responsive
+                  gridSpace.x = localX + (branch * triWidth * ringIntersection) + (ring * triWidth * phaseOffset);
+                  gridSpace.y = localY + (branch * cellHeight * ringDistanceMultiplier) - (ring * cellHeight * (phaseOffset * 0.5 - 1.0));
+                }
               }
 
               if (config.latticeType === 'hexagonal') {
@@ -414,6 +421,7 @@ export function generateTessellation(config: EngineConfig): string {
   const detailPaths: string[] = [];
   const finalDebugTextElements: string[] = [];
 
+  // TODO: Move svg generation to ./helpers
   normalizedPaths.forEach(path => {
     if (path.compIndex === 0) {
       const colorIdx = activeColors.indexOf(path.color);

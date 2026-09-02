@@ -90,23 +90,39 @@ function compileHexagonalTile(state: HexagonalEditorState): Point2D[] {
 function compileTriangularTile(state: TriangularEditorState): Point2D[] {
   const path: Point2D[] = [];
   const cellHeight = state.v4.y;
+  const leftSpineMidpoint = { x: 0.0, y: cellHeight * 0.5 };
   const triWidth = (Math.sqrt(3) / 2) * cellHeight;
 
+  // 1. TOP ANGLED EDGE: Trace edgeSpine from v1 to v2
   path.push({ x: state.v1.x, y: state.v1.y });
-  state.edgeInterlock.forEach(p => path.push({ x: p.x, y: p.y }));
-  path.push({ x: triWidth, y: cellHeight * 0.5 });
+  state.edgeSpine.forEach(p => path.push({ x: p.x, y: p.y }));
 
-  state.edgeInterlock.forEach(pt => path.push({ x: triWidth - pt.x, y: pt.y + (cellHeight * 0.5) }));
+   // 2. BOTTOM ANGLED TWIN EDGE: Pure -60 degree vertex rotation pass
+  path.push({ x: state.v2.x, y: state.v2.y });
+  state.edgeSpine
+    .slice()
+    .reverse()
+    .forEach(pt => {
+      const r = rotateAroundPivot(pt, state.v2, -60);
+      path.push(r);
+    });
   path.push({ x: state.v4.x, y: state.v4.y });
 
-  for (let i = state.edgeSpine.length - 1; i >= 0; i--) {
-    path.push({ x: -state.edgeSpine[i]!.x, y: state.edgeSpine[i]!.y + (cellHeight * 0.5) });
-  }
-  path.push({ x: 0.0, y: cellHeight * 0.5 });
-  for (let i = state.edgeSpine.length - 1; i >= 0; i--) {
-    path.push({ x: state.edgeSpine[i]!.x, y: state.edgeSpine[i]!.y });
-  }
+  // 3. Trace Lower Left Spine Twin Edge (v4 -> leftSpineMidpoint) moving UP from v4.
+  state.edgeInterlock
+    .map(p => rotateAroundPivot(p, leftSpineMidpoint, 180))
+    .forEach(p => path.push(p));
+
+  path.push({ x: leftSpineMidpoint.x, y: leftSpineMidpoint.y });
+
+  // 4. Trace Upper Left Spine Edge (leftSpineMidpoint -> v1) moving UP from midpoint to v1.
+  state.edgeInterlock
+    .slice()
+    .reverse()
+    .forEach(p => path.push({ x: p.x, y: p.y }));
+
   path.push({ x: state.v1.x, y: state.v1.y });
+
   return path;
 }
 

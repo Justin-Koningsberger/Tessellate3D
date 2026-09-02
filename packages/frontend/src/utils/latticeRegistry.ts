@@ -1,5 +1,6 @@
 import type { Point2D, EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 import {
+  rotateAroundPivot,
   type ModularEditorState,
   type HexagonalEditorState,
   type SquareEditorState,
@@ -67,14 +68,6 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
     },
     renderTwins: (ctx, state: HexagonalEditorState, projection, cellHeight) => {
       const v2s = (pt: Point2D) => projection.vectorToScreen(pt);
-      const rotatePoint = (point: Point2D, pivot: Point2D, angleDegrees: number) => {
-        const radians = (angleDegrees * Math.PI) / 180;
-        const cos = Math.cos(radians);
-        const sin = Math.sin(radians);
-        const dx = point.x - pivot.x;
-        const dy = point.y - pivot.y;
-        return { x: dx * cos - dy * sin + pivot.x, y: dx * sin + dy * cos + pivot.y };
-      };
 
       ctx.save();
       ctx.setLineDash([]);
@@ -85,7 +78,7 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
       ctx.beginPath();
       ctx.moveTo(v2s(state.v6).x, v2s(state.v6).y);
       for (let i = state.edgeA.length - 1; i >= 0; i--) {
-        const r = rotatePoint(state.edgeA[i]!, state.v1, 120);
+        const r = rotateAroundPivot(state.edgeA[i]!, state.v1, 120);
         ctx.lineTo(v2s(r).x, v2s(r).y);
       }
       ctx.lineTo(v2s(state.v1).x, v2s(state.v1).y);
@@ -95,7 +88,7 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
       ctx.beginPath();
       ctx.moveTo(v2s(state.v3).x, v2s(state.v3).y);
       for (let i = state.edgeB.length - 1; i >= 0; i--) {
-        const r = rotatePoint(state.edgeB[i]!, state.v3, -120);
+        const r = rotateAroundPivot(state.edgeB[i]!, state.v3, -120);
         ctx.lineTo(v2s(r).x, v2s(r).y);
       }
       ctx.lineTo(v2s(state.v4).x, v2s(state.v4).y);
@@ -105,7 +98,7 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
       ctx.beginPath();
       ctx.moveTo(v2s(state.v5).x, v2s(state.v5).y);
       for (let i = state.edgeC.length - 1; i >= 0; i--) {
-        const r = rotatePoint(state.edgeC[i]!, state.v5, -120);
+        const r = rotateAroundPivot(state.edgeC[i]!, state.v5, -120);
         ctx.lineTo(v2s(r).x, v2s(r).y);
       }
       ctx.lineTo(v2s(state.v6).x, v2s(state.v6).y);
@@ -183,8 +176,8 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
     getInteractiveEdges: (state: TriangularEditorState, cellHeight: number) => {
       const triWidth = (Math.sqrt(3) / 2) * cellHeight;
       return [
-        { key: 'edgeSpine',     start: state.v1, end: { x: 0.0, y: cellHeight * 0.5 }, isInteractive: true },
-        { key: 'edgeInterlock', start: state.v1, end: { x: triWidth, y: cellHeight * 0.5 }, isInteractive: true }
+        { key: 'edgeSpine',     start: state.v1, end: state.v2, isInteractive: true },
+        { key: 'edgeInterlock', start: state.v1, end: { x: 0.0, y: cellHeight * 0.5 }, isInteractive: true }
       ];
     },
     initializeDefaultState: (cellHeight: number): TriangularEditorState => {
@@ -194,39 +187,101 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
         v1: { x: 0.0, y: 0.0 },
         v2: { x: triWidth, y: cellHeight * 0.5 },
         v4: { x: 0.0, y: cellHeight },
-        edgeSpine: [{ x: 0.0, y: cellHeight * 0.25 }],
-        edgeInterlock: [{ x: triWidth * 0.5, y: cellHeight * 0.25 }]
+        edgeSpine: [{ x: triWidth * 0.5, y: cellHeight * 0.25 }],
+        edgeInterlock: [{ x: 0.0, y: cellHeight * 0.25 }]
       };
     },
     renderTwins: (ctx, state: TriangularEditorState, projection, cellHeight) => {
       const triWidth = (Math.sqrt(3) / 2) * cellHeight;
       const v2s = (pt: Point2D) => projection.vectorToScreen(pt);
+      const leftSpineMidpoint = { x: 0.0, y: cellHeight * 0.5 };
+
+      // Show index debug labels for each point along an edge
+      const showDebug = !import.meta.env.PROD;
 
       ctx.save();
       ctx.setLineDash([]);
+
+      if (showDebug) {
+        ctx.font = '12px monospace';
+      }
+
+      // ==========================================
+      // PART 1: TOP ANGLED INTERACTIVE EDGE (BLUE)
+      // ==========================================
+      if (showDebug) {
+        ctx.fillStyle = '#00aec9'; // Blue for source labels
+        ctx.fillText('v1', v2s(state.v1).x - 15, v2s(state.v1).y - 5);
+        ctx.fillText('v2', v2s(state.v2).x + 10, v2s(state.v2).y);
+
+        state.edgeSpine.forEach((pt, index) => {
+          const screenPt = v2s(pt);
+          ctx.fillText(`P${index}`, screenPt.x - 10, screenPt.y - 12);
+        });
+
+        // ==========================================
+        // PART 2: LEFT VERTICAL INTERACTIVE EDGE (BLUE)
+        // =// ==========================================
+        state.edgeInterlock.forEach((pt, index) => {
+          const screenPt = v2s(pt);
+          ctx.fillText(`P${index}`, screenPt.x - 25, screenPt.y);
+        });
+      }
+
+      // ==========================================
+      // PART 3: BOTTOM ANGLED TWIN EDGE (RED)
+      // ==========================================
       ctx.strokeStyle = '#ff7675';
       ctx.lineWidth = 2;
 
-      // 1. Lower Left Spine Twin (Glide translation top-down mapping)
-      ctx.beginPath();
-      ctx.moveTo(v2s({ x: 0.0, y: cellHeight * 0.5 }).x, v2s({ x: 0.0, y: cellHeight * 0.5 }).y);
-      for (let i = 0; i < state.edgeSpine.length; i++) {
-        const pt = state.edgeSpine[i]!;
-        ctx.lineTo(v2s({ x: -pt.x, y: pt.y + (cellHeight * 0.5) }).x, v2s({ x: -pt.x, y: pt.y + (cellHeight * 0.5) }).y);
+      if (showDebug) {
+        ctx.fillStyle = '#ff7675'; // Red for twin labels
+        ctx.fillText('v4', v2s(state.v4).x - 15, v2s(state.v4).y + 15);
       }
-      ctx.lineTo(v2s({ x: 0.0, y: cellHeight }).x, v2s({ x: 0.0, y: cellHeight }).y);
+
+      ctx.beginPath();
+      ctx.moveTo(v2s(state.v2).x, v2s(state.v2).y);
+
+      const computedAngledTwins: Point2D[] = [];
+      for (let i = state.edgeSpine.length - 1; i >= 0; i--) {
+        const pt = state.edgeSpine[i]!;
+        const r = rotateAroundPivot(pt, state.v2, -60);
+        computedAngledTwins.push(r);
+        ctx.lineTo(v2s(r).x, v2s(r).y);
+      }
+      ctx.lineTo(v2s(state.v4).x, v2s(state.v4).y);
       ctx.stroke();
 
-      // 2. Bottom Angled Interlocking Twin (Anti-Symmetric vertical shift)
-      ctx.beginPath();
-      const startPos = { x: triWidth, y: cellHeight * 0.5 };
-      ctx.moveTo(v2s(startPos).x, v2s(startPos).y);
-      for (let i = 0; i < state.edgeInterlock.length; i++) {
-        const pt = state.edgeInterlock[i]!;
-        ctx.lineTo(v2s({ x: triWidth - pt.x, y: pt.y + (cellHeight * 0.5) }).x, v2s({ x: triWidth -pt.x, y: pt.y + (cellHeight * 0.5) }).y);
+      if (showDebug) {
+        computedAngledTwins.forEach((twinPt, index) => {
+          const sourceIndex = (state.edgeSpine.length - 1) - index;
+          const screenTwin = v2s(twinPt);
+          ctx.fillText(`P${sourceIndex}`, screenTwin.x - 10, screenTwin.y + 15);
+        });
       }
-      ctx.lineTo(v2s({ x: 0.0, y: cellHeight }).x, v2s({ x: 0.0, y: cellHeight }).y);
+
+      // ==========================================
+      // PART 4: VERTICAL LEFT SPINE TWIN (RED)
+      // ==========================================
+      ctx.beginPath();
+      ctx.moveTo(v2s(leftSpineMidpoint).x, v2s(leftSpineMidpoint).y);
+
+      const computedLeftTwins: Point2D[] = [];
+      for (let i = state.edgeInterlock.length - 1; i >= 0; i--) {
+        const r = rotateAroundPivot(state.edgeInterlock[i]!, leftSpineMidpoint, 180);
+        computedLeftTwins.push(r);
+        ctx.lineTo(v2s(r).x, v2s(r).y);
+      }
+      ctx.lineTo(v2s(state.v4).x, v2s(state.v4).y);
       ctx.stroke();
+
+      if (showDebug) {
+        computedLeftTwins.forEach((twinPt, index) => {
+          const sourceIndex = (state.edgeInterlock.length - 1) - index;
+          const screenTwin = v2s(twinPt);
+          ctx.fillText(`P${sourceIndex}`, screenTwin.x - 25, screenTwin.y);
+        });
+      }
 
       ctx.restore();
     }

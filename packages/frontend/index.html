@@ -186,10 +186,10 @@
         <label for="variantMode">Transform Variant Mode</label>
         <div class="input-row-with-icon">
           <select id="variantMode" aria-describedby="variant-help-text">
-            <option value="none">None</option>
+            <option value="none" selected>None</option>
             <option value="logarithmic">Logarithmic Spiral</option>
             <option value="loxodromic">Loxodromic Twist</option>
-            <option value="single-pole" selected>Single-Pole Decay</option>
+            <option value="single-pole">Single-Pole Decay</option>
             <option value="multi-pole">Multi-Pole Hyperbolic</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Changes the layout style (no transform, spinning into a spiral or twisting around one or two core/s).">ⓘ</span>
@@ -227,8 +227,8 @@
         <div class="input-row-with-icon">
           <select id="latticeType" aria-describedby="lattice-help-text">
             <option value="square">Square</option>
-            <option value="triangular">Triangular</option>
-            <option value="hexagonal" selected>Hexagonal</option>
+            <option value="triangular" selected>Triangular</option>
+            <option value="hexagonal">Hexagonal</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Switches layout packing configurations between square, triangular, and hexagonal grids.">ⓘ</span>
         </div>
@@ -346,7 +346,7 @@
       <div class="form-group-accessible" id="ringDistanceContainer">
         <label for="ringDistanceMultiplier" class="slider-label-row">Intra-Ring Gap: <span id="ringDistanceMultiplier-val" class="slider-value-highlight" aria-live="polite">1.00</span></label>
         <div class="input-row-with-icon">
-          <input type="range" id="ringDistanceMultiplier" min="-3.0" max="3.0" step="0.01" value="1.0" aria-describedby="gap-help-text" />
+          <input type="range" id="ringDistanceMultiplier" min="-2.5" max="2.5" step="0.01" value="1.0" aria-describedby="gap-help-text" />
           <span class="info-icon" aria-hidden="true" title="Adjusts the inwards spacing between shapes within each ring.">ⓘ</span>
         </div>
         <span id="gap-help-text" class="sr-only">Adjusts the inwards spacing between shapes within each ring.</span>

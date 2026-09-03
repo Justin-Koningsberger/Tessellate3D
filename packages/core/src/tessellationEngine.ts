@@ -3,6 +3,8 @@ import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
 import { rotateAroundPivot } from './tileSymmetry.ts'
+import { LatticeFactory } from './lattices/latticeFactory.ts';
+import { LatticeContext } from './lattices/types.ts';
 
 export interface Point2D {
   x: number;
@@ -254,11 +256,10 @@ export function generateTessellation(config: EngineConfig): string {
       const colorIndex = (branch + ring) % activeColors.length;
       const currentFill = activeColors[colorIndex] || "#000000";
 
+      const strategy = LatticeFactory.getStrategy(config.latticeType, config.symmetryGroup ?? 'p1');
+
       smoothComponents.forEach((componentPoints, compIndex) => {
-        // Triangles in p6m3 require 6 rotational copies around the v2 corner
-        const orientations = config.latticeType === 'triangular'
-          ? ['0', '-60', '-120', '-180', '-240', '-300']
-          : ['standard'];
+        const orientations = strategy ? strategy.getOrientations() : ['standard'];
 
         orientations.forEach((orientation) => {
           const transformedPoints = componentPoints.map(p => {
@@ -313,23 +314,18 @@ export function generateTessellation(config: EngineConfig): string {
               let localX = p.x;
               let localY = p.y;
 
-              if (config.latticeType === 'triangular') {
-                // 1. Convert the orientation string back to a numeric degree angle
-                const angleDegrees = parseInt(orientation, 10);
-
-                // 2. Rotate the path directly around the true geometric vertex position v2
-                const trueV2 = { x: (Math.sqrt(3) / 2) * cellHeight, y: cellHeight * 0.5 };
-                const rotated = rotateAroundPivot({ x: localX, y: localY }, trueV2, angleDegrees);
-                localX = rotated.x;
-                localY = rotated.y;
-              }
-
-              if (config.latticeType === 'hexagonal') {
-                localY *= Math.sqrt(3) / 2;
-                const tileScaleFactor = 1.0 / ringDistanceMultiplier;
-                localX *= tileScaleFactor;
-                localY *= tileScaleFactor;
-                localY += ring * (phaseOffset - 1.0) * cellHeight;
+              if (strategy) {
+                const transformed = strategy.transformLocal({ x: localX, y: localY }, orientation, cellHeight);
+                localX = transformed.x;
+                localY = transformed.y;
+              } else {
+                if (config.latticeType === 'hexagonal') {
+                  localY *= Math.sqrt(3) / 2;
+                  const tileScaleFactor = 1.0 / ringDistanceMultiplier;
+                  localX *= tileScaleFactor;
+                  localY *= tileScaleFactor;
+                  localY += ring * (phaseOffset - 1.0) * cellHeight;
+                }
               }
 
               const shearedPoint: Point2D = {
@@ -339,55 +335,33 @@ export function generateTessellation(config: EngineConfig): string {
 
               gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
 
-              if (config.latticeType === 'square') {
-                gridSpace.x = (gridSpace.x - (-ring * 1.0)) + (-ring * ringIntersection);
-                gridSpace.y = (gridSpace.y - (branch * cellHeight)) + (branch * cellHeight * ringDistanceMultiplier);
-                gridSpace.y += ring * cellHeight * (phaseOffset - 1.5);
-              }
-
-              if (config.latticeType === 'triangular') {
-                const absoluteRingTranslationX = -ring * 1.0;
-                const triWidth = (Math.sqrt(3) / 2) * cellHeight;
-
-                // 1. Absolute geometric offsets to drop ring layers into the honeycomb side pockets
-                const perfectRingX = -ring * triWidth * 1.5;
-                const perfectRingY = ring * cellHeight * 0.5;
-
-                // 2. Map coordinates cleanly when Auto-Align is active
-                if (config.useAutoAlignment) {
-                  const autoIntersection = 1.0;
-                  const autoGap = 1.5;
-                  const autoPhase = 2.0;
-
-                  if (config.variantMode !== 'none') {
-                    const scale = 0.3333; // Intra-Ring Gap
-                    gridSpace.x = localX * scale + (ring * triWidth * 1.5 * 0.22);
-                    gridSpace.y = localY * scale + (branch * cellHeight) + (ring * cellHeight * (0.50 - 1.0));
-
-                  } else {
-                    gridSpace.x = localX + (branch * triWidth * autoIntersection) + (ring * triWidth * autoPhase);
-                    gridSpace.y = localY + (branch * cellHeight * autoGap) - (ring * cellHeight * (autoPhase * 0.5 - 1.0));
+              if (strategy) {
+                const ctx: LatticeContext = {
+                  branch,
+                  ring,
+                  totalBranches,
+                  cellHeight,
+                  triWidth: (Math.sqrt(3) / 2) * cellHeight,
+                  shearSlope,
+                  variantMode: config.variantMode ?? 'none',
+                  useAutoAlignment: !!config.useAutoAlignment,
+                  sliders: {
+                    intersection: ringIntersection,
+                    distanceMultiplier: ringDistanceMultiplier,
+                    phaseOffset: phaseOffset
                   }
-                } else {
-                  if (config.variantMode !== 'none') {
-                    // 1. Controls the internal scale sizing of individual rosettes
-                    const scale = ringDistanceMultiplier;
-
-                    // 2. Controls the radial expansion distance between rings
-                    gridSpace.x = localX * scale + (ring * triWidth * 1.5 * ringIntersection);
-
-                    // 3. Controls the alternating alignment offset between rosettes along the ring
-                    gridSpace.y = localY * scale + (branch * cellHeight) + (ring * cellHeight * (phaseOffset - 1.0));
-                } else {
-                  gridSpace.x = localX + (branch * triWidth * ringIntersection) + (ring * triWidth * phaseOffset);
-                  gridSpace.y = localY + (branch * cellHeight * ringDistanceMultiplier) - (ring * cellHeight * (phaseOffset * 0.5 - 1.0));
-                  }
+                };
+                gridSpace = strategy.finalizeGridSpace(gridSpace, shearedPoint, orientation, ctx);
+              } else {
+                if (config.latticeType === 'square') {
+                  gridSpace.x = (gridSpace.x - (-ring * 1.0)) + (-ring * ringIntersection);
+                  gridSpace.y = (gridSpace.y - (branch * cellHeight)) + (branch * cellHeight * ringDistanceMultiplier);
+                  gridSpace.y += ring * cellHeight * (phaseOffset - 1.5);
                 }
-              }
-
-              if (config.latticeType === 'hexagonal') {
-                const absoluteRingTranslationX = -ring * 1.0;
-                gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);
+                if (config.latticeType === 'hexagonal') {
+                  const absoluteRingTranslationX = -ring * 1.0;
+                  gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);
+                }
               }
             }
 

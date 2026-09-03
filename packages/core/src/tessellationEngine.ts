@@ -55,7 +55,7 @@ type WarpProjectionFn = (point: Point2D) => Point2D;
  */
 export function subdividePath(
   points: Point2D[],
-  config: EngineConfig,
+  adjustedConf: EngineConfig,
   compIndex: number,
   warpProjection: WarpProjectionFn,
   isInitialTemplatePass: boolean = false
@@ -63,12 +63,12 @@ export function subdividePath(
   if (points.length < 2) return [...points];
 
   const subdivided: Point2D[] = [];
-  const subdivisionLimit = config.layout.subdivisionLimit;
+  const subdivisionLimit = adjustedConf.layout.subdivisionLimit;
   // Minimum feature size for most 3D printers
   const minThresholdMm = 0.2;
 
   // Tie the engine coordinates directly to global physical millimeter scales
-  const physicalScaleFactor = config.layout.globalScale ?? 1.0;
+  const physicalScaleFactor = adjustedConf.layout.globalScale ?? 1.0;
 
   const isClosedLoop = compIndex === 0;
   const iterations = isClosedLoop ? points.length : points.length - 1;
@@ -116,6 +116,39 @@ export function subdividePath(
   }
 
   return subdivided;
+}
+
+function getSmoothComponents(
+  motifComponents: Point2D[][],
+  adjustedConfig: EngineConfig,
+  globalScale: number,
+  decayMultiplier: number,
+  twistFactor: number,
+): Point2D[][] {
+  const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
+    const adjustedPt = { ...pt };
+    if (adjustedConfig.latticeType === 'triangular') {
+      adjustedPt.x *= Math.sqrt(3) / 2;
+    }
+
+    switch (adjustedConfig.variantMode) {
+      case 'none':
+        return adjustedPt;
+      case 'logarithmic':
+        return forward.logarithmic(adjustedPt, globalScale);
+      case 'single-pole':
+        return forward.singlePole(adjustedPt, globalScale, decayMultiplier);
+      case 'multi-pole':
+        return forward.multiPole(adjustedPt, globalScale, decayMultiplier);
+      case 'loxodromic':
+      default:
+        return forward.loxodromic(adjustedPt, globalScale, twistFactor, decayMultiplier);
+    }
+  };
+
+  return motifComponents.map((comp, compIndex) =>
+    subdividePath(comp, adjustedConfig, compIndex, activeWarpProjection, true)
+  );
 }
 
 /**
@@ -177,36 +210,16 @@ export function generateTessellation(config: EngineConfig): string {
     phaseOffset = 1.5;
   }
 
-  if (config.symmetryGroup === "p3" && config.latticeType === 'hexagonal' && config.useAutoAlignment) {
-    ringIntersection = 1.0 + (2.10 / totalBranches);
-    ringDistanceMultiplier = 1.30;
-    // With 6 branches, 1.50 is rotated CCW, 2.50 is rotated CW, 3.50 is more random looking
-    phaseOffset = 3.50;
-  }
-
-  if (config.symmetryGroup === "p1" && config.latticeType === 'hexagonal' && config.useAutoAlignment) {
-    ringIntersection = 2.10 / totalBranches;
-    ringDistanceMultiplier = 1.298;
-    phaseOffset = 1.50;
-  }
-
-  const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
-    const adjustedPt = { ...pt };
-    if (config.latticeType === 'triangular') {
-      adjustedPt.x *= Math.sqrt(3) / 2;
-    }
-    switch (config.variantMode) {
-      case 'none':
-        return adjustedPt;
-      case 'logarithmic':
-        return forward.logarithmic(adjustedPt, globalScale);
-      case 'single-pole':
-        return forward.singlePole(adjustedPt, globalScale, decayMultiplier);
-      case 'multi-pole':
-        return forward.multiPole(adjustedPt, globalScale, decayMultiplier);
-      case 'loxodromic':
-      default:
-        return forward.loxodromic(adjustedPt, globalScale, twistFactor, decayMultiplier);
+  if (config.latticeType === 'hexagonal' && config.useAutoAlignment) {
+    if (config.symmetryGroup === "p1") {
+      ringIntersection = 2.10 / totalBranches;
+      ringDistanceMultiplier = 1.298;
+      phaseOffset = 1.50;
+    } else if (config.symmetryGroup === "p3") {
+      ringIntersection = 1.0 + (2.10 / totalBranches);
+      ringDistanceMultiplier = 1.30;
+      // With 6 branches, 1.50 is rotated CCW, 2.50 is rotated CW, 3.50 is more random looking
+      phaseOffset = 3.50;
     }
   };
 
@@ -224,29 +237,21 @@ export function generateTessellation(config: EngineConfig): string {
     }
   };
 
-  const smoothComponents = motifComponents.map((comp, compIndex) =>
-    subdividePath(comp, adjustedConfig, compIndex, activeWarpProjection, true)
-  );
+  const smoothComponents = getSmoothComponents(motifComponents, adjustedConfig, globalScale, decayMultiplier, twistFactor);
 
   const continuousStagger = config.layout.staggerFactor ?? 0.0;
   const shearSlope = (1.0 / totalBranches) * continuousStagger;
 
   const r = cellHeight / 2;
   const h = r * (Math.sqrt(3) / 2);
-  const localCenter = { x: 0, y: r }; // y is exactly cellHeight / 2
+  const localCenter = { x: 0, y: r };
 
   const rawPathObjects: PathObject[] = [];
   const debugTextElements: string[] = [];
 
   for (let ring = 0; ring < config.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
-      let colorIndex = (branch + ring) % activeColors.length;
-
-      if (config.latticeType === 'triangular') {
-        const structuralOffset = Math.floor(ring / 2);
-        colorIndex = (branch + ring - structuralOffset) % activeColors.length;
-      }
-
+      const colorIndex = (branch + ring) % activeColors.length;
       const currentFill = activeColors[colorIndex] || "#000000";
 
       smoothComponents.forEach((componentPoints, compIndex) => {

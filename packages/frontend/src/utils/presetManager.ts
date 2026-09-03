@@ -121,13 +121,13 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     useAutoAlignment: true,
     totalBranches: '20',
     maxRings: '7',
-    decayMultiplier: '1.58',
+    decayMultiplier: '0.65',
     twistFactor: '0.00',
     staggerFactor: '0.0',
     latticePhaseOffset: '4.00',
     ringDistanceMultiplier: '-1.31',
     ringIntersectionFactor: '0.27',
-    applyStroke: false
+    applyStroke: true
   },
   snowflakes: {
     variantMode: 'single-pole',

@@ -186,10 +186,10 @@
         <label for="variantMode">Transform Variant Mode</label>
         <div class="input-row-with-icon">
           <select id="variantMode" aria-describedby="variant-help-text">
-            <option value="none" selected>None</option>
+            <option value="none">None</option>
             <option value="logarithmic">Logarithmic Spiral</option>
             <option value="loxodromic">Loxodromic Twist</option>
-            <option value="single-pole">Single-Pole Decay</option>
+            <option value="single-pole" selected>Single-Pole Decay</option>
             <option value="multi-pole">Multi-Pole Hyperbolic</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Changes the layout style (no transform, spinning into a spiral or twisting around one or two core/s).">ⓘ</span>
@@ -337,7 +337,7 @@
       <div class="form-group-accessible" id="phaseOffsetContainer">
         <label for="latticePhaseOffset" class="slider-label-row">Isometric Phase Offset: <span id="latticePhaseOffset-val" class="slider-value-highlight" aria-live="polite">1.00</span></label>
         <div class="input-row-with-icon">
-          <input type="range" id="latticePhaseOffset" min="-10.0" max="10.0" step="0.5" value="1.0" aria-describedby="phase-help-text" />
+          <input type="range" id="latticePhaseOffset" min="-10.0" max="10.0" step="0.1" value="1.0" aria-describedby="phase-help-text" />
           <span class="info-icon" aria-hidden="true" title="Adjusts the sideways spacing between shapes within each ring.">ⓘ</span>
         </div>
         <span id="phase-help-text" class="sr-only">Adjusts the sideways spacing between shapes within each ring.</span>

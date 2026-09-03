@@ -353,12 +353,30 @@ export function generateTessellation(config: EngineConfig): string {
                   const autoIntersection = 1.0;
                   const autoGap = 1.5;
                   const autoPhase = 2.0;
-                  gridSpace.x = localX + (branch * triWidth * autoIntersection) + (ring * triWidth * autoPhase);
-                  gridSpace.y = localY + (branch * cellHeight * autoGap) - (ring * cellHeight * (autoPhase * 0.5 - 1.0));
+
+                  if (config.variantMode !== 'none') {
+                    const scale = 0.3333; // Intra-Ring Gap
+                    gridSpace.x = localX * scale + (ring * triWidth * 1.5 * 0.22);
+                    gridSpace.y = localY * scale + (branch * cellHeight) + (ring * cellHeight * (0.50 - 1.0));
+
+                  } else {
+                    gridSpace.x = localX + (branch * triWidth * autoIntersection) + (ring * triWidth * autoPhase);
+                    gridSpace.y = localY + (branch * cellHeight * autoGap) - (ring * cellHeight * (autoPhase * 0.5 - 1.0));
+                  }
                 } else {
-                  // Keep manual slider tracking control mapping clean and responsive
+                  if (config.variantMode !== 'none') {
+                    // 1. Controls the internal scale sizing of individual rosettes
+                    const scale = ringDistanceMultiplier;
+
+                    // 2. Controls the radial expansion distance between rings
+                    gridSpace.x = localX * scale + (ring * triWidth * 1.5 * ringIntersection);
+
+                    // 3. Controls the alternating alignment offset between rosettes along the ring
+                    gridSpace.y = localY * scale + (branch * cellHeight) + (ring * cellHeight * (phaseOffset - 1.0));
+                } else {
                   gridSpace.x = localX + (branch * triWidth * ringIntersection) + (ring * triWidth * phaseOffset);
                   gridSpace.y = localY + (branch * cellHeight * ringDistanceMultiplier) - (ring * cellHeight * (phaseOffset * 0.5 - 1.0));
+                  }
                 }
               }
 

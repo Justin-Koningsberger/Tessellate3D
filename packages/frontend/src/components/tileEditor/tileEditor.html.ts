@@ -27,7 +27,7 @@ export const tileEditorTemplate = `
           <select id="editorLatticeSelectCompact" class="sidebar-setting-dropdown">
             <option value="hexagonal">Hexagonal (p3 Framework)</option>
             <option value="square">Square (p1 Framework)</option>
-            <option value="triangular">Triangular (Glide reflection) Framework</option>
+            <option value="triangular">Triangular (p3c3 Rosette) Framework</option>
           </select>
         </div>
 
@@ -89,7 +89,7 @@ export const tileEditorTemplate = `
                 <select id="editorLatticeSelect" class="sidebar-setting-dropdown">
                   <option value="hexagonal">Hexagonal (p3 Framework)</option>
                   <option value="square">Square (p1 Framework)</option>
-                  <option value="triangular">Triangular (Glide reflection) Framework</option>
+                  <option value="triangular">Triangular (p3c3 Rosette) Framework</option>
                 </select>
               </div>
             </div>

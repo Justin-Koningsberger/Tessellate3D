@@ -44,8 +44,8 @@ function evaluateVariantExtended(
   decay: number,
   twist: number
 ): FuzzResult {
-  // Alternating pass between square and triangular structures independently
-  const testLattice: 'square' | 'triangular' = Math.random() > 0.5 ? 'triangular' : 'square';
+  const lattices: ('square' | 'triangular' | 'hexagonal')[] = ['square', 'triangular', 'hexagonal'];
+  const testLattice = lattices[Math.floor(Math.random() * lattices.length)]!;
 
   // 1. CHOOSE A RANDOM TESTING ANCHOR LAYER WITHIN ACTIVE BOUNDS
   // Pick an arbitrary ring depth and branch track to stress test the internal quadrants
@@ -61,7 +61,7 @@ function evaluateVariantExtended(
     variantMode: name,
     baseMotif: "chevron",
     latticeType: testLattice,
-    symmetryGroup: 'p1',
+    symmetryGroup: testLattice === 'square' ? 'p1' : 'p3',
     motifScaleFactor: 1.0,
     useAutoAlignment: true,
     showDebugLabels: false,
@@ -101,8 +101,6 @@ function evaluateVariantExtended(
         break;
 
       case "single-pole":
-        // FIXED: Inject the dynamic ring and branch indices into wallpaper symmetry simulation blocks.
-        // This ensures Point A (Ring + 1) matches face-to-face with Point B (Ring) on the active branch lane.
         const gridA_sp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing, randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_sp;
@@ -119,7 +117,6 @@ function evaluateVariantExtended(
         break;
 
       case "multi-pole":
-        // FIXED: Subject the multi-pole trigonometric matrix to non-orthogonal quadrant boundaries
         const gridA_mp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_mp = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_mp;

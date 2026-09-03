@@ -27,7 +27,7 @@ export const tileEditorTemplate = `
           <select id="editorLatticeSelectCompact" class="sidebar-setting-dropdown">
             <option value="hexagonal">Hexagonal (p3 Framework)</option>
             <option value="square">Square (p1 Framework)</option>
-            <option value="triangular">Triangular (p3c3 Rosette) Framework</option>
+            <option value="triangular">Triangular (p6 Framework)</option>
           </select>
         </div>
 
@@ -36,9 +36,9 @@ export const tileEditorTemplate = `
         </div>
 
         <div class="compact-footer-row">
-          <button type="button" id="btnSaveCompact" class="btn-editor-action btn-action-save">Apply Motif</button>
+          <button type="button" id="btnSaveCompact" class="btn-editor-action btn-action-save">Apply Tile</button>
           <button type="button" id="btnCancelCompact" class="btn-editor-action btn-action-cancel">Cancel</button>
-          <button type="button" id="btnResetCompact" class="btn-editor-action btn-action-reset">Reset Base Motif</button>
+          <button type="button" id="btnResetCompact" class="btn-editor-action btn-action-reset">Reset Base Tile</button>
         </div>
       </div>
 
@@ -94,9 +94,9 @@ export const tileEditorTemplate = `
               </div>
             </div>
             <div class="maximized-footer-row">
-              <button type="button" id="btnSaveMax" class="btn-editor-action btn-action-save">Apply Motif</button>
+              <button type="button" id="btnSaveMax" class="btn-editor-action btn-action-save">Apply Tile</button>
               <button type="button" id="btnCancelMax" class="btn-editor-action btn-action-cancel">Cancel</button>
-              <button type="button" id="btnResetMax" class="btn-editor-action btn-action-reset">Reset base Motif</button>
+              <button type="button" id="btnResetMax" class="btn-editor-action btn-action-reset">Reset base Tile</button>
             </div>
         </div>
       </div>

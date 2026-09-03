@@ -233,7 +233,7 @@
     display: flex !important;
   }
   .sidebar-setting-group {
-    margin-bottom: 28px !important; /* Pushes the Apply Motif action button down away from the dropdown */
+    margin-bottom: 28px !important;
   }
 
   .maximized-title, .compact-title {

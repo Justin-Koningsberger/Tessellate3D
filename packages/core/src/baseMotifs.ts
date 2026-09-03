@@ -31,7 +31,7 @@ export function normalizeWorkspaceTile(components: Point2D[][], state: ModularEd
 
 export interface MotifContext {
   cellHeight: number;
-  symmetryGroup: 'p1' | 'p3';
+  symmetryGroup: 'p1' | 'p3' | 'p6';
   latticeType: 'triangular' | 'hexagonal' | 'square';
 }
 

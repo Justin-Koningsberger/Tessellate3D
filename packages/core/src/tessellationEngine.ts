@@ -21,7 +21,7 @@ export interface EngineConfig {
   variantMode: "logarithmic" | "single-pole" | "multi-pole" | "loxodromic" | "none";
   baseMotif: "square" | "triangle" | "hexagon" | "chevron" | "sinewave" | "squarewave" | "detailedSquare" | "detailedTriangle" | "detailedHexagon" | "hexPuzzle" | "customTileCompiler" | "lizard" | "kochSnowflake" | "cat" | "letters";
   latticeType: 'square' | 'triangular' | 'hexagonal';
-  symmetryGroup: 'p1' | 'p3';
+  symmetryGroup: 'p1' | 'p3' | 'p6';
   motifScaleFactor: number;
   useAutoAlignment: boolean;
   showDebugLabels: boolean;

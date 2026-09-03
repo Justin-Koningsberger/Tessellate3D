@@ -211,8 +211,9 @@
 .key-hint-cyan { color: #00d2ff; font-weight: bold; }
 .key-hint-coral { color: #ff7675; font-weight: bold; }
 
-/* Mobile Portrait Viewport Adaptations */
-@media (max-width: 768px) {
+/* TODO: separate layout and feature visibilty*/
+/* Touchscreen Device (Mobile/Tablet) Adaptations */
+@media (pointer: coarse) {
   .view-maximized-grid {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;

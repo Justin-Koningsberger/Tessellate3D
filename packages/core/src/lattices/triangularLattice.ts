@@ -55,7 +55,7 @@ export class TriangularLattice implements LatticeStrategy {
       const phaseOffset = ctx.sliders.phaseOffset;
 
       if (ctx.variantMode !== 'none') {
-        // Controls te scale of triangles or rosettes
+        // Controls the scale of triangles or rosettes
         const scale = ringDistanceMultiplier;
 
         // Controls the distance between rings

@@ -206,12 +206,6 @@ export function generateTessellation(config: EngineConfig): string {
   let ringDistanceMultiplier = config.layout.ringDistanceMultiplier ?? 1.0;
   let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
 
-  if (config.latticeType === 'square' && config.useAutoAlignment) {
-    ringIntersection = cellHeight;
-    ringDistanceMultiplier = 1.0;
-    phaseOffset = 1.5;
-  }
-
   if (config.latticeType === 'hexagonal' && config.useAutoAlignment) {
     if (config.symmetryGroup === "p1") {
       ringIntersection = 2.10 / totalBranches;
@@ -344,7 +338,7 @@ export function generateTessellation(config: EngineConfig): string {
                   triWidth: (Math.sqrt(3) / 2) * cellHeight,
                   shearSlope,
                   variantMode: config.variantMode ?? 'none',
-                  useAutoAlignment: !!config.useAutoAlignment,
+                  useAutoAlignment: config.useAutoAlignment,
                   sliders: {
                     intersection: ringIntersection,
                     distanceMultiplier: ringDistanceMultiplier,
@@ -353,11 +347,6 @@ export function generateTessellation(config: EngineConfig): string {
                 };
                 gridSpace = strategy.finalizeGridSpace(gridSpace, shearedPoint, orientation, ctx);
               } else {
-                if (config.latticeType === 'square') {
-                  gridSpace.x = (gridSpace.x - (-ring * 1.0)) + (-ring * ringIntersection);
-                  gridSpace.y = (gridSpace.y - (branch * cellHeight)) + (branch * cellHeight * ringDistanceMultiplier);
-                  gridSpace.y += ring * cellHeight * (phaseOffset - 1.5);
-                }
                 if (config.latticeType === 'hexagonal') {
                   const absoluteRingTranslationX = -ring * 1.0;
                   gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);

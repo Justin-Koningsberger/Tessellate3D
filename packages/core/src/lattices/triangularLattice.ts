@@ -26,10 +26,6 @@ export class TriangularLattice implements LatticeStrategy {
   }
 
   finalizeGridSpace(gridSpace: Point2D, shearedPoint: Point2D, orientation: string, ctx: LatticeContext): Point2D {
-    if (!ctx.useAutoAlignment) {
-      return gridSpace;
-    }
-
     const triWidth = ctx.triWidth;
 
     // Reverse the shear transform to isolate the exact local track positions
@@ -39,19 +35,39 @@ export class TriangularLattice implements LatticeStrategy {
     let gridX = 0;
     let gridY = 0;
 
-    if (ctx.variantMode === 'none') {
+    if (ctx.useAutoAlignment) {
       const autoIntersection = 1.0;
       const autoGap = 1.5;
       const autoPhase = 2.0;
 
-      gridX = localX + (ctx.branch * triWidth * autoIntersection) + (ctx.ring * triWidth * autoPhase);
-      gridY = localY + (ctx.branch * ctx.cellHeight * autoGap) - (ctx.ring * ctx.cellHeight * (autoPhase * 0.5 - 1.0));
-    } else {
-      const scale = 1 /3;
-      gridX = localX * scale + (ctx.ring * triWidth * 1.5 * 0.22);
-      gridY = localY * scale + (ctx.branch * ctx.cellHeight) + (ctx.ring * ctx.cellHeight * (0.50 - 1.0));
+      if (ctx.variantMode === 'none') {
+        gridX = localX + (ctx.branch * triWidth * autoIntersection) + (ctx.ring * triWidth * autoPhase);
+        gridY = localY + (ctx.branch * ctx.cellHeight * autoGap) - (ctx.ring * ctx.cellHeight * (autoPhase * 0.5 - 1.0));
+      } else {
+        const scale = 1/3;
+        gridX = localX * scale + (ctx.ring * triWidth * 1.5 * 0.22);
+        gridY = localY * scale + (ctx.branch * ctx.cellHeight) + (ctx.ring * ctx.cellHeight * (0.50 - 1.0));
+      }
     }
+    else {
+      const ringIntersection = ctx.sliders.intersection;
+      const ringDistanceMultiplier = ctx.sliders.distanceMultiplier;
+      const phaseOffset = ctx.sliders.phaseOffset;
 
+      if (ctx.variantMode !== 'none') {
+        // Controls te scale of triangles or rosettes
+        const scale = ringDistanceMultiplier;
+
+        // Controls the distance between rings
+        gridX = localX * scale + (ctx.ring * triWidth * 1.5 * ringIntersection);
+
+        // Controls the alignment offset between rings
+        gridY = localY * scale + (ctx.branch * ctx.cellHeight) + (ctx.ring * ctx.cellHeight * (phaseOffset - 1.0));
+      } else {
+        gridX = localX + (ctx.branch * triWidth * ringIntersection) + (ctx.ring * triWidth * phaseOffset);
+        gridY = localY + (ctx.branch * ctx.cellHeight * ringDistanceMultiplier) - (ctx.ring * ctx.cellHeight * (phaseOffset * 0.5 - 1.0));
+      }
+    }
 
     return { x: gridX, y: gridY };
   }

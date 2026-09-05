@@ -208,36 +208,28 @@ export function generateTessellation(config: EngineConfig): string {
         const orientations = strategy.getOrientations();
 
         orientations.forEach((orientation) => {
-          const transformedPoints = componentPoints.map(p => {
-            let gridSpace: Point2D;
-            let localX = p.x;
-            let localY = p.y;
+          const warpedPoints = componentPoints.map(p => {
+            // 1. Orient the motif variant according to local tile symmetry requirements
+            const orientedPoint = strategy.transformLocal({ x: p.x, y: p.y }, orientation, cellHeight);
 
-            // 1. Calculate internal structural rotations or node inversions per orientation
-            const transformed = strategy.transformLocal({ x: localX, y: localY }, orientation, cellHeight);
-            localX = transformed.x;
-            localY = transformed.y;
-
-            // 2. Compute the uniform continuous shear slope profile
+            // 2. Project the oriented coordinates onto the uniform continuous helical shear track
             const shearedPoint: Point2D = {
-              x: localX + (localY / cellHeight) * shearSlope,
-              y: localY
+              x: orientedPoint.x + (orientedPoint.y / cellHeight) * shearSlope,
+              y: orientedPoint.y
             };
 
-            // 3. Apply baseline wallpaper symmetry translations
-            gridSpace = applyWallpaperSymmetry(
-              p,
+            // 3. Clone and replicate point positions structurally matching the wallpaper group constraints
+            const symmetryMappedPoint = applyWallpaperSymmetry(
+              orientedPoint,
               -ring,
               branch,
+              cellHeight,
               totalBranches,
-              shearSlope,
               symmetryGroup,
-              latticeType,
-              ringDistanceMultiplier,
-              phaseOffset,
-              ringIntersection
+              latticeType
             );
 
+            // Pack runtime execution variables to execute layout spacing computations
             const ctx: LatticeContext = {
               branch,
               ring,
@@ -254,10 +246,10 @@ export function generateTessellation(config: EngineConfig): string {
               }
             };
 
-            // 4. Inject structural slider tracking modifiers or view-dependent auto-alignment constraints
-            gridSpace = strategy.finalizeGridSpace(gridSpace, shearedPoint, orientation, ctx);
+            // 4. Translate, scale, and adjust the finalized grid spaces inside the chosen strategy module
+            const gridSpace = strategy.finalizeGridSpace(symmetryMappedPoint, shearedPoint, orientation, ctx);
 
-            // --- Unified Conformal Warp Processing ---
+            // 5. Warp flat coordinates into non-Euclidean spaces using conformal mappings
             let finalPoint: Point2D;
             switch (config.variantMode) {
               case "none": return gridSpace;
@@ -271,32 +263,33 @@ export function generateTessellation(config: EngineConfig): string {
             return finalPoint;
           });
 
-          const segmentStr = generateSvgPath(transformedPoints, compIndex);
+          // Compile coordinates into a valid SVG path definition string
+          const pathData = generateSvgPath(warpedPoints, compIndex);
 
           rawPathObjects.push({
-            d: segmentStr,
+            d: pathData,
             compIndex: compIndex,
             color: currentFill,
             ring: ring,
             branch: branch
           });
 
-          // Generate text labels for each shape
-          if (compIndex === 0 && transformedPoints.length > 0) {
-            let labelX = 0;
-            let labelY = 0;
-            const vertexCount = transformedPoints.length - 1;
+          // Process canvas tracking labels if debug visualization overlays are enabled
+          if (compIndex === 0 && warpedPoints.length > 0) {
+            let centroidX = 0;
+            let centroidY = 0;
+            const vertexCount = warpedPoints.length - 1;
 
             for (let i = 0; i < vertexCount; i++) {
-              labelX += transformedPoints[i]!.x;
-              labelY += transformedPoints[i]!.y;
+              centroidX += warpedPoints[i]!.x;
+              centroidY += warpedPoints[i]!.y;
             }
-            labelX /= vertexCount;
-            labelY /= vertexCount;
+            centroidX /= vertexCount;
+            centroidY /= vertexCount;
 
-            // Save the raw text element using local tile space coordinates
+            // Save text tags targeting the calculated visual centroids of the elements
             debugTextElements.push(
-              `<text x="${labelX.toFixed(2)}" y="${labelY.toFixed(2)}">R${ring} B${branch}</text>`
+              `<text x="${centroidX.toFixed(2)}" y="${centroidY.toFixed(2)}">R${ring} B${branch}</text>`
             );
           }
         });

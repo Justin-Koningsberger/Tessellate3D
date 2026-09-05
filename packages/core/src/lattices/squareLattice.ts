@@ -16,14 +16,16 @@ export class SquareLattice implements LatticeStrategy {
   }
 
   finalizeGridSpace(gridSpace: Point2D, shearedPoint: Point2D, orientation: string, ctx: LatticeContext): Point2D {
-    let gridX = gridSpace.x;
-    let gridY = gridSpace.y;
+    // Compute local translation grid coordinates
+    const tileWidth = 1.0;
+    const continuousHelicalOffset = ctx.branch * (tileWidth / ctx.totalBranches) * ctx.shearSlope;
+    let gridX = shearedPoint.x + continuousHelicalOffset;
+    let gridY = shearedPoint.y + (ctx.branch * ctx.cellHeight);
 
     if (ctx.useAutoAlignment) {
-      const autoIntersection = ctx.cellHeight;
-
-      gridX = gridX + ctx.ring - (ctx.ring * autoIntersection);
-      gridY = gridSpace.y;
+      // Tie the X axis progression step dynamically to the cylindrical sector profile height
+      gridX = gridX + ctx.ring * ctx.cellHeight;
+      // gridY remains unscaled and aligned in auto mode
     } 
     else {
       const ringIntersection = ctx.sliders.intersection;
@@ -32,13 +34,13 @@ export class SquareLattice implements LatticeStrategy {
 
       if (ctx.variantMode === 'none') {
         gridX = gridX + ctx.ring - (ctx.ring * ringIntersection);
-        gridY = (gridY - (ctx.branch * ctx.cellHeight)) + (ctx.branch * ctx.cellHeight * ringDistanceMultiplier);
+        gridY = shearedPoint.y + (ctx.branch * ctx.cellHeight * ringDistanceMultiplier);
         gridY += ctx.ring * ctx.cellHeight * (phaseOffset - 1.5);
       } else {
         gridX = gridX + ctx.ring - (ctx.ring * ringIntersection);
 
         // 1. Calculate the raw localized offset component of this shape *within* its branch track
-        const localComponentOffset = gridSpace.y - (ctx.branch * ctx.cellHeight);
+        const localComponentOffset = shearedPoint.y;
 
         // 2. Compute the evenly distributed macro base anchor for the branch around the full circle
         const macroBranchAnchor = ctx.branch * ctx.cellHeight;

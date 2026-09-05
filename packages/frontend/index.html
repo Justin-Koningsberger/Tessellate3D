@@ -186,10 +186,10 @@
         <label for="variantMode">Transform Variant Mode</label>
         <div class="input-row-with-icon">
           <select id="variantMode" aria-describedby="variant-help-text">
-            <option value="none" selected>None</option>
+            <option value="none">None</option>
             <option value="logarithmic">Logarithmic Spiral</option>
             <option value="loxodromic">Loxodromic Twist</option>
-            <option value="single-pole">Single-Pole Decay</option>
+            <option value="single-pole" selected>Single-Pole Decay</option>
             <option value="multi-pole">Multi-Pole Hyperbolic</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Changes the layout style (no transform, spinning into a spiral or twisting around one or two core/s).">ⓘ</span>
@@ -227,8 +227,8 @@
         <div class="input-row-with-icon">
           <select id="latticeType" aria-describedby="lattice-help-text">
             <option value="square">Square</option>
-            <option value="triangular">Triangular</option>
-            <option value="hexagonal" selected>Hexagonal</option>
+            <option value="triangular" selected>Triangular</option>
+            <option value="hexagonal">Hexagonal</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Switches layout packing configurations between square, triangular, and hexagonal grids.">ⓘ</span>
         </div>
@@ -240,8 +240,8 @@
         <div class="input-row-with-icon">
           <select id="symmetryGroup" aria-describedby="symmetry-help-text">
             <option value="p1">p1 (Linear Translation)</option>
-            <option value="p3" selected>p3 (3-Fold Rotations  )</option>
-            <option value="p6">p6 (6-Fold Rotations)</option>
+            <option value="p3">p3 (3-Fold Rotations  )</option>
+            <option value="p6" selected>p6 (6-Fold Rotations)</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Determines how the tile is replicated across space, either by sliding it in straight lines or rotating it around its corners.">ⓘ</span>
         </div>

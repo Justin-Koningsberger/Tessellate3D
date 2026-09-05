@@ -2,7 +2,10 @@ import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
-import { rotateAroundPivot } from './tileSymmetry.ts'
+import { rotateAroundPivot } from '@tessellate3d/frontend/src/tileSymmetry.ts'
+import { LatticeFactory } from './lattices/latticeFactory.ts';
+import { LatticeContext } from './lattices/types.ts';
+import { applyWallpaperSymmetry } from './wallpaperSymmetry.ts'
 
 export interface Point2D {
   x: number;
@@ -87,6 +90,7 @@ export function subdividePath(
     const dyWarped = warpedNext.y - warpedCurrent.y;
     const physicalDistanceMm = Math.hypot(dxWarped, dyWarped) * physicalScaleFactor;
 
+    // TODO: Do some testing at different extremes with isInitialTemplatePass false
     // 3. FDM Feature Culling Filter
     // Automatically skip decorative sub-features (compIndex > 0) that compress below 0.2mm
     if (compIndex > 0 && !isInitialTemplatePass && physicalDistanceMm < minThresholdMm) {
@@ -152,34 +156,26 @@ function getSmoothComponents(
 }
 
 /**
- * Wallpaper Symmetry Engine (With Helical Spiral Shift Support).
- * Supports standard translation configurations (p1) and 3-fold rotations (p3).
- */
-export function applyWallpaperSymmetry(
-  point: Point2D,
-  ring: number,
-  branch: number,
-  totalBranches: number,
-  shearSlope: number,
-): Point2D {
-  const tileWidth = 1.0;
-  const tileHeight = (Math.PI * 2) / totalBranches;
-  const continuousHelicalOffset = branch * (tileWidth / totalBranches) * shearSlope;
-  const translationX = (ring * tileWidth) + continuousHelicalOffset;
-  const translationY = branch * tileHeight;
-
-  return {
-    x: point.x + translationX,
-    y: point.y + translationY
-  };
-}
-
-/**
  * Master Generator Function
  */
 export function generateTessellation(config: EngineConfig): string {
   const totalBranches = config.layout.totalBranches;
+  const globalScale = config.layout.globalScale;
+  const twistFactor = config.layout.twistFactor;
+  const decayMultiplier = config.layout.decayMultiplier;
+  const phaseOffset = config.layout.latticePhaseOffset;
+  const ringDistanceMultiplier = config.layout.ringDistanceMultiplier;
+  const ringIntersection = config.layout.ringIntersectionFactor;
+  const continuousStagger = config.layout.staggerFactor;
+  const baseLimit = config.layout.subdivisionLimit;
+  const symmetryGroup = config.symmetryGroup;
+  const latticeType = config.latticeType;
+
+  const shearSlope = (1.0 / totalBranches) * continuousStagger;
   const cellHeight = (Math.PI * 2) / totalBranches;
+  const r = cellHeight / 2;
+  const h = r * (Math.sqrt(3) / 2);
+  const localCenter = { x: 0, y: r };
 
   const activeColors: string[] = [];
   for (let i = 0; i < totalBranches; i++) {
@@ -188,66 +184,20 @@ export function generateTessellation(config: EngineConfig): string {
 
   const rawMotifData = baseMotifs[config.baseMotif]?.({
     cellHeight: cellHeight,
-    symmetryGroup: config.symmetryGroup ?? 'p1',
-    latticeType: config.latticeType
+    symmetryGroup: symmetryGroup,
+    latticeType: latticeType
   }) || [];
 
   const motifComponents = Array.isArray(rawMotifData[0])
     ? (rawMotifData as Point2D[][])
     : [rawMotifData as Point2D[]];
 
-  const globalScale = config.layout.globalScale ?? 100;
-  const twistFactor = config.layout.twistFactor ?? 0.45;
-  const decayMultiplier = config.layout.decayMultiplier ?? 0.35;
-
-  let phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
-  let ringDistanceMultiplier = config.layout.ringDistanceMultiplier ?? 1.0;
-  let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
-
-  if (config.latticeType === 'square' && config.useAutoAlignment) {
-    ringIntersection = cellHeight;
-    ringDistanceMultiplier = 1.0;
-    phaseOffset = 1.5;
-  }
-
-  if (config.latticeType === 'hexagonal' && config.useAutoAlignment) {
-    if (config.symmetryGroup === "p1") {
-      ringIntersection = 2.10 / totalBranches;
-      ringDistanceMultiplier = 1.298;
-      phaseOffset = 1.50;
-    } else if (config.symmetryGroup === "p3") {
-      ringIntersection = 1.0 + (2.10 / totalBranches);
-      ringDistanceMultiplier = 1.30;
-      // With 6 branches, 1.50 is rotated CCW, 2.50 is rotated CW, 3.50 is more random looking
-      phaseOffset = 3.50;
-    }
-  };
-
-  // Dynamically increase vertex density to seal micro-gaps caused by non-linear distortion
-  const baseLimit = config.layout.subdivisionLimit ?? 5.0;
-  const adjustedConfig: EngineConfig = {
-    ...config,
-    layout: {
-      ...config.layout,
-      subdivisionLimit: config.variantMode === "multi-pole"
-        ? baseLimit * Math.max(0.20, decayMultiplier * 0.65)
-        : config.variantMode === "single-pole"
-        ? baseLimit * Math.max(0.25, decayMultiplier * 0.85)
-        : baseLimit
-    }
-  };
-
-  const smoothComponents = getSmoothComponents(motifComponents, adjustedConfig, globalScale, decayMultiplier, twistFactor);
-
-  const continuousStagger = config.layout.staggerFactor ?? 0.0;
-  const shearSlope = (1.0 / totalBranches) * continuousStagger;
-
-  const r = cellHeight / 2;
-  const h = r * (Math.sqrt(3) / 2);
-  const localCenter = { x: 0, y: r };
+  const smoothComponents = getSmoothComponents(motifComponents, config, globalScale, decayMultiplier, twistFactor);
 
   const rawPathObjects: PathObject[] = [];
   const debugTextElements: string[] = [];
+
+  const strategy = LatticeFactory.getStrategy(latticeType, symmetryGroup);
 
   for (let ring = 0; ring < config.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
@@ -255,182 +205,91 @@ export function generateTessellation(config: EngineConfig): string {
       const currentFill = activeColors[colorIndex] || "#000000";
 
       smoothComponents.forEach((componentPoints, compIndex) => {
-        // Triangles in p6m3 require 6 rotational copies around the v2 corner
-        const orientations = config.latticeType === 'triangular'
-          ? ['0', '-60', '-120', '-180', '-240', '-300']
-          : ['standard'];
+        const orientations = strategy.getOrientations();
 
         orientations.forEach((orientation) => {
-          const transformedPoints = componentPoints.map(p => {
-            let gridSpace: Point2D;
+          const warpedPoints = componentPoints.map(p => {
+            // 1. Orient the motif variant according to local tile symmetry requirements
+            const orientedPoint = strategy.transformLocal({ x: p.x, y: p.y }, orientation, cellHeight);
 
-            // Check for p3 hexagonal mode first
-            if (config.symmetryGroup === 'p3' && config.latticeType === 'hexagonal') {
-              // 1. Calculate continuous rotational wave progression
-              const baseAngle = (360 - (120 * ring)) % 360;
-              const rotationAngle = branch % 2 === 1 ? (baseAngle + 120) % 360 : baseAngle;
+            // 2. Project the oriented coordinates onto the uniform continuous helical shear track
+            const shearedPoint: Point2D = {
+              x: orientedPoint.x + (orientedPoint.y / cellHeight) * shearSlope,
+              y: orientedPoint.y
+            };
 
-              const rotated = rotateAroundPivot(p, localCenter, rotationAngle);
+            // 3. Clone and replicate point positions structurally matching the wallpaper group constraints
+            const symmetryMappedPoint = applyWallpaperSymmetry(
+              orientedPoint,
+              -ring,
+              branch,
+              cellHeight,
+              totalBranches,
+              symmetryGroup,
+              latticeType
+            );
 
-              if (config.variantMode === 'none') {
-                let flatX = -ring * (2 * h);
-                const flatY = branch * (1.5 * r);
-                if (branch % 2 === 1) {
-                  flatX -= h;
-                }
-                gridSpace = { x: rotated.x + flatX, y: rotated.y + flatY };
-              } else {
-                // Automated Conformal Phase Alignment Rotation Formula
-                let base = 240 - (120 * ring);
-                if (branch % 2 === 1) {
-                  base -= 120;
-                }
-                const phaseAdjustment = ((base % 360) + 360) % 360;
-
-                // Re-calculate the local rotation combining the flat p3 rule with the active phase adjustment
-                const conformalAngle = (rotationAngle + phaseAdjustment) % 360;
-                const conformalRotated = rotateAroundPivot(p, localCenter, conformalAngle);
-
-                const tileScaleFactor = 1.0 / ringDistanceMultiplier;
-
-                let normalizedY = branch * cellHeight;
-                normalizedY += ring * (phaseOffset - 1.0) * cellHeight;
-
-                const normalizedX = (conformalRotated.x - localCenter.x) * tileScaleFactor;
-                const adjustedRotatedY = (conformalRotated.y - localCenter.y) * (Math.sqrt(3) / 2) * tileScaleFactor;
-
-                const shearedPoint: Point2D = {
-                  x: normalizedX + (normalizedY / cellHeight) * shearSlope,
-                  y: normalizedY + adjustedRotatedY
-                };
-
-                gridSpace = { ...shearedPoint };
-                const absoluteRingTranslationX = -ring * 1.0;
-                gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);
+            // Pack runtime execution variables to execute layout spacing computations
+            const ctx: LatticeContext = {
+              branch,
+              ring,
+              totalBranches,
+              cellHeight,
+              triWidth: (Math.sqrt(3) / 2) * cellHeight,
+              shearSlope,
+              variantMode: config.variantMode ?? 'none',
+              useAutoAlignment: config.useAutoAlignment,
+              sliders: {
+                intersection: ringIntersection,
+                distanceMultiplier: ringDistanceMultiplier,
+                phaseOffset: phaseOffset
               }
-            } else {
-              // --- Fallback Pipeline for All Other Base Engine Modes ---
-              let localX = p.x;
-              let localY = p.y;
+            };
 
-              if (config.latticeType === 'triangular') {
-                // 1. Convert the orientation string back to a numeric degree angle
-                const angleDegrees = parseInt(orientation, 10);
+            // 4. Translate, scale, and adjust the finalized grid spaces inside the chosen strategy module
+            const gridSpace = strategy.finalizeGridSpace(symmetryMappedPoint, shearedPoint, orientation, ctx);
 
-                // 2. Rotate the path directly around the true geometric vertex position v2
-                const trueV2 = { x: (Math.sqrt(3) / 2) * cellHeight, y: cellHeight * 0.5 };
-                const rotated = rotateAroundPivot({ x: localX, y: localY }, trueV2, angleDegrees);
-                localX = rotated.x;
-                localY = rotated.y;
-              }
-
-              if (config.latticeType === 'hexagonal') {
-                localY *= Math.sqrt(3) / 2;
-                const tileScaleFactor = 1.0 / ringDistanceMultiplier;
-                localX *= tileScaleFactor;
-                localY *= tileScaleFactor;
-                localY += ring * (phaseOffset - 1.0) * cellHeight;
-              }
-
-              const shearedPoint: Point2D = {
-                x: localX + (localY / cellHeight) * shearSlope,
-                y: localY
-              };
-
-              gridSpace = applyWallpaperSymmetry(shearedPoint, -ring, branch, totalBranches, shearSlope);
-
-              if (config.latticeType === 'square') {
-                gridSpace.x = (gridSpace.x - (-ring * 1.0)) + (-ring * ringIntersection);
-                gridSpace.y = (gridSpace.y - (branch * cellHeight)) + (branch * cellHeight * ringDistanceMultiplier);
-                gridSpace.y += ring * cellHeight * (phaseOffset - 1.5);
-              }
-
-              if (config.latticeType === 'triangular') {
-                const absoluteRingTranslationX = -ring * 1.0;
-                const triWidth = (Math.sqrt(3) / 2) * cellHeight;
-
-                // 1. Absolute geometric offsets to drop ring layers into the honeycomb side pockets
-                const perfectRingX = -ring * triWidth * 1.5;
-                const perfectRingY = ring * cellHeight * 0.5;
-
-                // 2. Map coordinates cleanly when Auto-Align is active
-                if (config.useAutoAlignment) {
-                  const autoIntersection = 1.0;
-                  const autoGap = 1.5;
-                  const autoPhase = 2.0;
-
-                  if (config.variantMode !== 'none') {
-                    const scale = 0.3333; // Intra-Ring Gap
-                    gridSpace.x = localX * scale + (ring * triWidth * 1.5 * 0.22);
-                    gridSpace.y = localY * scale + (branch * cellHeight) + (ring * cellHeight * (0.50 - 1.0));
-
-                  } else {
-                    gridSpace.x = localX + (branch * triWidth * autoIntersection) + (ring * triWidth * autoPhase);
-                    gridSpace.y = localY + (branch * cellHeight * autoGap) - (ring * cellHeight * (autoPhase * 0.5 - 1.0));
-                  }
-                } else {
-                  if (config.variantMode !== 'none') {
-                    // 1. Controls the internal scale sizing of individual rosettes
-                    const scale = ringDistanceMultiplier;
-
-                    // 2. Controls the radial expansion distance between rings
-                    gridSpace.x = localX * scale + (ring * triWidth * 1.5 * ringIntersection);
-
-                    // 3. Controls the alternating alignment offset between rosettes along the ring
-                    gridSpace.y = localY * scale + (branch * cellHeight) + (ring * cellHeight * (phaseOffset - 1.0));
-                } else {
-                  gridSpace.x = localX + (branch * triWidth * ringIntersection) + (ring * triWidth * phaseOffset);
-                  gridSpace.y = localY + (branch * cellHeight * ringDistanceMultiplier) - (ring * cellHeight * (phaseOffset * 0.5 - 1.0));
-                  }
-                }
-              }
-
-              if (config.latticeType === 'hexagonal') {
-                const absoluteRingTranslationX = -ring * 1.0;
-                gridSpace.x = gridSpace.x - absoluteRingTranslationX + (absoluteRingTranslationX * ringIntersection);
-              }
-            }
-
-            // --- Unified Conformal Warp Processing ---
+            // 5. Warp flat coordinates into non-Euclidean spaces using conformal mappings
             let finalPoint: Point2D;
             switch (config.variantMode) {
               case "none": return gridSpace;
-              case "logarithmic": finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale); break;
-              case "single-pole": finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier); break;
-              case "multi-pole": finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier); break;
+              case "logarithmic": finalPoint = forward.logarithmic(gridSpace, globalScale); break;
+              case "single-pole": finalPoint = forward.singlePole(gridSpace, globalScale, decayMultiplier); break;
+              case "multi-pole": finalPoint = forward.multiPole(gridSpace, globalScale, decayMultiplier); break;
               case "loxodromic":
-              default: finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.twistFactor, config.layout.decayMultiplier); break;
+              default: finalPoint = forward.loxodromic(gridSpace, globalScale, twistFactor, decayMultiplier); break;
             }
 
             return finalPoint;
           });
 
-          const segmentStr = generateSvgPath(transformedPoints, compIndex);
+          // Compile coordinates into a valid SVG path definition string
+          const pathData = generateSvgPath(warpedPoints, compIndex);
 
           rawPathObjects.push({
-            d: segmentStr,
+            d: pathData,
             compIndex: compIndex,
             color: currentFill,
             ring: ring,
             branch: branch
           });
 
-          // Generate text labels for each shape
-          if (compIndex === 0 && transformedPoints.length > 0) {
-            let labelX = 0;
-            let labelY = 0;
-            const vertexCount = transformedPoints.length - 1;
+          // Process canvas tracking labels if debug visualization overlays are enabled
+          if (compIndex === 0 && warpedPoints.length > 0) {
+            let centroidX = 0;
+            let centroidY = 0;
+            const vertexCount = warpedPoints.length - 1;
 
             for (let i = 0; i < vertexCount; i++) {
-              labelX += transformedPoints[i]!.x;
-              labelY += transformedPoints[i]!.y;
+              centroidX += warpedPoints[i]!.x;
+              centroidY += warpedPoints[i]!.y;
             }
-            labelX /= vertexCount;
-            labelY /= vertexCount;
+            centroidX /= vertexCount;
+            centroidY /= vertexCount;
 
-            // Save the raw text element using local tile space coordinates
+            // Save text tags targeting the calculated visual centroids of the elements
             debugTextElements.push(
-              `<text x="${labelX.toFixed(2)}" y="${labelY.toFixed(2)}">R${ring} B${branch}</text>`
+              `<text x="${centroidX.toFixed(2)}" y="${centroidY.toFixed(2)}">R${ring} B${branch}</text>`
             );
           }
         });

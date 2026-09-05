@@ -5,7 +5,7 @@ import {
   type HexagonalEditorState,
   type SquareEditorState,
   type TriangularEditorState
-} from '@tessellate3d/core/src/tileSymmetry.ts';
+} from '../tileSymmetry.ts';
 import type { CanvasProjection } from '../utils/canvasProjection.ts';
 
 export type LatticeType = EngineConfig['latticeType'];

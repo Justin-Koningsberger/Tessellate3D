@@ -4,7 +4,7 @@ import {
   liveEditorState,
   compileSymmetricTile,
   type ModularEditorState
-} from './tileSymmetry.ts';
+} from '@tessellate3d/frontend/src/tileSymmetry.ts';
 
 /**
  * Universally normalizes custom shape workspace paths relative to their true structural origin.

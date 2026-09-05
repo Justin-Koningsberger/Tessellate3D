@@ -1,8 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { compileSymmetricTile, rotateAroundPivot } from '../tileSymmetry.ts';
-
-import type { ModularEditorState } from '../tileSymmetry.ts';
+import { compileSymmetricTile, rotateAroundPivot, type ModularEditorState } from '@tessellate3d/frontend/src/tileSymmetry.ts';
 import type { Point2D } from '../tessellationEngine.ts';
 
 // Helper function to handle floating point tolerance assertions

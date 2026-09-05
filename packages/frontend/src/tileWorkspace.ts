@@ -1,7 +1,7 @@
 import {
   updateLiveEditorState,
   type ModularEditorState
-} from '@tessellate3d/core/src/tileSymmetry.ts';
+} from './tileSymmetry.ts';
 import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 import { CanvasProjection } from './utils/canvasProjection.ts';
 import { LATTICE_REGISTRY, type LatticeType } from './utils/latticeRegistry.ts';

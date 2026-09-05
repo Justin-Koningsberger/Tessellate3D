@@ -1,5 +1,5 @@
 import { LatticeStrategy, Point2D, LatticeContext } from './types.ts';
-import { rotateAroundPivot } from '../tileSymmetry.ts';
+import { rotateAroundPivot } from '@tessellate3d/frontend/src/tileSymmetry.ts';
 
 export class TriangularLattice implements LatticeStrategy {
   private symmetryGroup: string;

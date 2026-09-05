@@ -1,4 +1,4 @@
-import type { Point2D } from './tessellationEngine.ts';
+import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 
 export interface BaseEditorState {
   v1: Point2D; // Base origin node anchor common across shapes

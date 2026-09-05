@@ -9,7 +9,7 @@ import { generateTessellation, type Point2D } from '@tessellate3d/core/src/tesse
 import {
   liveEditorState,
   updateLiveEditorState
-} from '@tessellate3d/core/src/tileSymmetry.ts';
+} from './tileSymmetry.ts';
 
 import type { EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 

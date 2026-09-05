@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
-import { rotateAroundPivot } from './tileSymmetry.ts'
+import { rotateAroundPivot } from '@tessellate3d/frontend/src/tileSymmetry.ts'
 import { LatticeFactory } from './lattices/latticeFactory.ts';
 import { LatticeContext } from './lattices/types.ts';
 import { applyWallpaperSymmetry } from './wallpaperSymmetry.ts'
@@ -90,6 +90,7 @@ export function subdividePath(
     const dyWarped = warpedNext.y - warpedCurrent.y;
     const physicalDistanceMm = Math.hypot(dxWarped, dyWarped) * physicalScaleFactor;
 
+    // TODO: Do some testing at different extremes with isInitialTemplatePass false
     // 3. FDM Feature Culling Filter
     // Automatically skip decorative sub-features (compIndex > 0) that compress below 0.2mm
     if (compIndex > 0 && !isInitialTemplatePass && physicalDistanceMm < minThresholdMm) {
@@ -159,7 +160,22 @@ function getSmoothComponents(
  */
 export function generateTessellation(config: EngineConfig): string {
   const totalBranches = config.layout.totalBranches;
+  const globalScale = config.layout.globalScale;
+  const twistFactor = config.layout.twistFactor;
+  const decayMultiplier = config.layout.decayMultiplier;
+  const phaseOffset = config.layout.latticePhaseOffset;
+  const ringDistanceMultiplier = config.layout.ringDistanceMultiplier;
+  const ringIntersection = config.layout.ringIntersectionFactor;
+  const continuousStagger = config.layout.staggerFactor;
+  const baseLimit = config.layout.subdivisionLimit;
+  const symmetryGroup = config.symmetryGroup;
+  const latticeType = config.latticeType;
+
+  const shearSlope = (1.0 / totalBranches) * continuousStagger;
   const cellHeight = (Math.PI * 2) / totalBranches;
+  const r = cellHeight / 2;
+  const h = r * (Math.sqrt(3) / 2);
+  const localCenter = { x: 0, y: r };
 
   const activeColors: string[] = [];
   for (let i = 0; i < totalBranches; i++) {
@@ -168,49 +184,20 @@ export function generateTessellation(config: EngineConfig): string {
 
   const rawMotifData = baseMotifs[config.baseMotif]?.({
     cellHeight: cellHeight,
-    symmetryGroup: config.symmetryGroup ?? 'p1',
-    latticeType: config.latticeType
+    symmetryGroup: symmetryGroup,
+    latticeType: latticeType
   }) || [];
 
   const motifComponents = Array.isArray(rawMotifData[0])
     ? (rawMotifData as Point2D[][])
     : [rawMotifData as Point2D[]];
 
-  const globalScale = config.layout.globalScale ?? 100;
-  const twistFactor = config.layout.twistFactor ?? 0.45;
-  const decayMultiplier = config.layout.decayMultiplier ?? 0.35;
-
-  let phaseOffset = config.layout.latticePhaseOffset ?? 1.0;
-  let ringDistanceMultiplier = config.layout.ringDistanceMultiplier ?? 1.0;
-  let ringIntersection = config.layout.ringIntersectionFactor ?? 1.0;
-
-  // Dynamically increase vertex density to seal micro-gaps caused by non-linear distortion
-  const baseLimit = config.layout.subdivisionLimit ?? 5.0;
-  const adjustedConfig: EngineConfig = {
-    ...config,
-    layout: {
-      ...config.layout,
-      subdivisionLimit: config.variantMode === "multi-pole"
-        ? baseLimit * Math.max(0.20, decayMultiplier * 0.65)
-        : config.variantMode === "single-pole"
-        ? baseLimit * Math.max(0.25, decayMultiplier * 0.85)
-        : baseLimit
-    }
-  };
-
-  const smoothComponents = getSmoothComponents(motifComponents, adjustedConfig, globalScale, decayMultiplier, twistFactor);
-
-  const continuousStagger = config.layout.staggerFactor ?? 0.0;
-  const shearSlope = (1.0 / totalBranches) * continuousStagger;
-
-  const r = cellHeight / 2;
-  const h = r * (Math.sqrt(3) / 2);
-  const localCenter = { x: 0, y: r };
+  const smoothComponents = getSmoothComponents(motifComponents, config, globalScale, decayMultiplier, twistFactor);
 
   const rawPathObjects: PathObject[] = [];
   const debugTextElements: string[] = [];
 
-  const strategy = LatticeFactory.getStrategy(config.latticeType, config.symmetryGroup);
+  const strategy = LatticeFactory.getStrategy(latticeType, symmetryGroup);
 
   for (let ring = 0; ring < config.layout.maxRings; ring++) {
     for (let branch = 0; branch < totalBranches; branch++) {
@@ -244,8 +231,8 @@ export function generateTessellation(config: EngineConfig): string {
               branch,
               totalBranches,
               shearSlope,
-              config.symmetryGroup,
-              config.latticeType,
+              symmetryGroup,
+              latticeType,
               ringDistanceMultiplier,
               phaseOffset,
               ringIntersection
@@ -274,11 +261,11 @@ export function generateTessellation(config: EngineConfig): string {
             let finalPoint: Point2D;
             switch (config.variantMode) {
               case "none": return gridSpace;
-              case "logarithmic": finalPoint = forward.logarithmic(gridSpace, config.layout.globalScale); break;
-              case "single-pole": finalPoint = forward.singlePole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier); break;
-              case "multi-pole": finalPoint = forward.multiPole(gridSpace, config.layout.globalScale, config.layout.decayMultiplier); break;
+              case "logarithmic": finalPoint = forward.logarithmic(gridSpace, globalScale); break;
+              case "single-pole": finalPoint = forward.singlePole(gridSpace, globalScale, decayMultiplier); break;
+              case "multi-pole": finalPoint = forward.multiPole(gridSpace, globalScale, decayMultiplier); break;
               case "loxodromic":
-              default: finalPoint = forward.loxodromic(gridSpace, config.layout.globalScale, config.layout.twistFactor, config.layout.decayMultiplier); break;
+              default: finalPoint = forward.loxodromic(gridSpace, globalScale, twistFactor, decayMultiplier); break;
             }
 
             return finalPoint;

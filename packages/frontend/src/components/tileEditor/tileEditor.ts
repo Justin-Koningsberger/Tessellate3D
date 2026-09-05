@@ -1,7 +1,7 @@
 import { CustomWorkspace, type MobileInteractionMode } from '../../tileWorkspace.ts';
 import { type LatticeType } from '../../utils/latticeRegistry.ts';
 import { tileEditorTemplate } from './tileEditor.html.ts';
-import type { ModularEditorState } from '@tessellate3d/core/src/tileSymmetry.ts';
+import type { ModularEditorState } from '../../tileSymmetry.ts';
 import './tileEditor.css';
 
 // Interface representing the global application context configuration state

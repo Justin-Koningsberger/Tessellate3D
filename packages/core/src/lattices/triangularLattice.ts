@@ -30,41 +30,33 @@ export class TriangularLattice implements LatticeStrategy {
     const localY = shearedPoint.y;
     const localX = shearedPoint.x - (localY / ctx.cellHeight) * ctx.shearSlope;
 
+    let intersection: number;
+    let multiplier: number;
+    let phase: number;
+    let isVariant = ctx.variantMode !== 'none';
+
+    if (ctx.useAutoAlignment) {
+      intersection = isVariant ? 0.2222 : 1.0;
+      multiplier = isVariant ? 1/3 : 1.5;
+      phase = isVariant ? 0.50 : 2.0;
+    } else {
+      intersection = ctx.sliders.intersection;
+      multiplier = ctx.sliders.distanceMultiplier;
+      phase = ctx.sliders.phaseOffset;
+    }
+
     let gridX = 0;
     let gridY = 0;
 
-    if (ctx.useAutoAlignment) {
-      const autoIntersection = 1.0;
-      const autoGap = 1.5;
-      const autoPhase = 2.0;
-
-      if (ctx.variantMode === 'none') {
-        gridX = localX + (ctx.branch * triWidth * autoIntersection) + (ctx.ring * triWidth * autoPhase);
-        gridY = localY + (ctx.branch * ctx.cellHeight * autoGap) - (ctx.ring * ctx.cellHeight * (autoPhase * 0.5 - 1.0));
-      } else {
-        const scale = 1/3;
-        gridX = localX * scale + (ctx.ring * triWidth * 1.5 * 0.22);
-        gridY = localY * scale + (ctx.branch * ctx.cellHeight) + (ctx.ring * ctx.cellHeight * (0.50 - 1.0));
-      }
-    }
-    else {
-      const ringIntersection = ctx.sliders.intersection;
-      const ringDistanceMultiplier = ctx.sliders.distanceMultiplier;
-      const phaseOffset = ctx.sliders.phaseOffset;
-
-      if (ctx.variantMode !== 'none') {
-        // Controls the scale of triangles or rosettes
-        const scale = ringDistanceMultiplier;
-
-        // Controls the distance between rings
-        gridX = localX * scale + (ctx.ring * triWidth * 1.5 * ringIntersection);
-
-        // Controls the alignment offset between rings
-        gridY = localY * scale + (ctx.branch * ctx.cellHeight) + (ctx.ring * ctx.cellHeight * (phaseOffset - 1.0));
-      } else {
-        gridX = localX + (ctx.branch * triWidth * ringIntersection) + (ctx.ring * triWidth * phaseOffset);
-        gridY = localY + (ctx.branch * ctx.cellHeight * ringDistanceMultiplier) - (ctx.ring * ctx.cellHeight * (phaseOffset * 0.5 - 1.0));
-      }
+    // Compute grid coordinates mapped directly by layout structures
+    if (isVariant) {
+      // Scales the rosettes down and spaces out the center tracks
+      gridX = localX * multiplier + (ctx.ring * triWidth * 1.5 * intersection);
+      gridY = localY * multiplier + (ctx.branch * ctx.cellHeight) + (ctx.ring * ctx.cellHeight * (phase - 1.0));
+    } else {
+      // Standard linear lattice spacing
+      gridX = localX + (ctx.branch * triWidth * intersection) + (ctx.ring * triWidth * phase);
+      gridY = localY + (ctx.branch * ctx.cellHeight * multiplier) - (ctx.ring * ctx.cellHeight * (phase * 0.5 - 1.0));
     }
 
     return { x: gridX, y: gridY };

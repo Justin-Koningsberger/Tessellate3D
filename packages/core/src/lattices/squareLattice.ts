@@ -20,13 +20,10 @@ export class SquareLattice implements LatticeStrategy {
     let gridY = gridSpace.y;
 
     if (ctx.useAutoAlignment) {
-      const autoIntersection = ctx.cellHeight; 
-      const autoMultiplier = 1.0;
-      const autoPhase = 1.5;
+      const autoIntersection = ctx.cellHeight;
 
-      gridX = (gridX - (-ctx.ring * 1.0)) + (-ctx.ring * autoIntersection);
-      gridY = (gridY - (ctx.branch * ctx.cellHeight)) + (ctx.branch * ctx.cellHeight * autoMultiplier);
-      gridY += ctx.ring * ctx.cellHeight * (autoPhase - 1.5);
+      gridX = gridX + ctx.ring - (ctx.ring * autoIntersection);
+      gridY = gridSpace.y;
     } 
     else {
       const ringIntersection = ctx.sliders.intersection;
@@ -34,11 +31,11 @@ export class SquareLattice implements LatticeStrategy {
       const phaseOffset = ctx.sliders.phaseOffset;
 
       if (ctx.variantMode === 'none') {
-        gridX = (gridX - (-ctx.ring * 1.0)) + (-ctx.ring * ringIntersection);
+        gridX = gridX + ctx.ring - (ctx.ring * ringIntersection);
         gridY = (gridY - (ctx.branch * ctx.cellHeight)) + (ctx.branch * ctx.cellHeight * ringDistanceMultiplier);
         gridY += ctx.ring * ctx.cellHeight * (phaseOffset - 1.5);
       } else {
-        gridX = (gridX - (-ctx.ring * 1.0)) + (-ctx.ring * ringIntersection);
+        gridX = gridX + ctx.ring - (ctx.ring * ringIntersection);
 
         // 1. Calculate the raw localized offset component of this shape *within* its branch track
         const localComponentOffset = gridSpace.y - (ctx.branch * ctx.cellHeight);

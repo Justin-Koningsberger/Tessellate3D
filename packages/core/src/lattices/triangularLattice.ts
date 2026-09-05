@@ -9,10 +9,8 @@ export class TriangularLattice implements LatticeStrategy {
   }
 
   getOrientations(): string[] {
-    if (this.symmetryGroup === 'p1' || this.symmetryGroup === 'p3' || this.symmetryGroup === 'p6') {
-      return ['0', '-60', '-120', '-180', '-240', '-300'];
-    }
-    return [];
+    // Both p3 and p6 must return all 6 structural orientation slices to assemble the complete rosette flower
+    return ['0', '-60', '-120', '-180', '-240', '-300'];
   }
 
   transformLocal(pt: Point2D, orientation: string, cellHeight: number): Point2D {

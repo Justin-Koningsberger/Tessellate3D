@@ -1,6 +1,6 @@
 import { strict as assert } from 'assert';
 import type { Point2D, EngineConfig } from '../tessellationEngine.ts';
-import { applyWallpaperSymmetry } from '../tessellationEngine.ts';
+import { applyWallpaperSymmetry } from '../wallpaperSymmetry.ts';
 import { forward } from '../transforms/forward.ts';
 import { inverseWarp } from '../transforms/inverse.ts';
 

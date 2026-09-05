@@ -5,6 +5,7 @@ import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.t
 import { rotateAroundPivot } from './tileSymmetry.ts'
 import { LatticeFactory } from './lattices/latticeFactory.ts';
 import { LatticeContext } from './lattices/types.ts';
+import { applyWallpaperSymmetry } from './wallpaperSymmetry.ts'
 
 export interface Point2D {
   x: number;
@@ -154,78 +155,6 @@ function getSmoothComponents(
 }
 
 /**
- * Agnostic Wallpaper Symmetry Engine.
- * Supports standard translation configurations (p1) and 3-fold rotations (p3) right now.
- */
-export function applyWallpaperSymmetry(
-  p: Point2D,
-  ring: number,
-  branch: number,
-  totalBranches: number,
-  shearSlope: number,
-  symmetryGroup: EngineConfig['symmetryGroup'] = 'p1',
-  latticeType: EngineConfig['latticeType'] = 'square',
-  ringDistanceMultiplier: number = 1.0,
-  phaseOffset: number = 1.0
-): Point2D {
-  const tileWidth = 1.0;
-  const tileHeight = (Math.PI * 2) / totalBranches;
-
-  switch (symmetryGroup) {
-    case 'p3': {
-      const r = tileHeight / 2;
-      const h = r * (Math.sqrt(3) / 2);
-      const localCenter = { x: 0, y: r };
-
-      const baseAngle = (360 - (120 * ring)) % 360;
-      const rotationAngle = branch % 2 === 1 ? (baseAngle + 120) % 360 : baseAngle;
-
-      const rotated = rotateAroundPivot(p, localCenter, rotationAngle);
-
-      let flatX = -ring * (2 * h);
-      const flatY = branch * (1.5 * r);
-      if (branch % 2 === 1) {
-        flatX -= h;
-      }
-
-      return { x: rotated.x + flatX, y: rotated.y + flatY };
-    }
-
-    case 'p6': {
-      return p;
-    }
-
-    case 'p1':
-    default: {
-      let localX = p.x;
-      let localY = p.y;
-
-      // Handle hexagonal compression and slider multipliers locally before shearing
-      if (latticeType === 'hexagonal') {
-        localY *= Math.sqrt(3) / 2;
-        const tileScaleFactor = 1.0 / ringDistanceMultiplier;
-        localX *= tileScaleFactor;
-        localY *= tileScaleFactor;
-        localY += ring * (phaseOffset - 1.0) * tileHeight;
-      }
-
-      // Compute standard shear transformation
-      const shearedX = localX + (localY / tileHeight) * shearSlope;
-      const shearedY = localY;
-
-      const continuousHelicalOffset = branch * (tileWidth / totalBranches) * shearSlope;
-      const translationX = (ring * tileWidth) + continuousHelicalOffset;
-      const translationY = branch * tileHeight;
-
-      return {
-        x: shearedX + translationX,
-        y: shearedY + translationY
-      };
-    }
-  }
-}
-
-/**
  * Master Generator Function
  */
 export function generateTessellation(config: EngineConfig): string {
@@ -318,7 +247,8 @@ export function generateTessellation(config: EngineConfig): string {
               config.symmetryGroup,
               config.latticeType,
               ringDistanceMultiplier,
-              phaseOffset
+              phaseOffset,
+              ringIntersection
             );
 
             const ctx: LatticeContext = {

@@ -20,10 +20,14 @@ export function normalizeWorkspaceTile(components: Point2D[][], state: ModularEd
 
   const scale = cellHeight / workspaceHeight;
 
-  return components.map(component => {
+  return components.map((component, compIdx) => {
     const total = component.length;
     return component.map((pt, idx) => {
-      if (idx === 0 || idx === total - 1) return { x: 0.0, y: 0.0 };
+      // ONLY flatten the first and last point if this is the main outer boundary loop (Index 0)
+      if (compIdx === 0 && (idx === 0 || idx === total - 1)) {
+        return { x: 0.0, y: 0.0 };
+      }
+      // Internal details keep their true raw coordinates scaled relative to the center
       return { x: (pt.x - originX) * scale, y: (pt.y - originY) * scale };
     });
   });
@@ -67,7 +71,17 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     // Used to add new base motifs
     // console.log("👉 Live editor state:", JSON.stringify(liveEditorState, null, 2));
 
+    // 1. Compile the master interlocking outer edge path loops matrix
     const rawTile = compileSymmetricTile(liveEditorState);
+
+    // 2. Push details path right behind the outline loop matrix
+    if ('activeDetailStroke' in liveEditorState) {
+      const liveStroke = liveEditorState.activeDetailStroke;
+      if (liveStroke && liveStroke.length > 1) {
+        rawTile.push(liveStroke);
+      }
+    }
+
     return normalizeWorkspaceTile(rawTile, liveEditorState, ctx.cellHeight);
   },
 
@@ -429,7 +443,9 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
         { x: -0.51590625, y: 0.51984375 },
         { x: -0.61190625, y: 0.23184375000000002 },
         { x: -0.79190625, y: 0.15984375 }
-      ]
+      ],
+
+      activeDetailStroke: []
     };
 
     const rawTile = compileSymmetricTile(lizardState);
@@ -480,7 +496,9 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
         { x: -0.52790625, y: 0.36600000000000005 },
         { x: -0.49790625000000005, y: 0.5700000000000001 },
         { x: -0.61790625, y: 0.657 }
-      ]
+      ],
+
+      activeDetailStroke: []
     };
 
     const rawTile = compileSymmetricTile(snowflakeState);
@@ -492,7 +510,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     const originalWorkspaceHeight = 2.0;
     const scaleFactor = targetHeight / originalWorkspaceHeight;
 
-    const puzzleState: ModularEditorState = {
+    const catState: ModularEditorState = {
       latticeType: 'square',
       v1: { x: 0.0, y: 0.0 },
       v4: { x: 0.0, y: targetHeight },
@@ -551,10 +569,11 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
         { x: 0.21409374999999994 * scaleFactor,   y: 1.432 * scaleFactor },
         { x: 0.27409374999999997 * scaleFactor,   y: 1.7439999999999998 * scaleFactor },
         { x: 0.19009374999999995 * scaleFactor,   y: 1.882 * scaleFactor }
-      ]
+      ],
+      activeDetailStroke: []
     };
 
-    return compileSymmetricTile(puzzleState);
+    return compileSymmetricTile(catState);
   },
 
   // Custom Typographic Interlocking Motif
@@ -563,7 +582,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     const originalWorkspaceHeight = 2.0;
     const scaleFactor = targetHeight / originalWorkspaceHeight;
 
-    const puzzleState: ModularEditorState = {
+    const lettersState: ModularEditorState = {
       latticeType: 'square',
       v1: { x: 0.0, y: 0.0 },
       v4: { x: 0.0, y: targetHeight },
@@ -624,9 +643,10 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
         { x: 0.38809374999999996 * scaleFactor,   y: 1.696 * scaleFactor },
         { x: 0.19609374999999996 * scaleFactor,   y: 1.7619999999999998 * scaleFactor },
         { x: 0.010093749999999943 * scaleFactor,  y: 1.7979999999999998 * scaleFactor }
-      ]
+      ],
+      activeDetailStroke: []
     };
 
-    return compileSymmetricTile(puzzleState);
+    return compileSymmetricTile(lettersState);
   }
 };

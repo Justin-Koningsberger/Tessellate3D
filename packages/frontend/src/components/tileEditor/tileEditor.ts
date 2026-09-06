@@ -51,6 +51,9 @@ export class tileEditorComponent {
       btnModeEdit: document.getElementById('btnModeEdit'),
       btnModeAdd: document.getElementById('btnModeAdd'),
       btnModeDelete: document.getElementById('btnModeDelete'),
+
+      chkDrawDetails: document.getElementById('chkDrawDetails'),
+      chkDrawDetailsCompact: document.getElementById('chkDrawDetailsCompact')
     };
   }
 
@@ -95,6 +98,25 @@ export class tileEditorComponent {
   }
 
   private bindActionInterceptors(): void {
+    const executeDrawingModeToggle = (e: Event) => {
+      if (!this.workspaceInstance) return;
+      const isChecked = (e.target as HTMLInputElement).checked;
+
+      // Call unified workspace mode router to switch cursors and freeze perimeters
+      const targetMode: MobileInteractionMode = isChecked ? 'drawDetails' : 'edit';
+      this.workspaceInstance.setInteractionMode(targetMode);
+
+      // Synchronize the checked indicators so switching views maintains visual state
+      const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
+      const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
+
+      if (checkCompact) checkCompact.checked = isChecked;
+      if (checkMax) checkMax.checked = isChecked;
+    };
+
+    this.els.chkDrawDetailsCompact?.addEventListener('change', executeDrawingModeToggle);
+    this.els.chkDrawDetails?.addEventListener('change', executeDrawingModeToggle);
+
     const executeSave = () => {
       if (this.els.modal) this.els.modal.style.display = 'none';
       this.ctx.currentConfig.baseMotif = 'customTileCompiler';
@@ -102,6 +124,17 @@ export class tileEditorComponent {
 
       if (this.ctx.baseMotifSelectElement) {
         this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
+      }
+
+      // Transmit live workspace stroke data directly to pipeline state memory
+      if (this.workspaceInstance) {
+        const activeState = this.ctx.getLiveEditorState();
+        const userStroke = this.workspaceInstance.getUserDetailStroke();
+
+        if (activeState && userStroke) {
+          // Assign the array to the active state pointer
+          (activeState as any).activeDetailStroke = [...userStroke];
+        }
       }
 
       const activeState = this.ctx.getLiveEditorState();
@@ -206,9 +239,19 @@ export class tileEditorComponent {
     if (!this.workspaceInstance) return;
     this.workspaceInstance.setInteractionMode(activeMode);
 
+    // Synchronize touchScreen toolbar button states
     ['btnModeEdit', 'btnModeAdd', 'btnModeDelete'].forEach(id => {
       const btn = this.els[id];
       if (btn) btn.classList.toggle('mode-active', id === `btnMode${activeMode.charAt(0).toUpperCase() + activeMode.slice(1)}`);
     });
+
+    // --- UNCHECK DRAWING MODE ON LATTICE SWAP ---
+    if (activeMode !== 'drawDetails') {
+      const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
+      const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
+
+      if (checkCompact) checkCompact.checked = false;
+      if (checkMax) checkMax.checked = false;
+    }
   }
 }

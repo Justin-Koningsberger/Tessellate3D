@@ -22,7 +22,8 @@ export interface LatticeDefinition {
   getCenterOffset: (cellHeight: number) => Point2D;
   getBaseEdges: (cellHeight: number) => { start: Point2D; end: Point2D }[];
   getInteractiveEdges: (state: any, cellHeight: number) => EdgeConfig[];
-  initializeDefaultState: (cellHeight: number) => ModularEditorState;
+  // TODO: Clean up the types once contracts are clearly established
+  initializeDefaultState: (cellHeight: number) => HexagonalEditorState | SquareEditorState | TriangularEditorState;
   renderTwins: (ctx: CanvasRenderingContext2D, state: any, projection: CanvasProjection, cellHeight: number) => void;
 }
 
@@ -196,8 +197,8 @@ export const LATTICE_REGISTRY: Record<LatticeType, LatticeDefinition> = {
       const v2s = (pt: Point2D) => projection.vectorToScreen(pt);
       const leftSpineMidpoint = { x: 0.0, y: cellHeight * 0.5 };
 
-      // Show index debug labels for each point along an edge
-      const showDebug = !import.meta.env.PROD;
+      // TODO: Extract debug capability and add it to the rest
+      const showDebug = import.meta.env.DEV;
 
       ctx.save();
       ctx.setLineDash([]);

@@ -21,6 +21,15 @@ export const tileEditorTemplate = `
           <button type="button" id="btnModeDelete" class="btn-mode-toggle">❌ Delete Handle</button>
         </div>
 
+        <!-- TODO: Move styles when new UI is stable -->
+        <!-- DRAWING MODE SWITCH OVERLAY (COMPACT) -->
+        <div class="compact-lattice-selector-group drawing-toggle-wrap">
+          <label class="sidebar-setting-label toggle-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
+            <input type="checkbox" id="chkDrawDetailsCompact" style="cursor: pointer; width: 16px; height: 16px;">
+            🎨 Draw Details Inside Tile Bounds
+          </label>
+        </div>
+
         <!-- MOBILE GRID SELECTION LINK -->
         <div class="compact-lattice-selector-group">
           <label for="editorLatticeSelectCompact" class="sidebar-setting-label">Active Lattice Grid System</label>
@@ -81,6 +90,14 @@ export const tileEditorTemplate = `
                 <button type="button" id="btnModeEdit" class="btn-mode-toggle mode-active">✨ Move Handle</button>
                 <button type="button" id="btnModeAdd" class="btn-mode-toggle">➕ Add Handle</button>
                 <button type="button" id="btnModeDelete" class="btn-mode-toggle">❌ Delete Handle</button>
+              </div>
+
+              <!-- DRAWING MODE SWITCH OVERLAY (MAXIMIZED) -->
+              <div class="sidebar-setting-group drawing-toggle-wrap">
+                <label class="sidebar-setting-label toggle-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 12px;">
+                  <input type="checkbox" id="chkDrawDetails" style="cursor: pointer; width: 16px; height: 16px;">
+                  🎨 Draw Details Inside Tile Bounds
+                </label>
               </div>
 
               <!-- LATTICE SELECTION SYSTEM MODULE -->

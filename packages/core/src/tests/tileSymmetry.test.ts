@@ -1,6 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { compileSymmetricTile, rotateAroundPivot, type ModularEditorState } from '@tessellate3d/frontend/src/tileSymmetry.ts';
+import {
+  compileSymmetricTile,
+  rotateAroundPivot,
+  type ModularEditorState,
+  type HexagonalEditorState } from '@tessellate3d/frontend/src/tileSymmetry.ts';
 import type { Point2D } from '../tessellationEngine.ts';
 
 // Helper function to handle floating point tolerance assertions
@@ -12,6 +16,7 @@ function assertCloseTo(actual: number, expected: number, precision: number = 4) 
   );
 }
 
+// TODO: move this file to the frontend package
 describe('Custom Symmetry Matrix Engine', () => {
   it('should accurately rotate 2D vector coordinates 120 degrees around a fixed vertex pivot', () => {
     const pivot: Point2D = { x: 0.0, y: 0.0 };
@@ -30,7 +35,8 @@ describe('Custom Symmetry Matrix Engine', () => {
     const h = r * (Math.sqrt(3) / 2);
 
     const mockState: ModularEditorState = {
-      latticeType: 'hexagonal', // FIX 1: Satisfy the strict type contract parameter
+      latticeType: 'hexagonal',
+      activeDetailStroke: [],
       v1: { x: 0.0, y: 0.0 },
       v2: { x: h,   y: r * 0.5 },
       v3: { x: h,   y: cellHeight - r * 0.5 },
@@ -61,15 +67,15 @@ describe('Custom Symmetry Matrix Engine', () => {
     assert.strictEqual(firstPoint.x, mockState.v1?.x);
     assert.strictEqual(firstPoint.y, mockState.v1?.y);
 
+    const hexState = mockState as HexagonalEditorState;
     const expectedPointsCount =
-      1 + (mockState.edgeA?.length || 0) +
-      1 + (mockState.edgeB?.length || 0) +
-      1 + (mockState.edgeB?.length || 0) + // rotatedB matches edgeB size
-      1 + (mockState.edgeC?.length || 0) +
-      1 + (mockState.edgeC?.length || 0) + // rotatedC matches edgeC size
-      1 + (mockState.edgeA?.length || 0) + // rotatedA matches edgeA size
+      1 + hexState.edgeA.length +
+      1 + hexState.edgeB.length +
+      1 + hexState.edgeB.length + // rotatedB matches edgeB size
+      1 + hexState.edgeC.length +
+      1 + hexState.edgeC.length + // rotatedC matches edgeC size
+      1 + hexState.edgeA.length + // rotatedA matches edgeA size
       1;
-
     assert.strictEqual(perimeterPath.length, expectedPointsCount);
   });
 });

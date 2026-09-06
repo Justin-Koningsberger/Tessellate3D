@@ -30,10 +30,17 @@ export interface TriangularEditorState extends BaseEditorState {
 }
 
 /**
- * Universal Discriminated Union representing the state contract.
- * Checking state.latticeType automatically unpacks the exact required properties.
+ * Pure base geometry state union representing the raw structural layouts.
  */
-export type ModularEditorState = HexagonalEditorState | SquareEditorState | TriangularEditorState;
+export type RawTileState = HexagonalEditorState | SquareEditorState | TriangularEditorState;
+
+/**
+ * Universal Discriminated Union intersected with active drawing layers.
+ * Enforces that any live editor session contains the detail stroke array.
+ */
+export type ModularEditorState = RawTileState & {
+  activeDetailStroke: Point2D[];
+};
 
 // Global active tracking state pointers
 export let liveEditorState: ModularEditorState | null = null;
@@ -91,7 +98,6 @@ function compileTriangularTile(state: TriangularEditorState): Point2D[] {
   const path: Point2D[] = [];
   const cellHeight = state.v4.y;
   const leftSpineMidpoint = { x: 0.0, y: cellHeight * 0.5 };
-  const triWidth = (Math.sqrt(3) / 2) * cellHeight;
 
   // 1. TOP ANGLED EDGE: Trace edgeSpine from v1 to v2
   path.push({ x: state.v1.x, y: state.v1.y });

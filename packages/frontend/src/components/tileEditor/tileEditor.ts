@@ -53,13 +53,16 @@ export class tileEditorComponent {
       btnModeDelete: document.getElementById('btnModeDelete'),
 
       chkDrawDetails: document.getElementById('chkDrawDetails'),
-      chkDrawDetailsCompact: document.getElementById('chkDrawDetailsCompact')
+      chkDrawDetailsCompact: document.getElementById('chkDrawDetailsCompact'),
+      chkDrawDetailsTouch: document.getElementById('chkDrawDetailsTouch'),
+      drawingStatusBanner: document.getElementById('drawingStatusBanner')
     };
   }
 
   public open(): void {
     this.isMaximized = false;
     this.els.modalContainer?.classList.remove('maximized-mode-active');
+    this.els.modalContainer?.classList.remove('drawing-session-active');
 
     if (this.els.modal) {
       this.els.modal.style.display = 'flex';
@@ -85,8 +88,16 @@ export class tileEditorComponent {
       this.workspaceInstance.onMobileModeReset = (autoMode) => this.updateMobileModeButtons(autoMode);
     } else {
       this.workspaceInstance.resizeWorkspace(500, 500);
+      // Enforce cold opens back to deform perimeter & edit mode
+      this.workspaceInstance.setInteractionMode('edit');
       this.workspaceInstance.render();
     }
+
+    // Force HTML input check states back to unselected false on cold open boot
+    const sliders = [this.els.chkDrawDetailsCompact, this.els.chkDrawDetailsTouch, this.els.chkDrawDetails];
+    sliders.forEach(slider => { if (slider) (slider as HTMLInputElement).checked = false; });
+    if (this.els.drawingStatusBanner) this.els.drawingStatusBanner.style.display = 'none';
+    this.updateMobileModeButtons('edit');
 
     // Synchronize responsive layout dropdown selectors
     if (this.workspaceInstance) {
@@ -106,15 +117,11 @@ export class tileEditorComponent {
       const targetMode: MobileInteractionMode = isChecked ? 'drawDetails' : 'edit';
       this.workspaceInstance.setInteractionMode(targetMode);
 
-      // Synchronize the checked indicators so switching views maintains visual state
-      const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
-      const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
-
-      if (checkCompact) checkCompact.checked = isChecked;
-      if (checkMax) checkMax.checked = isChecked;
+      this.updateMobileModeButtons(targetMode);
     };
 
     this.els.chkDrawDetailsCompact?.addEventListener('change', executeDrawingModeToggle);
+    this.els.chkDrawDetailsTouch?.addEventListener('change', executeDrawingModeToggle);
     this.els.chkDrawDetails?.addEventListener('change', executeDrawingModeToggle);
 
     const executeSave = () => {
@@ -158,7 +165,7 @@ export class tileEditorComponent {
 
     const executeReset = () => {
       if (!this.workspaceInstance) return;
-      if (window.confirm('Are you sure you want to reset the geometry? This will completely clear all your custom points.')) {
+      if (window.confirm('Are you sure you want to reset the geometry? This will clear all your custom points and drawings.')) {
         this.workspaceInstance.resetToDefaultLattice(2.0);
         this.ctx.updateEnginePipeline(); // Sync master canvas immediately
       }
@@ -191,6 +198,13 @@ export class tileEditorComponent {
 
       const selectors = [this.els.editorLatticeSelect, this.els.editorLatticeSelectCompact];
       selectors.forEach(select => { if (select) (select as HTMLSelectElement).value = targetType; });
+
+      // Sync drawing switch indicators to false since swap defaults back to edit mode
+      const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
+      const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
+      if (checkCompact) checkCompact.checked = false;
+      if (checkMax) checkMax.checked = false;
+
       this.ctx.updateEnginePipeline();
     };
 
@@ -242,16 +256,35 @@ export class tileEditorComponent {
     // Synchronize touchScreen toolbar button states
     ['btnModeEdit', 'btnModeAdd', 'btnModeDelete'].forEach(id => {
       const btn = this.els[id];
-      if (btn) btn.classList.toggle('mode-active', id === `btnMode${activeMode.charAt(0).toUpperCase() + activeMode.slice(1)}`);
+      if (btn) {
+        // If drawing mode is active, make sure all buttons are unselected
+        const targetIdSuffix = activeMode === 'drawDetails' ? 'None' : activeMode.charAt(0).toUpperCase() + activeMode.slice(1);
+
+        btn.classList.toggle('mode-active', id === `btnMode${targetIdSuffix}`);
+      }
     });
 
-    // --- UNCHECK DRAWING MODE ON LATTICE SWAP ---
-    if (activeMode !== 'drawDetails') {
-      const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
-      const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
+    // --- MANAGE DRAWING MODE SLIDER SYNC ON MODE MUTATION ---
+    const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
+    const checkTouch = this.els.chkDrawDetailsTouch as HTMLInputElement | null;
+    const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
 
+    if (activeMode === 'drawDetails') {
+      if (checkCompact) checkCompact.checked = true;
+      if (checkTouch) checkTouch.checked = true;
+      if (checkMax) checkMax.checked = true;
+
+      // Morph UI Layout: Toggle background classes and shift status header components active
+      this.els.modalContainer?.classList.add('drawing-session-active');
+      if (this.els.drawingStatusBanner) this.els.drawingStatusBanner.style.display = 'block';
+    } else {
       if (checkCompact) checkCompact.checked = false;
+      if (checkTouch) checkTouch.checked = false;
       if (checkMax) checkMax.checked = false;
+
+      // Restore Layout: Clean structural state adjustments back to base deform options
+      this.els.modalContainer?.classList.remove('drawing-session-active');
+      if (this.els.drawingStatusBanner) this.els.drawingStatusBanner.style.display = 'none';
     }
   }
 }

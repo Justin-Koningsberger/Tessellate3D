@@ -74,11 +74,11 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     // 1. Compile the master interlocking outer edge path loops matrix
     const rawTile = compileSymmetricTile(liveEditorState);
 
-    // 2. Push details path right behind the outline loop matrix
+    // 2. Push all the detail paths right behind the outline loop matrix
     if ('activeDetailStroke' in liveEditorState) {
-      const liveStroke = liveEditorState.activeDetailStroke;
-      if (liveStroke && liveStroke.length > 1) {
-        rawTile.push(liveStroke);
+      const liveStrokes = liveEditorState.activeDetailStroke as Point2D[][];
+      if (liveStrokes && liveStrokes.length > 0) {
+        rawTile.push(...liveStrokes);
       }
     }
 

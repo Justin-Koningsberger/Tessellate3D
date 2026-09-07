@@ -27,7 +27,7 @@ export class CustomWorkspace {
   private cellHeight: number;
 
   // Session tracking arrays for drawing custom details
-  private userDetailStroke: Point2D[] = [];
+  private userDetailStroke: Point2D[][] = [];
   private cachedOutline: Point2D[] = [];
 
   constructor(canvas: HTMLCanvasElement, cellHeight: number = 2.0) {
@@ -86,7 +86,6 @@ export class CustomWorkspace {
       console.warn('⚠️ [Storage] Could not write custom motif definition to localStorage:', err);
     }
   }
-
 
   private initializeActiveLattice(cellHeight: number): void {
     try {
@@ -189,7 +188,16 @@ export class CustomWorkspace {
 
       // Only add the vertex if it lands strictly inside the deformed tile boundary shape
       if (this.isPointInPolygon(mouseVector, this.cachedOutline)) {
-        this.userDetailStroke.push(mouseVector);
+
+        // Safety check to ensure an active lane exists
+        if (this.userDetailStroke.length === 0) {
+          this.userDetailStroke.push([]);
+        }
+
+        // Push directly into the active trailing sub-array segment
+        const activeIdx = this.userDetailStroke.length - 1;
+        this.userDetailStroke[activeIdx]!.push(mouseVector);
+
         this.persistAndSyncState();
         this.render();
       }
@@ -261,7 +269,6 @@ export class CustomWorkspace {
       }
     }
   }
-
 
   private handlePointerMove(e: PointerEvent): void {
     if (this.activeDragEdge === null || this.activeDragIndex === null) return;
@@ -377,26 +384,35 @@ export class CustomWorkspace {
       this.ctx.strokeStyle = '#f1c40f'; // Gold/yellow stroke
       this.ctx.setLineDash([]);
 
-      this.ctx.beginPath();
-      const startScreen = this.projection.vectorToScreen(this.userDetailStroke[0]!);
-      this.ctx.moveTo(startScreen.x, startScreen.y);
+      // Map over every individual sub-path matrix lane cleanly
+      this.userDetailStroke.forEach((stroke: Point2D[]) => {
+        if (!stroke || stroke.length === 0 || !stroke[0]) return;
 
-      for (let i = 1; i < this.userDetailStroke.length; i++) {
-        const ptScreen = this.projection.vectorToScreen(this.userDetailStroke[i]!);
-        this.ctx.lineTo(ptScreen.x, ptScreen.y);
-      }
-      this.ctx.stroke();
-
-      // Draw small vertex markers over clicked spots for visual feedback
-      this.userDetailStroke.forEach((node: Point2D) => {
-        const nodeScreen = this.projection.vectorToScreen(node);
         this.ctx.beginPath();
-        this.ctx.arc(nodeScreen.x, nodeScreen.y, 3.5, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#f1c40f';
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#ffffff';
-        this.ctx.lineWidth = 1.0;
+        const startScreen = this.projection.vectorToScreen(stroke[0]);
+        this.ctx.moveTo(startScreen.x, startScreen.y);
+
+        for (let i = 1; i < stroke.length; i++) {
+          const currentPt = stroke[i];
+          if (!currentPt) continue;
+
+          const ptScreen = this.projection.vectorToScreen(currentPt);
+          this.ctx.lineTo(ptScreen.x, ptScreen.y);
+        }
         this.ctx.stroke();
+
+        // Draw small vertex markers over clicked spots for visual feedback
+        stroke.forEach((node: Point2D) => {
+          if (!node) return;
+          const nodeScreen = this.projection.vectorToScreen(node);
+          this.ctx.beginPath();
+          this.ctx.arc(nodeScreen.x, nodeScreen.y, 3.5, 0, Math.PI * 2);
+          this.ctx.fillStyle = '#f1c40f';
+          this.ctx.fill();
+          this.ctx.strokeStyle = '#ffffff';
+          this.ctx.lineWidth = 1.0;
+          this.ctx.stroke();
+        });
       });
 
       this.ctx.restore();
@@ -534,36 +550,54 @@ export class CustomWorkspace {
   }
 
   public setInteractionMode(mode: MobileInteractionMode): void {
+    const wasDrawing = this.mobileMode === 'drawDetails';
     this.mobileMode = mode;
 
-    if (mode === 'add') {
-      this.canvas.style.cursor = 'copy';
-      this.cachedOutline = []; // Clear outline cache
-    } else if (mode === 'delete') {
-      this.canvas.style.cursor = 'no-drop';
-      this.cachedOutline = []; // Clear outline cache
-    } else if (mode === 'drawDetails') {
+    console.log(`🔄 Mode shifting to: "${mode}" (Was drawing: ${wasDrawing})`);
+
+    if (mode === 'drawDetails') {
       this.canvas.style.cursor = 'crosshair';
 
-      // Compile and freeze the active outer tile loop geometry once right here
       const compiled = compileSymmetricTile(this.state);
       if (compiled && compiled.length > 0) {
         this.cachedOutline = compiled[0] || [];
       } else {
         this.cachedOutline = [];
       }
-    } else {
-      this.canvas.style.cursor = 'default';
-      this.cachedOutline = []; // Clear outline cache
-    }
 
+      console.log(`📐 Cached drawing boundary initialized with ${this.cachedOutline.length} points.`);
+
+      // Push a fresh, empty path array bucket to split the sequence
+      if (this.userDetailStroke.length > 0) {
+        const lastPath = this.userDetailStroke[this.userDetailStroke.length - 1];
+        if (lastPath && lastPath.length > 0) {
+          this.userDetailStroke.push([]);
+          console.log(`➕ Existing strokes found. Appended a brand new stroke bucket. Total strokes: ${this.userDetailStroke.length}`);
+        }
+      } else {
+        this.userDetailStroke.push([]);
+        console.log('➕ First drawing stroke bucket initialized.');
+      }
+    } else {
+      this.canvas.style.cursor = mode === 'add' ? 'copy' : mode === 'delete' ? 'no-drop' : 'default';
+      this.cachedOutline = [];
+
+      const beforeFilterCount = this.userDetailStroke.length;
+      // Clean up any trailing empty paths if the user toggled away without adding vertices
+      this.userDetailStroke = this.userDetailStroke.filter(stroke => stroke.length > 0);
+      console.log(`🧼 Exiting draw mode. Purged empty stroke blocks. Count: ${beforeFilterCount} -> ${this.userDetailStroke.length}`);
+
+      if (wasDrawing) {
+        this.persistAndSyncState();
+      }
+    }
     this.render();
   }
 
   /**
    * Retrieves the raw, un-normalized internal user detail stroke paths.
    */
-  public getUserDetailStroke(): Point2D[] {
+  public getUserDetailStroke(): Point2D[][] {
     return this.userDetailStroke;
   }
 }

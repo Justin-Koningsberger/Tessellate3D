@@ -23,9 +23,19 @@
   text-align: center;
   max-width: 90vw;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease;
   display: flex;
   flex-direction: column;
+}
+
+/* Visual feedback when drawing mode is turned on */
+.drawing-session-active.custom-modal-container {
+  background: #15151c !important;
+}
+.drawing-session-active .editor-canvas-container,
+.drawing-session-active #mountCompact canvas {
+  outline: 2px solid #f1c40f !important;
+  box-shadow: 0 0 24px rgba(241, 196, 15, 0.2) !important;
 }
 
 /* Maximized Workspace Mode */
@@ -39,12 +49,34 @@
   overflow: hidden;
 }
 
+/* Visual feedback when drawing mode is turned on */
+.drawing-session-active .view-compact-block {
+  background: #15151c !important;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
 /* Layout Variation Toggle States */
 .view-compact-block {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
+}
+
+/* Hide UI elements when drawing */
+.drawing-session-active .compact-desc,
+.drawing-session-active .compact-shortcuts,
+.drawing-session-active .mobile-interaction-toolbar .btn-mode-toggle {
+  display: none !important;
+}
+
+.drawing-session-active .mobile-interaction-toolbar .btn-mode-toggle.mode-active {
+  background: #27272a !important;
+  color: #a1a1aa !important;
+  border-color: #3f3f46 !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
 }
 
 .view-maximized-grid {
@@ -89,8 +121,8 @@
 }
 
 /* Typography, Descriptions, and Control Header Stacks */
-.compact-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; width: 100%; }
-.compact-title { color: #fff; margin: 0; flex-grow: 1; text-align: center; padding-left: 70px; }
+.compact-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 16px; width: 100%; }
+.compact-title { color: #fff; margin: 0; font-size: 16px; font-weight: bold; flex-grow: 1; text-align: center; }
 .compact-desc { color: #aaa; font-size: 13px; margin-bottom: 15px; margin-top: 0; text-align: center; }
 .compact-shortcuts { color: #888; font-size: 12px; margin-bottom: 15px; margin-top: -10px; text-align: center; }
 
@@ -196,6 +228,75 @@
 
 .canvas-mount-zone { width: 100%; display: flex; justify-content: center; }
 
+/* Space Optimized Slider Controls */
+.canvas-overlay-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+
+.ui-toggle-slider {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.ui-toggle-slider input {
+  opacity: 0; width: 0; height: 0; position: absolute;
+}
+
+.slider-round {
+  position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #3f3f46;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slider-round::before {
+  position: absolute; content: ""; background-color: #ffffff; border-radius: 50%;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.compact-switch-overlay .ui-toggle-slider { width: 28px; height: 16px; }
+.compact-switch-overlay .slider-round { border-radius: 16px; }
+.compact-switch-overlay .slider-round::before { height: 12px; width: 12px; left: 2px; bottom: 2px; }
+.compact-switch-overlay input:checked + .slider-round::before { transform: translateX(12px); }
+
+.studio-switch-overlay .ui-toggle-slider { width: 34px; height: 20px; }
+.studio-switch-overlay .slider-round { border-radius: 20px; }
+.studio-switch-overlay .slider-round::before { height: 14px; width: 14px; left: 3px; bottom: 3px; }
+.studio-switch-overlay input:checked + .slider-round::before { transform: translateX(14px); }
+
+.ui-toggle-slider input:checked + .slider-round { background-color: #f1c40f; }
+
+/* Structural Sidebar Text State Swapping Rules */
+.draw-instructions-block {
+  display: none;
+}
+.deform-instructions-block {
+  display: block;
+}
+
+.drawing-session-active .draw-instructions-block {
+  display: block;
+}
+.drawing-session-active .deform-instructions-block {
+  display: none;
+}
+
+/* Clear layout structural visibility separation */
+.touch-only-row {
+  display: none !important;
+}
+.desktop-only-row {
+  display: flex !important;
+}
+
 /* Reusable Control Buttons */
 .compact-footer-row { margin-top: 15px; display: flex; gap: 10px; justify-content: center; width: 100%; }
 .maximized-footer-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
@@ -211,9 +312,17 @@
 .key-hint-cyan { color: #00d2ff; font-weight: bold; }
 .key-hint-coral { color: #ff7675; font-weight: bold; }
 
-/* TODO: separate layout and feature visibilty*/
 /* Touchscreen Device (Mobile/Tablet) Adaptations */
 @media (pointer: coarse) {
+  .desktop-only-row {
+    display: none !important;
+  }
+  .touch-only-row {
+    display: flex !important;
+  }
+  .drawing-session-active .mobile-interaction-toolbar button {
+    display: none !important;
+  }
   .view-maximized-grid {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr auto;
@@ -345,4 +454,38 @@
 .sidebar-setting-dropdown option {
   background: #222;
   color: #fff;
+}
+
+/* Custom slider capsule layout mechanics */
+.ui-toggle-slider .slider-round::before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .25s ease-in-out;
+  border-radius: 50%;
+}
+
+/* Specific sizing proportions for studio window toggle button */
+.studio-switch-overlay .ui-toggle-slider .slider-round::before {
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+}
+
+/* Transform button layout state when checked option is true */
+.ui-toggle-slider input:checked + .slider-round {
+  background-color: #f1c40f !important;
+}
+
+.ui-toggle-slider input:checked + .slider-round::before {
+  transform: translateX(14px);
+}
+
+.studio-switch-overlay .ui-toggle-slider input:checked + .slider-round::before {
+  transform: translateX(18px);
 }

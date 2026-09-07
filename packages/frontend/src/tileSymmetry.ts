@@ -39,7 +39,7 @@ export type RawTileState = HexagonalEditorState | SquareEditorState | Triangular
  * Enforces that any live editor session contains the detail stroke array.
  */
 export type ModularEditorState = RawTileState & {
-  activeDetailStroke: Point2D[];
+  activeDetailStroke: Point2D[][];
 };
 
 // Global active tracking state pointers

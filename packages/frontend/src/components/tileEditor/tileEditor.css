@@ -1,5 +1,5 @@
 /* ==========================================================================
- Custom Tile Editor Component Layout
+ 1. Custom Tile Editor Component Layout Base
  ========================================================================== */
 
 .custom-modal-backdrop {
@@ -23,9 +23,54 @@
   text-align: center;
   max-width: 90vw;
   box-sizing: border-box;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, border-color 0.2s ease;
   display: flex;
   flex-direction: column;
+}
+
+.layout-compact-active .view-compact-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.layout-compact-active .view-maximized-grid {
+  display: none !important;
+}
+
+.compact-mode-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.layout-maximized-active .view-compact-block {
+  display: none !important;
+}
+.layout-maximized-active .view-maximized-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 320px !important;
+  width: 100dvw !important;
+  height: 100dvh !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.mobile-interaction-toolbar {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 15px 0;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.mobile-deform-toolbar {
+  display: none;
+}
+
+.maximized-toolbar {
+  display: none;
 }
 
 /* Visual feedback when drawing mode is turned on */
@@ -49,14 +94,12 @@
   overflow: hidden;
 }
 
-/* Visual feedback when drawing mode is turned on */
 .drawing-session-active .view-compact-block {
   background: #15151c !important;
   border-radius: 6px;
   transition: background-color 0.2s ease;
 }
 
-/* Layout Variation Toggle States */
 .view-compact-block {
   display: flex;
   flex-direction: column;
@@ -64,24 +107,30 @@
   width: 100%;
 }
 
-/* Hide UI elements when drawing */
-.drawing-session-active .compact-desc,
-.drawing-session-active .compact-shortcuts,
-.drawing-session-active .mobile-interaction-toolbar .btn-mode-toggle {
-  display: none !important;
+/* Toggle drawing rows visibility based on drawing state */
+.touch-draw-row {
+  display: none;
+}
+.drawing-session-active .touch-draw-row {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  gap: 6px !important;
+  width: 100% !important;
+  margin: 0 0 15px 0 !important;
 }
 
-.drawing-session-active .mobile-interaction-toolbar .btn-mode-toggle.mode-active {
-  background: #27272a !important;
-  color: #a1a1aa !important;
-  border-color: #3f3f46 !important;
-  box-shadow: none !important;
-  font-weight: 500 !important;
+/* Hide compact details and the desktop handle-modes when sketching */
+.drawing-session-active .compact-desc,
+.drawing-session-active .compact-shortcuts,
+.drawing-session-active .maximized-toolbar,
+.drawing-session-active .touch-buttons-row {
+  display: none !important;
 }
 
 .view-maximized-grid {
   display: none;
-  grid-template-columns: 1fr 320px; /* Canvas Viewport Left, Settings Panel Right */
+  grid-template-columns: 1fr 320px;
   width: 100dvw;
   height: 100dvh;
   box-sizing: border-box;
@@ -120,7 +169,7 @@
   overflow: hidden;
 }
 
-/* Typography, Descriptions, and Control Header Stacks */
+/* Typography stacks */
 .compact-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 16px; width: 100%; }
 .compact-title { color: #fff; margin: 0; font-size: 16px; font-weight: bold; flex-grow: 1; text-align: center; }
 .compact-desc { color: #aaa; font-size: 13px; margin-bottom: 15px; margin-top: 0; text-align: center; }
@@ -131,7 +180,7 @@
 .maximized-desc { color: #94a3b8; font-size: 13px; margin: 8px 0 0 0; text-align: left; line-height: 1.5; }
 .maximized-shortcuts-line { color: #64748b; font-size: 12px; margin: 12px 0 0 0; text-align: left; line-height: 1.5; }
 
-/* Interactive Mounting & Action Mechanisms */
+/* View mode toggles and canvas mounts */
 .btn-maximize {
   background: #444; color: #fff; border: 1px solid #666;
   padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
@@ -139,13 +188,8 @@
 .btn-maximize:hover { background: #555; }
 
 .btn-restore-relative {
-  background: #2d2d3a;
-  color: #fff;
-  border: 1px solid #3f3f46;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
+  background: #2d2d3a; color: #fff; border: 1px solid #3f3f46;
+  padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;
   transition: background 0.2s;
 }
 .btn-restore-relative:hover { background: #3f3f46; }
@@ -159,17 +203,8 @@
   box-sizing: border-box;
 }
 
-.editor-viewport-top-bar {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
-
-.canvas-stretch-mount {
-  flex-grow: 1;
-  width: 100%;
-  min-height: 0;
- }
+.editor-viewport-top-bar { display: flex; justify-content: flex-end; width: 100%; }
+.canvas-stretch-mount { flex-grow: 1; width: 100%; min-height: 0; }
 
 .editor-canvas {
   background: #111;
@@ -178,13 +213,12 @@
   max-width: 100%;
   max-height: 100%;
   display: block;
-  touch-action: none; /* Block viewport browser swipes */
+  touch-action: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
 }
 
-/* Mobile Interaction Mode Bar Extensions */
 .compact-lattice-selector-group {
   display: block;
   width: 100%;
@@ -193,23 +227,42 @@
   box-sizing: border-box;
 }
 
-.mobile-interaction-toolbar {
-  display: none;
-  gap: 8px;
-  margin: 10px 0 15px 0;
+.mobile-interaction-toolbar .btn-mode-toggle {
+  flex: 1;
   justify-content: center;
-  width: 100%;
-  box-sizing: border-box;
+  text-align: center;
 }
 
+.btn-draw-new { border-color: rgba(0, 210, 255, 0.3) !important; color: #00d2ff !important; }
+.btn-draw-clear { background: rgba(220, 53, 69, 0.15) !important; border-color: rgba(220, 53, 69, 0.4) !important; color: #ff7675 !important; }
+
+.touch-pill-row {
+  display: flex;
+  justify-content: center;
+  width: fit-content;
+  margin: 0 0 14px 0;
+}
+
+.touch-buttons-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 15px 0;
+  width: 100%;
+}
+
+/* Button style setups */
 .btn-mode-toggle {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
   background: #27272a;
   color: #a1a1aa;
   border: 1px solid #3f3f46;
-  padding: 8px 14px;
   border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
   font-weight: 500;
   transition: all 0.15s ease;
   display: inline-flex;
@@ -228,7 +281,10 @@
 
 .canvas-mount-zone { width: 100%; display: flex; justify-content: center; }
 
-/* Space Optimized Slider Controls */
+/* ==========================================================================
+ 2. Custom Slider Capsules & Switch Layouts
+ ========================================================================== */
+
 .canvas-overlay-switch {
   display: inline-flex;
   align-items: center;
@@ -257,11 +313,6 @@
   transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.slider-round::before {
-  position: absolute; content: ""; background-color: #ffffff; border-radius: 50%;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
 .compact-switch-overlay .ui-toggle-slider { width: 28px; height: 16px; }
 .compact-switch-overlay .slider-round { border-radius: 16px; }
 .compact-switch-overlay .slider-round::before { height: 12px; width: 12px; left: 2px; bottom: 2px; }
@@ -272,9 +323,21 @@
 .studio-switch-overlay .slider-round::before { height: 14px; width: 14px; left: 3px; bottom: 3px; }
 .studio-switch-overlay input:checked + .slider-round::before { transform: translateX(14px); }
 
-.ui-toggle-slider input:checked + .slider-round { background-color: #f1c40f; }
+.ui-toggle-slider .slider-round::before {
+  position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+  background-color: white; transition: .25s ease-in-out; border-radius: 50%;
+}
 
-/* Structural Sidebar Text State Swapping Rules */
+.studio-switch-overlay .ui-toggle-slider .slider-round::before { height: 16px; width: 16px; left: 3px; bottom: 3px; }
+.ui-toggle-slider input:checked + .slider-round { background-color: #f1c40f !important; }
+.ui-toggle-slider input:checked + .slider-round::before { transform: translateX(14px); }
+.studio-switch-overlay input:checked + .slider-round::before { transform: translateX(18px); }
+
+
+/* ==========================================================================
+ 3. Instruction Panel State Switches
+ ========================================================================== */
+
 .draw-instructions-block {
   display: none;
 }
@@ -283,77 +346,81 @@
 }
 
 .drawing-session-active .draw-instructions-block {
-  display: block;
+  display: block !important;
 }
 .drawing-session-active .deform-instructions-block {
-  display: none;
-}
-
-/* Clear layout structural visibility separation */
-.touch-only-row {
   display: none !important;
 }
-.desktop-only-row {
-  display: flex !important;
+
+.drawing-status-banner {
+  display: none;
+  width: 100%;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #f1c40f;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  margin: 6px 0 10px 0;
+  box-sizing: border-box;
 }
 
-/* Reusable Control Buttons */
-.compact-footer-row { margin-top: 15px; display: flex; gap: 10px; justify-content: center; width: 100%; }
-.maximized-footer-row { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.drawing-session-active .drawing-status-banner {
+  display: block !important;
+}
 
-.btn-editor-action { color: #fff; border: none; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; text-align: center; width: 100%; box-sizing: border-box; }
+.desktop-only-row { display: flex !important; }
+
+/* ==========================================================================
+ 4. Control Action Button Sets & Layout Footer Rows
+ ========================================================================== */
+
+.compact-footer-row {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+
+.maximized-footer-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.btn-editor-action {
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 13px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .btn-action-save { background: #28a745; }
 .maximized-mode-active .btn-action-save { background: #10b981; }
+
 .btn-action-cancel { background: #e67e22; }
 .maximized-mode-active .btn-action-cancel { background: #e67e22; }
+
 .btn-action-reset { background: #dc3545; }
 .maximized-mode-active .btn-action-reset { background: #ef4444; }
 
 .key-hint-cyan { color: #00d2ff; font-weight: bold; }
 .key-hint-coral { color: #ff7675; font-weight: bold; }
 
-/* Touchscreen Device (Mobile/Tablet) Adaptations */
-@media (pointer: coarse) {
-  .desktop-only-row {
-    display: none !important;
-  }
-  .touch-only-row {
-    display: flex !important;
-  }
-  .drawing-session-active .mobile-interaction-toolbar button {
-    display: none !important;
-  }
-  .view-maximized-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-  }
-  .editor-sidebar-panel {
-    border-left: none;
-    border-top: 1px solid #2d2d3a;
-    padding: 16px 20px;
-    height: auto;
-  }
-  #btnMaxCompact.btn-maximize {
-    display: none !important;
-  }
-  .compact-shortcuts, .maximized-shortcuts-line, .maximized-desc, .compact-desc {
-    display: none !important;
-  }
-  .mobile-interaction-toolbar {
-    display: flex !important;
-  }
-  .sidebar-setting-group {
-    margin-bottom: 28px !important;
-  }
 
-  .maximized-title, .compact-title {
-    text-align: center;
-    width: 100%;
-    margin-bottom: 12px !important;
-  }
-}
+/* ==========================================================================
+ 5. Skeleton Loader Presentation Placeholder Module
+ ========================================================================== */
 
-/* --- SKELETON PLACEHOLDER LOADING MODULE --- */
 .sidebar-skeleton-wrapper {
   display: flex;
   flex-direction: column;
@@ -366,7 +433,7 @@
 .skeleton-line {
   background: linear-gradient(90deg, #2d2d3a 25%, #3a3a4c 50%, #2d2d3a 75%);
   background-size: 200% 100%;
-  animation: skeleton-shimmer-pulse 1.4s ease-get-loop infinite;
+  animation: skeleton-shimmer-pulse 1.4s ease infinite;
   border-radius: 4px;
 }
 
@@ -390,7 +457,7 @@
 .skeleton-button {
   width: 100%;
   height: 40px;
-  margin-top: auto; /* Push down to mirror active buttons location layout */
+  margin-top: auto;
   border-radius: 6px;
 }
 
@@ -399,7 +466,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* Smooth fade-in presentation for loaded elements */
 .sidebar-content-loaded {
   animation: sidebar-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   height: 100%;
@@ -413,7 +479,11 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- LATTICE CONTROLS SIDEBAR SELECTION SYSTEM --- */
+
+/* ==========================================================================
+ 6. Lattice Selection Sidebar Grid Overrides
+ ========================================================================== */
+
 .sidebar-setting-group {
   margin-top: 24px;
   text-align: left;
@@ -456,36 +526,39 @@
   color: #fff;
 }
 
-/* Custom slider capsule layout mechanics */
-.ui-toggle-slider .slider-round::before {
-  position: absolute;
-  content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .25s ease-in-out;
-  border-radius: 50%;
-}
+/* ==========================================================================
+ 7. Coarse Touchscreen Pointer Media Queries
+ ========================================================================== */
 
-/* Specific sizing proportions for studio window toggle button */
-.studio-switch-overlay .ui-toggle-slider .slider-round::before {
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-}
+@media (pointer: coarse) {
+  .desktop-only-row { display: none !important; }
 
-/* Transform button layout state when checked option is true */
-.ui-toggle-slider input:checked + .slider-round {
-  background-color: #f1c40f !important;
-}
+  .custom-modal-container .touch-pill-row {
+    display: flex !important;
+    justify-content: center;
+    width: 100%;
+    margin: 0 0 10px 0;
+  }
 
-.ui-toggle-slider input:checked + .slider-round::before {
-  transform: translateX(14px);
-}
+  .custom-modal-container .touch-buttons-row {
+    display: flex !important;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 0 15px 0;
+    width: 100%;
+  }
 
-.studio-switch-overlay .ui-toggle-slider input:checked + .slider-round::before {
-  transform: translateX(18px);
+  /* Show Deform menu layout row on touch environments unless actively drawing */
+  .mobile-deform-toolbar { display: flex !important; }
+  .drawing-session-active .mobile-deform-toolbar { display: none !important; }
+
+  .maximized-toolbar { display: flex !important; }
+  .drawing-session-active .maximized-toolbar { display: none !important; }
+
+  .view-maximized-grid { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  .editor-sidebar-panel { border-left: none; border-top: 1px solid #2d2d3a; padding: 16px 20px; height: auto; }
+  #btnMaxCompact.btn-maximize { display: none !important; }
+  .compact-shortcuts, .maximized-shortcuts-line, .maximized-desc, .compact-desc { display: none !important; }
+  .sidebar-setting-group { margin-bottom: 28px !important; }
+  .maximized-title, .compact-title { text-align: center; width: 100%; margin-bottom: 12px !important; }
 }

@@ -600,4 +600,39 @@ export class CustomWorkspace {
   public getUserDetailStroke(): Point2D[][] {
     return this.userDetailStroke;
   }
+
+ /**
+   * Safe Multi-Stroke Undo Engine:
+   * Selectively clears active uncommitted paths or steps back to prune previous segments.
+   */
+  public undoLastDetailStroke(): void {
+    if (this.userDetailStroke.length === 0) return;
+
+    const activeIdx = this.userDetailStroke.length - 1;
+    const activeStroke = this.userDetailStroke[activeIdx]!;
+
+    if (activeStroke.length > 0) {
+      // If a user is actively drawing, reset only the active trail
+      this.userDetailStroke[activeIdx] = [];
+    } else {
+      // Otherwise, remove the genuine previous path
+      this.userDetailStroke.pop();
+      this.userDetailStroke.pop();
+
+      // Always seed a fresh trailing lane bucket so subsequent clicks are isolated
+      this.userDetailStroke.push([]);
+    }
+
+    this.persistAndSyncState();
+    this.render();
+  }
+
+  /**
+   * Flushes the entire decorative multi-stroke matrix back to a fresh layout configuration.
+   */
+  public clearAllDetailStrokes(): void {
+    this.userDetailStroke = [];
+    this.persistAndSyncState();
+    this.render();
+  }
 }

@@ -35,7 +35,7 @@ export class tileEditorComponent {
   private cacheElements(): void {
     this.els = {
       modal: document.getElementById('customTileModal'),
-      modalContainer: document.getElementById('customModalContainer'),
+      modalContainer: document.getElementById('custom-modal-container'),
       mountCompact: document.getElementById('mountCompact'),
       mountMaximized: document.getElementById('mountMaximized'),
       btnMaxCompact: document.getElementById('btnMaxCompact'),
@@ -55,7 +55,11 @@ export class tileEditorComponent {
       chkDrawDetails: document.getElementById('chkDrawDetails'),
       chkDrawDetailsCompact: document.getElementById('chkDrawDetailsCompact'),
       chkDrawDetailsTouch: document.getElementById('chkDrawDetailsTouch'),
-      drawingStatusBanner: document.getElementById('drawingStatusBanner')
+      // TODO: Decide if this is still needed
+      drawingStatusBanner: document.getElementById('drawingStatusBanner'),
+      drawActionsStrip: document.querySelector('.draw-actions-strip'),
+      btnUndoDetail: document.getElementById('btnUndoDetail'),
+      btnClearDetail: document.getElementById('btnClearDetail')
     };
   }
 
@@ -124,6 +128,20 @@ export class tileEditorComponent {
     this.els.chkDrawDetailsTouch?.addEventListener('change', executeDrawingModeToggle);
     this.els.chkDrawDetails?.addEventListener('change', executeDrawingModeToggle);
 
+    this.els.btnUndoDetail?.addEventListener('click', () => {
+      if (this.workspaceInstance) {
+        this.workspaceInstance.undoLastDetailStroke();
+        this.ctx.updateEnginePipeline();
+      }
+    });
+
+    this.els.btnClearDetail?.addEventListener('click', () => {
+      if (this.workspaceInstance && window.confirm('Are you sure you want to completely erase all custom lines inside your tile?')) {
+        this.workspaceInstance.clearAllDetailStrokes();
+        this.ctx.updateEnginePipeline();
+      }
+    });
+
     const executeSave = () => {
       if (this.els.modal) this.els.modal.style.display = 'none';
       this.ctx.currentConfig.baseMotif = 'customTileCompiler';
@@ -144,18 +162,6 @@ export class tileEditorComponent {
         }
       }
 
-      const activeState = this.ctx.getLiveEditorState();
-      if (activeState) {
-        console.log('🔍 [UI Sync] Live state handles verified on save:', {
-          edgeA: ('edgeA' in activeState) ? activeState.edgeA.length : 0,
-          edgeB: ('edgeB' in activeState) ? activeState.edgeB.length : 0,
-          edgeC: ('edgeC' in activeState) ? activeState.edgeC.length : 0,
-          edgeTop: ('edgeTop' in activeState) ? activeState.edgeTop.length : 0,
-          edgeLeft: ('edgeLeft' in activeState) ? activeState.edgeLeft.length : 0,
-          edgeSpine: ('edgeSpine' in activeState) ? activeState.edgeSpine.length : 0,
-          edgeInterlock: ('edgeInterlock' in activeState) ? activeState.edgeInterlock.length : 0
-        });
-      }
       this.ctx.updateEnginePipeline();
     };
 
@@ -192,6 +198,9 @@ export class tileEditorComponent {
 
       this.workspaceInstance.switchLatticeSystem(targetType, 2.0);
 
+      // Force the workspace back to edit mode during a lattice swap
+      this.workspaceInstance.setInteractionMode('edit');
+
       if (this.ctx.baseMotifSelectElement) {
         this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
       }
@@ -201,9 +210,15 @@ export class tileEditorComponent {
 
       // Sync drawing switch indicators to false since swap defaults back to edit mode
       const checkCompact = this.els.chkDrawDetailsCompact as HTMLInputElement | null;
+      const checkTouch = this.els.chkDrawDetailsTouch as HTMLInputElement | null;
       const checkMax = this.els.chkDrawDetails as HTMLInputElement | null;
       if (checkCompact) checkCompact.checked = false;
+      if (checkTouch) checkTouch.checked = false;
       if (checkMax) checkMax.checked = false;
+
+      // Reset the defaults
+      this.els.modalContainer?.classList.remove('drawing-session-active');
+      this.updateMobileModeButtons('edit');
 
       this.ctx.updateEnginePipeline();
     };
@@ -217,18 +232,17 @@ export class tileEditorComponent {
 
   private toggleLayoutMode(toMaximized: boolean): void {
     const canvas = document.getElementById('tileCanvas') as HTMLCanvasElement;
-    if (!this.workspaceInstance || !this.els.modalContainer || !canvas) return;
+    const wrapper = document.getElementById('editorLayoutWrapper');
+    if (!this.workspaceInstance || !this.els.modalContainer || !canvas || !wrapper) return;
 
     this.isMaximized = toMaximized;
-    this.els.modalContainer.classList.toggle('maximized-mode-active', toMaximized);
-
     const skeleton = document.getElementById('sidebarSkeletonPlaceholder');
     const actualContent = document.getElementById('sidebarActualContent');
 
+    // Toggle state styling switches directly onto the master layout wrapper
     if (toMaximized) {
-      // Ensure placeholder is active immediately to preserve 320px layout constraints
-      if (skeleton) skeleton.style.display = 'flex';
-      if (actualContent) actualContent.style.display = 'none';
+      wrapper.className = 'layout-maximized-active';
+      this.els.modalContainer.classList.add('maximized-mode-active');
 
       if (this.els.mountMaximized) this.els.mountMaximized.appendChild(canvas);
 
@@ -238,12 +252,14 @@ export class tileEditorComponent {
         const bounds = this.els.mountMaximized.getBoundingClientRect();
         this.workspaceInstance.resizeWorkspace(bounds.width, bounds.height || 500);
       });
-
       setTimeout(() => {
         if (skeleton) skeleton.style.display = 'none';
         if (actualContent) actualContent.style.display = 'flex';
       }, 180);
     } else {
+      wrapper.className = 'layout-compact-active';
+      this.els.modalContainer.classList.remove('maximized-mode-active');
+
       if (this.els.mountCompact) this.els.mountCompact.appendChild(canvas);
       this.workspaceInstance.resizeWorkspace(500, 500);
     }
@@ -276,7 +292,6 @@ export class tileEditorComponent {
 
       // Morph UI Layout: Toggle background classes and shift status header components active
       this.els.modalContainer?.classList.add('drawing-session-active');
-      if (this.els.drawingStatusBanner) this.els.drawingStatusBanner.style.display = 'block';
     } else {
       if (checkCompact) checkCompact.checked = false;
       if (checkTouch) checkTouch.checked = false;
@@ -284,7 +299,6 @@ export class tileEditorComponent {
 
       // Restore Layout: Clean structural state adjustments back to base deform options
       this.els.modalContainer?.classList.remove('drawing-session-active');
-      if (this.els.drawingStatusBanner) this.els.drawingStatusBanner.style.display = 'none';
     }
   }
 }

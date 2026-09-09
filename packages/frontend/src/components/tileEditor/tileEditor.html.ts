@@ -122,9 +122,9 @@ export const tileEditorTemplate = `
                 </div>
 
                 <div class="mobile-interaction-toolbar touch-draw-row">
-                  <button type="button" id="btnUndoDetail" class="btn-mode-toggle">↩ Undo Last Path</button>
-                  <button type="button" id="btnStartNewPath" class="btn-mode-toggle btn-draw-new">➕ Start New Path</button>
-                  <button type="button" id="btnClearDetail" class="btn-mode-toggle btn-draw-clear">🗑️ Clear All</button>
+                  <button type="button" id="btnUndoDetailMax" class="btn-mode-toggle">↩ Undo Last Path</button>
+                  <button type="button" id="btnStartNewPathMax" class="btn-mode-toggle btn-draw-new">➕ Start New Path</button>
+                  <button type="button" id="btnClearDetailMax" class="btn-mode-toggle btn-draw-clear">🗑️ Clear All</button>
                 </div>
 
                 <div class="mobile-interaction-toolbar maximized-toolbar">
@@ -138,7 +138,7 @@ export const tileEditorTemplate = `
                   <select id="editorLatticeSelect" class="sidebar-setting-dropdown">
                     <option value="hexagonal">Hexagonal (p3 Framework)</option>
                     <option value="square">Square (p1 Framework)</option>
-                    <option value="triangular">Triangular (p3c3 Rosette) Framework</option>
+                    <option value="triangular">Triangular (p6 Framework)</option>
                   </select>
                 </div>
               </div>

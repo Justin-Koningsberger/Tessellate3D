@@ -59,7 +59,12 @@ export class tileEditorComponent {
       drawingStatusBanner: document.getElementById('drawingStatusBanner'),
       drawActionsStrip: document.querySelector('.draw-actions-strip'),
       btnUndoDetail: document.getElementById('btnUndoDetail'),
-      btnClearDetail: document.getElementById('btnClearDetail')
+      btnStartNewPath: document.getElementById('btnStartNewPath'),
+      btnClearDetail: document.getElementById('btnClearDetail'),
+
+      btnUndoDetailMax: document.getElementById('btnUndoDetailMax'),
+      btnStartNewPathMax: document.getElementById('btnStartNewPathMax'),
+      btnClearDetailMax: document.getElementById('btnClearDetailMax')
     };
   }
 
@@ -128,19 +133,35 @@ export class tileEditorComponent {
     this.els.chkDrawDetailsTouch?.addEventListener('change', executeDrawingModeToggle);
     this.els.chkDrawDetails?.addEventListener('change', executeDrawingModeToggle);
 
-    this.els.btnUndoDetail?.addEventListener('click', () => {
+    const executeUndo = () => {
       if (this.workspaceInstance) {
         this.workspaceInstance.undoLastDetailStroke();
         this.ctx.updateEnginePipeline();
       }
-    });
+    };
+    this.els.btnUndoDetail?.addEventListener('click', executeUndo);
+    this.els.btnUndoDetailMax?.addEventListener('click', executeUndo);
 
-    this.els.btnClearDetail?.addEventListener('click', () => {
+    const executeClear = () => {
       if (this.workspaceInstance && window.confirm('Are you sure you want to completely erase all custom lines inside your tile?')) {
         this.workspaceInstance.clearAllDetailStrokes();
         this.ctx.updateEnginePipeline();
       }
-    });
+    };
+    this.els.btnClearDetail?.addEventListener('click', executeClear);
+    this.els.btnClearDetailMax?.addEventListener('click', executeClear);
+
+    const executeStartNewPath = () => {
+      if (this.workspaceInstance) {
+        this.workspaceInstance.setInteractionMode('edit');
+        this.workspaceInstance.setInteractionMode('drawDetails');
+
+        this.workspaceInstance.render?.();
+      }
+    };
+    this.els.btnStartNewPath?.addEventListener('click', executeStartNewPath);
+    this.els.btnStartNewPathMax?.addEventListener('click', executeStartNewPath);
+
 
     const executeSave = () => {
       if (this.els.modal) this.els.modal.style.display = 'none';
@@ -193,6 +214,7 @@ export class tileEditorComponent {
     (['edit', 'add', 'delete'] as MobileInteractionMode[]).forEach(mode => {
       const capitalized = mode.charAt(0).toUpperCase() + mode.slice(1);
       this.els[`btnMode${capitalized}`]?.addEventListener('click', () => this.updateMobileModeButtons(mode));
+      this.els[`btnMode${capitalized}Max`]?.addEventListener('click', () => this.updateMobileModeButtons(mode));
     });
 
     // --- UNIFIED STRATEGY SWAP EVENT WATCHER ---

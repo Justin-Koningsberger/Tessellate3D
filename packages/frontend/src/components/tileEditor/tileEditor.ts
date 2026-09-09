@@ -162,17 +162,22 @@ export class tileEditorComponent {
         }
       }
 
+      this.toggleLayoutMode(false);
+
       this.ctx.updateEnginePipeline();
     };
 
     const executeCancel = () => {
       if (this.els.modal) this.els.modal.style.display = 'none';
+      this.toggleLayoutMode(false);
     };
 
     const executeReset = () => {
       if (!this.workspaceInstance) return;
       if (window.confirm('Are you sure you want to reset the geometry? This will clear all your custom points and drawings.')) {
         this.workspaceInstance.resetToDefaultLattice(2.0);
+        this.toggleLayoutMode(false);
+
         this.ctx.updateEnginePipeline(); // Sync master canvas immediately
       }
     };

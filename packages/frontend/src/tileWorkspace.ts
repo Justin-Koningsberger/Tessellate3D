@@ -549,6 +549,60 @@ export class CustomWorkspace {
     this.render();
   }
 
+  /**
+   * Inject pre-configured preset states into the live canvas.
+   */
+  public loadPresetToWorkspace(presetState: any, cellHeight: number = 2.0): void {
+    const type = presetState.latticeType;
+    this.currentLatticeType = type;
+    this.cellHeight = cellHeight;
+
+    // Clear old handle drag references
+    this.activeDragEdge = null;
+    this.activeDragIndex = null;
+    this.cachedOutline = [];
+
+    // Reset toolbar interaction status to base perimeter manipulation
+    this.mobileMode = 'edit';
+    this.canvas.style.cursor = 'default';
+
+    // Synchronize conformal canvas projection anchors
+    const dynamicOffset = LATTICE_REGISTRY[type].getCenterOffset(cellHeight);
+    this.projection.setCenterOffset(dynamicOffset);
+
+    // Create a deep copy of the preset configuration
+    this.state = JSON.parse(JSON.stringify(presetState));
+
+    // Fallback instantiation protection
+    if (!this.state.activeDetailStroke) {
+      this.state.activeDetailStroke = [];
+    }
+
+    // Hydrate undo history so undo/clear actions work on presets
+    this.userDetailStroke = [...this.state.activeDetailStroke];
+
+    // Align the shared symmetry context global state pointer
+    updateLiveEditorState(this.state);
+
+    // Commit state to localStorage
+    try {
+      const vaultRaw = localStorage.getItem(this.storageKey);
+      const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
+      vault.activeType = this.currentLatticeType;
+      vault[this.currentLatticeType] = this.state;
+      localStorage.setItem(this.storageKey, JSON.stringify(vault));
+    } catch (err) {
+      console.warn('⚠️ [Storage] Failed to cache newly hydrated preset parameters:', err);
+    }
+
+    // Force the touchscreen toolbar to refresh
+    if (this.onMobileModeReset) {
+      this.onMobileModeReset('edit');
+    }
+
+    this.render();
+  }
+
   public setInteractionMode(mode: MobileInteractionMode): void {
     const wasDrawing = this.mobileMode === 'drawDetails';
     this.mobileMode = mode;

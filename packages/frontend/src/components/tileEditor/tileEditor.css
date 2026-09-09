@@ -119,6 +119,12 @@
   width: 100% !important;
   margin: 0 0 15px 0 !important;
 }
+.drawing-session-active .maximized-toolbar,
+.drawing-session-active .touch-draw-row:has(~ .maximized-toolbar),
+.drawing-session-active .draw-instructions-block ~ .touch-draw-row {
+  flex-direction: column !important;
+  gap: 10px !important;
+}
 
 /* Hide compact details and the desktop handle-modes when sketching */
 .drawing-session-active .compact-desc,
@@ -228,6 +234,12 @@
 }
 
 .mobile-interaction-toolbar .btn-mode-toggle {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+}
+
+.mobile-deform-toolbar .btn-mode-toggle {
   flex: 1;
   justify-content: center;
   text-align: center;
@@ -347,6 +359,7 @@
 
 .drawing-session-active .draw-instructions-block {
   display: block !important;
+  margin-bottom: 16px;
 }
 .drawing-session-active .deform-instructions-block {
   display: none !important;
@@ -549,7 +562,7 @@
   }
 
   /* Show Deform menu layout row on touch environments unless actively drawing */
-  .mobile-deform-toolbar { display: flex !important; }
+  .mobile-deform-toolbar { display: flex !important; gap: 10px; margin: 0 0 15px 0; width: 100%; }
   .drawing-session-active .mobile-deform-toolbar { display: none !important; }
 
   .maximized-toolbar { display: flex !important; }

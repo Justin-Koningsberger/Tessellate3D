@@ -1,12 +1,13 @@
 import {
   updateLiveEditorState,
+  compileSymmetricTile,
   type ModularEditorState
 } from './tileSymmetry.ts';
 import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 import { CanvasProjection } from './utils/canvasProjection.ts';
 import { LATTICE_REGISTRY, type LatticeType } from './utils/latticeRegistry.ts';
 
-export type MobileInteractionMode = 'edit' | 'add' | 'delete';
+export type MobileInteractionMode = 'edit' | 'add' | 'delete' | 'drawDetails';
 
 // Self-contained high-performance workspace context managing canvas layout transforms,
 // multi-lattice selection states, drag interactions, and disk storage sync loops.
@@ -24,6 +25,10 @@ export class CustomWorkspace {
   private storageKey = 'tessellate3d_custom_motif';
   private currentLatticeType: LatticeType = 'hexagonal';
   private cellHeight: number;
+
+  // Session tracking arrays for drawing custom details
+  private userDetailStroke: Point2D[][] = [];
+  private cachedOutline: Point2D[] = [];
 
   constructor(canvas: HTMLCanvasElement, cellHeight: number = 2.0) {
     this.canvas = canvas;
@@ -43,8 +48,9 @@ export class CustomWorkspace {
     this.initializeActiveLattice(cellHeight);
     this.setupEventListeners();
     this.render();
+    // Expose the instance globally so the core layout engine can poll dynamic details safely
+    (window as any).activeWorkspaceInstance = this;
   }
-
 
   private syncActiveLatticeType(): void {
     try {
@@ -62,6 +68,11 @@ export class CustomWorkspace {
    * Synchronizes the master pipeline state and commits the current points to localStorage.
    */
   private persistAndSyncState(): void {
+    // Sync the runtime stroke data into the non-optional state array field right before persistence
+    if (this.state) {
+      this.state.activeDetailStroke = [...this.userDetailStroke];
+    }
+
     updateLiveEditorState(this.state);
     try {
       const vaultRaw = localStorage.getItem(this.storageKey);
@@ -82,6 +93,9 @@ export class CustomWorkspace {
       if (saved) {
         const vault = JSON.parse(saved);
         this.state = vault[this.currentLatticeType] || LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
+
+        // Populate the canvas drawing state matching the active shape layout selection
+        this.userDetailStroke = [...(this.state.activeDetailStroke || [])];
         updateLiveEditorState(this.state);
 
         return;
@@ -97,8 +111,14 @@ export class CustomWorkspace {
       this.state = vault[this.currentLatticeType] || LATTICE_REGISTRY[this.currentLatticeType].initializeDefaultState(cellHeight);
     } catch {
       const activeLatticeType = this.currentLatticeType as 'square' | 'triangular' | 'hexagonal';
-      this.state = LATTICE_REGISTRY[activeLatticeType].initializeDefaultState(cellHeight);
+      const baseDefault = LATTICE_REGISTRY[activeLatticeType].initializeDefaultState(cellHeight);
+      this.state = {
+        ...baseDefault,
+        activeDetailStroke: []
+      };
     }
+
+    this.userDetailStroke = [...(this.state.activeDetailStroke || [])];
     this.persistAndSyncState();
   }
 
@@ -162,6 +182,31 @@ export class CustomWorkspace {
       y: e.clientY - rect.top
     };
 
+    // --- INTERCEPT CLICK FOR INTERNAL DETAILS IF TOGGLE IS ACTIVE ---
+    if (this.mobileMode === 'drawDetails') {
+      const mouseVector = this.projection.screenToVector(mouseScreen.x, mouseScreen.y);
+
+      // Only add the vertex if it lands strictly inside the deformed tile boundary shape
+      if (this.isPointInPolygon(mouseVector, this.cachedOutline)) {
+
+        // Safety check to ensure an active lane exists
+        if (this.userDetailStroke.length === 0) {
+          this.userDetailStroke.push([]);
+        }
+
+        // Push directly into the active trailing sub-array segment
+        const activeIdx = this.userDetailStroke.length - 1;
+        this.userDetailStroke[activeIdx]!.push(mouseVector);
+
+        this.persistAndSyncState();
+        this.render();
+      }
+
+      // Short-circuit execution so it never falls down to select or move handles
+      return;
+    }
+
+    // Normal handle editing logic
     const latticeDef = LATTICE_REGISTRY[this.currentLatticeType];
     const interactiveEdges = latticeDef.getInteractiveEdges(this.state, this.cellHeight);
 
@@ -247,6 +292,25 @@ export class CustomWorkspace {
     this.activeDragIndex = null;
   }
 
+  private isPointInPolygon(point: Point2D, polygon: Point2D[]): boolean {
+    let inside = false;
+    const { x, y } = point;
+
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i]!.x;
+      const yi = polygon[i]!.y;
+      const xj = polygon[j]!.x;
+      const yj = polygon[j]!.y;
+
+      const intersect = ((yi > y) !== (yj > y)) &&
+                        (x < (xj - xi) * (y - yi) / (yj - yi + 0.000001) + xi);
+      if (intersect) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  }
+
   public render(): void {
     // 1. Clear the canvas and retrieve the current lattice configuration
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -313,6 +377,47 @@ export class CustomWorkspace {
     // 6. Draw a node marker directly over the true visual center of the shape body
     let visualCenter: Point2D = { x: 0.0, y: 0.0 };
 
+    // --- RENDER USER-DRAWN DETAIL LINES ---
+    if (this.userDetailStroke.length > 0) {
+      this.ctx.save();
+      this.ctx.lineWidth = 2.0;
+      this.ctx.strokeStyle = '#f1c40f'; // Gold/yellow stroke
+      this.ctx.setLineDash([]);
+
+      // Map over every individual sub-path matrix lane cleanly
+      this.userDetailStroke.forEach((stroke: Point2D[]) => {
+        if (!stroke || stroke.length === 0 || !stroke[0]) return;
+
+        this.ctx.beginPath();
+        const startScreen = this.projection.vectorToScreen(stroke[0]);
+        this.ctx.moveTo(startScreen.x, startScreen.y);
+
+        for (let i = 1; i < stroke.length; i++) {
+          const currentPt = stroke[i];
+          if (!currentPt) continue;
+
+          const ptScreen = this.projection.vectorToScreen(currentPt);
+          this.ctx.lineTo(ptScreen.x, ptScreen.y);
+        }
+        this.ctx.stroke();
+
+        // Draw small vertex markers over clicked spots for visual feedback
+        stroke.forEach((node: Point2D) => {
+          if (!node) return;
+          const nodeScreen = this.projection.vectorToScreen(node);
+          this.ctx.beginPath();
+          this.ctx.arc(nodeScreen.x, nodeScreen.y, 3.5, 0, Math.PI * 2);
+          this.ctx.fillStyle = '#f1c40f';
+          this.ctx.fill();
+          this.ctx.strokeStyle = '#ffffff';
+          this.ctx.lineWidth = 1.0;
+          this.ctx.stroke();
+        });
+      });
+
+      this.ctx.restore();
+    }
+
     if (this.currentLatticeType === 'hexagonal' || this.currentLatticeType === 'square') {
       visualCenter = {
         x: this.currentLatticeType === 'square' ? (this.cellHeight * 0.5) : 0.0,
@@ -344,6 +449,8 @@ export class CustomWorkspace {
   public resetToDefaultLattice(cellHeight: number): void {
     this.activeDragEdge = null;
     this.activeDragIndex = null;
+    this.userDetailStroke = [];
+    this.cachedOutline = [];
 
     try {
       const vaultRaw = localStorage.getItem(this.storageKey);
@@ -353,12 +460,12 @@ export class CustomWorkspace {
         localStorage.setItem(this.storageKey, JSON.stringify(vault));
       }
     } catch {
-      // Safe silent bypass if local storage write/delete is blocked
+      // Safe silent bypass if local storage write is blocked
     }
-
     this.initializeActiveLattice(cellHeight);
     this.render();
   }
+
 
   public resizeWorkspace(newWidth: number, newHeight: number): void {
     const fluidWidth = Math.max(300, newWidth);
@@ -378,27 +485,154 @@ export class CustomWorkspace {
     this.currentLatticeType = type;
     this.cellHeight = cellHeight;
 
-    // Update projection centering matrices instantly on hot-swapping types
+    // Reset to tile deformation mode on lattice swap
+    this.activeDragEdge = null;
+    this.activeDragIndex = null;
+    this.cachedOutline = [];
+
+    // Default back to standard handle translation mapping
+    this.mobileMode = 'edit';
+    this.canvas.style.cursor = 'default';
+
     const dynamicOffset = LATTICE_REGISTRY[type].getCenterOffset(cellHeight);
     this.projection.setCenterOffset(dynamicOffset);
 
     // Safely look up if this specific lattice has an existing configuration on disk before creating a blank default
+    let loadedState: ModularEditorState;
     try {
       const vaultRaw = localStorage.getItem(this.storageKey);
       const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
-      this.state = vault[type] || LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+
+      if (vault[type]) {
+        loadedState = vault[type];
+      } else {
+        const rawDefault = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+        loadedState = {
+          ...rawDefault,
+          activeDetailStroke: []
+        };
+      }
     } catch {
-      this.state = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+      const rawDefault = LATTICE_REGISTRY[type].initializeDefaultState(cellHeight);
+      loadedState = {
+        ...rawDefault,
+        activeDetailStroke: []
+      };
+    }
+
+    // Ensure detail arrays are instantiated
+    if (!loadedState.activeDetailStroke) {
+      loadedState.activeDetailStroke = [];
+    }
+
+    // Commit properties into memory instance variables in a single pass
+    this.state = loadedState;
+    this.userDetailStroke = [...this.state.activeDetailStroke];
+
+    updateLiveEditorState(this.state);
+
+    try {
+      const vaultRaw = localStorage.getItem(this.storageKey);
+      const vault = vaultRaw ? JSON.parse(vaultRaw) : {};
+      vault.activeType = this.currentLatticeType;
+      vault[this.currentLatticeType] = this.state;
+      localStorage.setItem(this.storageKey, JSON.stringify(vault));
+    } catch (err) {
+      console.warn('⚠️ [Storage] Could not write custom system configuration during lattice system swap:', err);
+    }
+
+    // Trigger the UI component state hook
+    if (this.onMobileModeReset) {
+      this.onMobileModeReset('edit');
+    }
+
+    this.render();
+  }
+
+  public setInteractionMode(mode: MobileInteractionMode): void {
+    const wasDrawing = this.mobileMode === 'drawDetails';
+    this.mobileMode = mode;
+
+    console.log(`🔄 Mode shifting to: "${mode}" (Was drawing: ${wasDrawing})`);
+
+    if (mode === 'drawDetails') {
+      this.canvas.style.cursor = 'crosshair';
+
+      const compiled = compileSymmetricTile(this.state);
+      if (compiled && compiled.length > 0) {
+        this.cachedOutline = compiled[0] || [];
+      } else {
+        this.cachedOutline = [];
+      }
+
+      console.log(`📐 Cached drawing boundary initialized with ${this.cachedOutline.length} points.`);
+
+      // Push a fresh, empty path array bucket to split the sequence
+      if (this.userDetailStroke.length > 0) {
+        const lastPath = this.userDetailStroke[this.userDetailStroke.length - 1];
+        if (lastPath && lastPath.length > 0) {
+          this.userDetailStroke.push([]);
+          console.log(`➕ Existing strokes found. Appended a brand new stroke bucket. Total strokes: ${this.userDetailStroke.length}`);
+        }
+      } else {
+        this.userDetailStroke.push([]);
+        console.log('➕ First drawing stroke bucket initialized.');
+      }
+    } else {
+      this.canvas.style.cursor = mode === 'add' ? 'copy' : mode === 'delete' ? 'no-drop' : 'default';
+      this.cachedOutline = [];
+
+      const beforeFilterCount = this.userDetailStroke.length;
+      // Clean up any trailing empty paths if the user toggled away without adding vertices
+      this.userDetailStroke = this.userDetailStroke.filter(stroke => stroke.length > 0);
+      console.log(`🧼 Exiting draw mode. Purged empty stroke blocks. Count: ${beforeFilterCount} -> ${this.userDetailStroke.length}`);
+
+      if (wasDrawing) {
+        this.persistAndSyncState();
+      }
+    }
+    this.render();
+  }
+
+  /**
+   * Retrieves the raw, un-normalized internal user detail stroke paths.
+   */
+  public getUserDetailStroke(): Point2D[][] {
+    return this.userDetailStroke;
+  }
+
+ /**
+   * Safe Multi-Stroke Undo Engine:
+   * Selectively clears active uncommitted paths or steps back to prune previous segments.
+   */
+  public undoLastDetailStroke(): void {
+    if (this.userDetailStroke.length === 0) return;
+
+    const activeIdx = this.userDetailStroke.length - 1;
+    const activeStroke = this.userDetailStroke[activeIdx]!;
+
+    if (activeStroke.length > 0) {
+      // If a user is actively drawing, reset only the active trail
+      this.userDetailStroke[activeIdx] = [];
+    } else {
+      // Otherwise, remove the genuine previous path
+      this.userDetailStroke.pop();
+      this.userDetailStroke.pop();
+
+      // Always seed a fresh trailing lane bucket so subsequent clicks are isolated
+      this.userDetailStroke.push([]);
     }
 
     this.persistAndSyncState();
     this.render();
   }
 
-  public setInteractionMode(mode: MobileInteractionMode): void {
-    this.mobileMode = mode;
-    if (mode === 'add') this.canvas.style.cursor = 'copy';
-    else if (mode === 'delete') this.canvas.style.cursor = 'no-drop';
-    else this.canvas.style.cursor = 'default';
+  /**
+   * Flushes the entire decorative multi-stroke matrix back to a fresh layout configuration.
+   */
+  public clearAllDetailStrokes(): void {
+    this.userDetailStroke = [];
+    this.persistAndSyncState();
+    this.render();
   }
 }

@@ -26,7 +26,9 @@ Never suggest, write, or approve a change to the codebase without instructing th
 ### 3. Resolution-Independent Motif Scaling
 * All raw structural node definitions inside `src/baseMotifs.ts` must balance uniformly between localized tile boundary constraints ($X[0.0 - 1.0]$ and $Y[0.0 - cellHeight]$).
 * Let the forward conformal warper handle dynamic canvas scaling down into the focal poles.
+* **Data Layout Structure:** All motif coordinates must be stored and processed as a multi-dimensional array matrix (`Point2D[][]`) rather than a single flat point list. This ensures support for separate, non-continuous vector strokes.
+
 
 ### 4. Respect Layer Ordering Boundaries
-* **`compIndex === 0`**: Strictly reserved for foundational, structural, interlocking tile boundaries with explicitly closed manifold loops (`Z`).
-* **`compIndex > 0`**: Reserved for internal artistic details (scales, wings, eye accent lines) where filling tracking flags are automatically stripped.
+* **`compIndex === 0`**: Strictly reserved for foundational, structural, interlocking tile boundaries with explicitly closed manifold loops (`Z`). This represents the master enclosing layout polygon.
+* **`compIndex > 0`**: Reserved for internal artistic details (scales, wings, eye accent lines) where filling tracking flags are automatically stripped. The rendering pipeline compiles these multi-stroke sub-paths (`Point2D[][]`) into separate multi-material layer groupings.

@@ -58,17 +58,25 @@ I also see a deep structural link between 3D printing and classical relief print
   * *Grouping Output:* Organizes arrays of mapped coordinates dynamically into structured collections sorted by their deterministic sorting layer keys.
 
 ---
+
 ## Interactive Custom Motif Designer (New UI Feature)
 
-* **`[Custom Motif Shapes]`**
-  * *Shape Customization:* Create custom repeating tiles by grabbing and dragging the interactive red handles on the canvas.
-  * *Adding & Removing Points:* Fine-tune designs by holding **Alt + Clicking** lines to add fresh control points, or holding **Shift + Clicking** nodes to delete them.
-  * *Solid Geometry Guides:* Draws a faint, clean hexagon outline behind your design to act as a zero-point baseline for path alignment. Includes a confirmation prompt on reset to prevent accidental design losses.
+* **`[Custom Motif Shapes & Interaction Modes]`**
+  * *Perimeter Deformation:* Create custom repeating tiles by grabbing and dragging the interactive control handles on the canvas.
+  * *Adding & Removing Points:* Fine-tune perimeter paths by holding **Alt + Clicking** line segments to inject fresh control handles, or holding **Shift + Clicking** nodes to delete them.
+  * *Unified Vector Drawing Mode:* Toggling the **Draw** switch freezes perimeter handles and activates a freehand sketch layer. It features responsive, layout-specific action button strips providing specialized **Undo Last Path** (removes the latest stroke array) and **Clear All** capabilities.
+  * *Smart Path Splitting:* Supports non-continuous drawings via a **Start New Path** utility that routes a rapid internal mode-toggle loop, sealing the current active point coordinates and instantiating a fresh vector group mid-session.
+  * *Solid Geometry Guides:* Draws a faint, clean framework layout behind your design to act as a zero-point baseline for path alignment. Includes a confirmation prompt on reset to prevent accidental design losses.
   * *Page Load Persistence:* Automatically saves your layout state to browser cache so your custom shapes stay active across page reloads and edits.
 
-* **`[Maximized Studio Workspace Portal]`**
-  * *Expanded Canvas View:* Features a **Maximize** toggle that shifts the popup card into a fullscreen, side-by-side studio view.
-  * *Purpose:* Teleports the drawing area to the left to maximize canvas design space, moving settings, text instructions, and actions into a right-hand panel. This sidebar layout provides breathing room for advanced tool modules and features down the line.
+* **`[Maximized Studio Workspace Portal & Sizing Sync]`**
+  * *Expanded Canvas View:* Features a **Maximize / Restore** toggle that shifts the popup card into a fullscreen, side-by-side studio workspace view layout.
+  * *Layout Optimization:* Teleports the drawing area to the left to maximize canvas design space while moving layout-specific controls, instructions, and primary buttons into a clean, vertical right-hand panel sidebar.
+  * *Automatic View Cleanup:* Integrated automated view resets that cleanly trigger `this.toggleLayoutMode(false)` whenever **Apply Tile**, **Cancel**, or **Reset base Tile** are clicked. This remounts the canvas back to the compact block viewport safely, preventing layout clipping on subsequent opens.
+
+* **`[Bidirectional Main Menu Synchronizer]`**
+  * *Lattice System Automation:* Changing the active lattice framework inside the editor (e.g., jumping from Hexagonal to Square) runs a silent background sync that instantly aligns the main window's **Symmetry Base Lattice** and **Wallpaper Symmetry Group** dropdown fields to matching mathematical pairs (such as `Triangular / p3` or `Square / p1`).
+  * *Event Override Shield:* Updates form element values directly and updates configuration variables without forcing artificial browser change events. This prevents background application listeners from waking up and accidentally overriding specific configurations (like forcing `p3` back to `p6`).
 
 ---
 
@@ -77,6 +85,9 @@ I also see a deep structural link between 3D printing and classical relief print
 * **`[Microscopic Alignment Matrix Engine]`**
   * *Purpose:* Guarantees perfect alignment between changing color fields in 3D slicers.
   * *Strategy:* Automatically tracks the absolute extreme minimum and maximum (X, Y) coordinate boundaries across all generated arrays, injecting tiny geometric alignment artifacts at the canvas corners.
+* **`[Multi-Stroke Detail Layer Separator]`**
+  * *Purpose:* Packages multi-path drawings safely for 3D extrusion heights and multi-material print beds.
+  * *Strategy:* Parses the multi-dimensional array matrix (`Point2D[][]`), identifying boundary lines (`compIndex === 0`) to extract solid underlying fills while wrapping disconnected interior sketch marks (`compIndex > 0`) into dedicated, separate layer groupings with independent elevation heights or color change assignments.
 * **`[Library-Free ASCII STL Builder]`**
   * *Purpose:* Converts 2D mathematical vector paths into 3D manifolds on the server without heavy 3D rendering dependencies (like Three.js or OpenSCAD).
   * *Strategy:* Standardizes tile winding to counter-clockwise via the Shoelace formula and resolves curved, concave geometries using an ear-clipping triangulation engine. It maps these 2D coordinates straight into a text string template, generating side-wall and top/bottom triangles.

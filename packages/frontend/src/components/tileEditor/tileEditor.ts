@@ -11,6 +11,9 @@ interface EditorPipelineContext {
   updateEnginePipeline: () => void;
   getLiveEditorState: () => ModularEditorState | null;
   baseMotifSelectElement: HTMLSelectElement | null;
+
+  mainLatticeSelectElement?: HTMLSelectElement | null;
+  mainSymmetryGroupSelectElement?: HTMLSelectElement | null;
 }
 
 export class tileEditorComponent {
@@ -166,23 +169,12 @@ export class tileEditorComponent {
     const executeSave = () => {
       if (this.els.modal) this.els.modal.style.display = 'none';
       this.ctx.currentConfig.baseMotif = 'customTileCompiler';
-      this.ctx.currentConfig.symmetryGroup = 'p3';
 
       if (this.ctx.baseMotifSelectElement) {
         this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
       }
 
-      // Transmit live workspace stroke data directly to pipeline state memory
-      if (this.workspaceInstance) {
-        const activeState = this.ctx.getLiveEditorState();
-        const userStroke = this.workspaceInstance.getUserDetailStroke();
-
-        if (activeState && userStroke) {
-          // Assign the array to the active state pointer
-          (activeState as any).activeDetailStroke = [...userStroke];
-        }
-      }
-
+      this.syncMainDropdownsWithEditorLattice();
       this.toggleLayoutMode(false);
 
       this.ctx.updateEnginePipeline();
@@ -231,6 +223,8 @@ export class tileEditorComponent {
       if (this.ctx.baseMotifSelectElement) {
         this.ctx.baseMotifSelectElement.value = 'customTileCompiler';
       }
+
+      this.syncMainDropdownsWithEditorLattice();
 
       const selectors = [this.els.editorLatticeSelect, this.els.editorLatticeSelectCompact];
       selectors.forEach(select => { if (select) (select as HTMLSelectElement).value = targetType; });
@@ -289,6 +283,33 @@ export class tileEditorComponent {
 
       if (this.els.mountCompact) this.els.mountCompact.appendChild(canvas);
       this.workspaceInstance.resizeWorkspace(500, 500);
+    }
+  }
+
+  private syncMainDropdownsWithEditorLattice(): void {
+    if (!this.workspaceInstance || !this.ctx.mainLatticeSelectElement) return;
+
+    const targetType = this.workspaceInstance.getCurrentLatticeType();
+    let mainLatticeValue = 'square';
+    let defaultSymmetryGroup = 'p1';
+
+    if (targetType === 'hexagonal') {
+      mainLatticeValue = 'hexagonal';
+      defaultSymmetryGroup = 'p3';
+    } else if (targetType === 'triangular') {
+      mainLatticeValue = 'triangular';
+      defaultSymmetryGroup = 'p6';
+    }
+
+    this.ctx.mainLatticeSelectElement.value = mainLatticeValue;
+
+    if (this.ctx.mainSymmetryGroupSelectElement) {
+      this.ctx.mainSymmetryGroupSelectElement.value = defaultSymmetryGroup;
+    }
+
+    this.ctx.currentConfig.symmetryGroup = defaultSymmetryGroup;
+    if ('latticeType' in this.ctx.currentConfig) {
+      (this.ctx.currentConfig as any).latticeType = mainLatticeValue;
     }
   }
 

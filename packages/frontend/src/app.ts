@@ -197,7 +197,10 @@ function initializeTileEditor(): void {
     updateLiveEditorState: updateLiveEditorState,
     updateEnginePipeline: updateEnginePipeline,
     getLiveEditorState: () => liveEditorState,
-    baseMotifSelectElement: els.baseMotif || null
+    baseMotifSelectElement: els.baseMotif || null,
+    mainLatticeSelectElement: document.getElementById('latticeType') as HTMLSelectElement,
+    mainSymmetryGroupSelectElement: document.getElementById('symmetryGroup') as HTMLSelectElement
+
   });
 
   els.btnOpenCustom.addEventListener('click', () => {

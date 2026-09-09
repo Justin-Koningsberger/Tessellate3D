@@ -49,11 +49,12 @@
 }
 .layout-maximized-active .view-maximized-grid {
   display: grid !important;
-  grid-template-columns: 1fr 320px !important;
+  grid-template-columns: minmax(0, 1fr) 320px !important;
   width: 100dvw !important;
   height: 100dvh !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
+  min-width: 0 !important;
 }
 
 .mobile-interaction-toolbar {
@@ -78,9 +79,12 @@
   background: #15151c !important;
 }
 .drawing-session-active .editor-canvas-container,
-.drawing-session-active #mountCompact canvas {
-  outline: 2px solid #f1c40f !important;
-  box-shadow: 0 0 24px rgba(241, 196, 15, 0.2) !important;
+.drawing-session-active #mountCompact canvas,
+.drawing-session-active #mountMaximized {
+  border: 2px solid #f1c40f !important;
+  box-shadow: 0 0 24px rgba(241, 196, 15, 0.4) !important;
+  box-sizing: border-box !important;
+  outline: none !important;
 }
 
 /* Maximized Workspace Mode */
@@ -229,7 +233,7 @@
   display: block;
   width: 100%;
   max-width: 500px;
-  margin: 0 auto 16px auto;
+  margin: 16px auto 16px auto;
   box-sizing: border-box;
 }
 

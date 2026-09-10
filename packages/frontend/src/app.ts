@@ -3,6 +3,7 @@ import { CustomWorkspace } from './tileWorkspace.ts';
 import { tileEditorComponent } from './components/tileEditor/tileEditor.ts';
 import { initializePresetListener } from './utils/presetManager.ts';
 
+import { baseMotifs } from '@tessellate3d/core/src/baseMotifs.ts';
 import { CONFIG } from '@tessellate3d/core/src/config.ts';
 import { generateTessellation, type Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 
@@ -103,6 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.baseMotif = els.baseMotif.value as EngineConfig['baseMotif'];
     currentConfig.latticeType = els.latticeType.value as EngineConfig['latticeType'];
     currentConfig.symmetryGroup = els.symmetryGroup.value as EngineConfig['symmetryGroup'];
+
     currentConfig.useAutoAlignment = els.useAutoAlignment.checked;
     currentConfig.showDebugLabels = els.showDebugLabels.checked;
     currentConfig.applyStroke = els.applyStroke.checked;
@@ -519,6 +521,24 @@ function initializeTileEditor(): void {
   const globalInputs = document.querySelectorAll('#controls input:not([type="color"]), #controls select');
   globalInputs.forEach(input => {
     input.addEventListener('input', updateEnginePipeline);
+  });
+
+  // Update dropdown values
+  els.baseMotif?.addEventListener('change', (e) => {
+    const selectedMotifKey = (e.target as HTMLSelectElement).value;
+    const chosenMotif = baseMotifs[selectedMotifKey];
+
+    // UI synchronization from the presets properties
+    if (chosenMotif) {
+      els.latticeType.value = chosenMotif.latticeType;
+      els.symmetryGroup.value = chosenMotif.symmetryGroup;
+    } else {
+      // Safe fallback
+      els.latticeType.value = 'square';
+      els.symmetryGroup.value = 'p1';
+    }
+
+    updateEnginePipeline();
   });
 
   // Hide debugging in production builds

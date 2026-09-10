@@ -1,4 +1,5 @@
 import { PRESET_STATES } from '@tessellate3d/core/src/baseMotifs.ts';
+import { type Point2D} from '@tessellate3d/core/src/tessellationEngine.ts'
 import { CustomWorkspace, type MobileInteractionMode } from '../../tileWorkspace.ts';
 import { type LatticeType } from '../../utils/latticeRegistry.ts';
 import { tileEditorTemplate } from './tileEditor.html.ts';
@@ -345,6 +346,11 @@ export class tileEditorComponent {
       this.ctx.mainSymmetryGroupSelectElement.value = defaultSymmetryGroup;
     }
 
+    const mainAutoAlignCheck = document.getElementById('useAutoAlignment') as HTMLInputElement | null;
+    if (mainAutoAlignCheck) {
+      mainAutoAlignCheck.checked = true;
+    }
+
     this.ctx.currentConfig.symmetryGroup = defaultSymmetryGroup;
     if ('latticeType' in this.ctx.currentConfig) {
       (this.ctx.currentConfig as any).latticeType = mainLatticeValue;
@@ -411,6 +417,12 @@ function translatePresetStateToWorkspace(state: ModularEditorState): ModularEdit
         cloned[key] = cloned[key].map((pt: Point2D) => ({ x: pt.x, y: pt.y + shiftY }));
       }
     });
+
+    if (cloned.activeDetailStroke && cloned.activeDetailStroke.length > 0) {
+      cloned.activeDetailStroke = cloned.activeDetailStroke.map((stroke: any[]) =>
+        stroke.map((pt: any) => ({ x: pt.x, y: pt.y + shiftY }))
+      );
+    }
   }
 
   return cloned;

@@ -553,7 +553,7 @@ export class CustomWorkspace {
    * Inject pre-configured preset states into the live canvas.
    */
   public loadPresetToWorkspace(presetState: any, cellHeight: number = 2.0): void {
-    const type = presetState.latticeType;
+    const type = presetState.latticeType as LatticeType;
     this.currentLatticeType = type;
     this.cellHeight = cellHeight;
 

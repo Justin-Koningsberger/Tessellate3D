@@ -133,6 +133,18 @@ export const tileEditorTemplate = `
                   <button type="button" id="btnModeDelete" class="btn-mode-toggle">❌ Delete Handle</button>
                 </div>
 
+                <!-- CHOOSE STRUCTURAL PRESET DROPDOWN -->
+                <div class="sidebar-setting-group">
+                  <label for="editorPresetSelect" class="sidebar-setting-label">Load Baseline Motif Preset</label>
+                  <select id="editorPresetSelect" class="sidebar-setting-dropdown">
+                    <option value="" disabled selected>-- Select a template to import --</option>
+                    <option value="lizard">Lizard (Hexagonal Framework)</option>
+                    <option value="kochSnowflake">Koch Snowflake (Hexagonal Framework)</option>
+                    <option value="cat">Cat (Square Framework)</option>
+                    <option value="letters">Letters (Square Framework)</option>
+                  </select>
+                </div>
+
                 <div class="sidebar-setting-group">
                   <label for="editorLatticeSelect" class="sidebar-setting-label">Active Lattice Grid System</label>
                   <select id="editorLatticeSelect" class="sidebar-setting-dropdown">

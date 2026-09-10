@@ -1,3 +1,5 @@
+import { PRESET_STATES } from '@tessellate3d/core/src/baseMotifs.ts';
+import { type Point2D} from '@tessellate3d/core/src/tessellationEngine.ts'
 import { CustomWorkspace, type MobileInteractionMode } from '../../tileWorkspace.ts';
 import { type LatticeType } from '../../utils/latticeRegistry.ts';
 import { tileEditorTemplate } from './tileEditor.html.ts';
@@ -51,6 +53,7 @@ export class tileEditorComponent {
       btnResetMax: document.getElementById('btnResetMax'),
       editorLatticeSelect: document.getElementById('editorLatticeSelect'),
       editorLatticeSelectCompact: document.getElementById('editorLatticeSelectCompact'),
+      editorPresetSelect: document.getElementById('editorPresetSelect'),
       btnModeEdit: document.getElementById('btnModeEdit'),
       btnModeAdd: document.getElementById('btnModeAdd'),
       btnModeDelete: document.getElementById('btnModeDelete'),
@@ -108,6 +111,9 @@ export class tileEditorComponent {
     // Force HTML input check states back to unselected false on cold open boot
     const sliders = [this.els.chkDrawDetailsCompact, this.els.chkDrawDetailsTouch, this.els.chkDrawDetails];
     sliders.forEach(slider => { if (slider) (slider as HTMLInputElement).checked = false; });
+    if (this.els.editorPresetSelect) {
+      (this.els.editorPresetSelect as HTMLSelectElement).value = "";
+    }
     if (this.els.drawingStatusBanner) this.els.drawingStatusBanner.style.display = 'none';
     this.updateMobileModeButtons('edit');
 
@@ -247,6 +253,39 @@ export class tileEditorComponent {
     this.els.editorLatticeSelect?.addEventListener('change', executeLatticeSystemSwap);
     this.els.editorLatticeSelectCompact?.addEventListener('change', executeLatticeSystemSwap);
 
+    // --- WORKSPACE PRESET IMPORT EVENT INTERCEPTOR ---
+    this.els.editorPresetSelect?.addEventListener('change', (e: Event) => {
+      if (!this.workspaceInstance) return;
+
+      const selectedPresetKey = (e.target as HTMLSelectElement).value;
+
+      if (PRESET_STATES[selectedPresetKey]) {
+        // 1. Generate a clone of preset coordinates
+        const rawPresetState = PRESET_STATES[selectedPresetKey]();
+
+        // 2. Normalize the coordinates to line up with the workspace
+        const workspaceReadyState = translatePresetStateToWorkspace(rawPresetState);
+
+        // 3. Push the translated coordinates to the workspace
+        this.workspaceInstance.loadPresetToWorkspace(workspaceReadyState, 2.0);
+
+        // 4. Synchronize UI drop-downs and form elements
+        this.syncMainDropdownsWithEditorLattice();
+
+        const selectors = [this.els.editorLatticeSelect, this.els.editorLatticeSelectCompact];
+        selectors.forEach(select => {
+          if (select) (select as HTMLSelectElement).value = workspaceReadyState.latticeType;
+        });
+
+        const sliders = [this.els.chkDrawDetailsCompact, this.els.chkDrawDetailsTouch, this.els.chkDrawDetails];
+        sliders.forEach(slider => { if (slider) (slider as HTMLInputElement).checked = false; });
+        this.els.modalContainer?.classList.remove('drawing-session-active');
+        this.updateMobileModeButtons('edit');
+      }
+
+      (e.target as HTMLSelectElement).value = "";
+    });
+
     this.els.btnMaxCompact?.addEventListener('click', () => this.toggleLayoutMode(true));
     this.els.btnRestoreMax?.addEventListener('click', () => this.toggleLayoutMode(false));
   }
@@ -307,6 +346,11 @@ export class tileEditorComponent {
       this.ctx.mainSymmetryGroupSelectElement.value = defaultSymmetryGroup;
     }
 
+    const mainAutoAlignCheck = document.getElementById('useAutoAlignment') as HTMLInputElement | null;
+    if (mainAutoAlignCheck) {
+      mainAutoAlignCheck.checked = true;
+    }
+
     this.ctx.currentConfig.symmetryGroup = defaultSymmetryGroup;
     if ('latticeType' in this.ctx.currentConfig) {
       (this.ctx.currentConfig as any).latticeType = mainLatticeValue;
@@ -349,4 +393,37 @@ export class tileEditorComponent {
       this.els.modalContainer?.classList.remove('drawing-session-active');
     }
   }
+}
+
+/**
+ * Automatically shifts raw exported/logged preset configurations into standard
+ * local workspace view boundaries without altering the original coordinate data.
+ */
+function translatePresetStateToWorkspace(state: ModularEditorState): ModularEditorState {
+  const cloned = JSON.parse(JSON.stringify(state));
+
+  if (cloned.latticeType === 'hexagonal') {
+    const shiftY = 1.0;
+
+    cloned.v1.y += shiftY;
+    cloned.v2.y += shiftY;
+    cloned.v3.y += shiftY;
+    cloned.v4.y += shiftY;
+    cloned.v5.y += shiftY;
+    cloned.v6.y += shiftY;
+
+    ['edgeA', 'edgeB', 'edgeC'].forEach(key => {
+      if (cloned[key]) {
+        cloned[key] = cloned[key].map((pt: Point2D) => ({ x: pt.x, y: pt.y + shiftY }));
+      }
+    });
+
+    if (cloned.activeDetailStroke && cloned.activeDetailStroke.length > 0) {
+      cloned.activeDetailStroke = cloned.activeDetailStroke.map((stroke: any[]) =>
+        stroke.map((pt: any) => ({ x: pt.x, y: pt.y + shiftY }))
+      );
+    }
+  }
+
+  return cloned;
 }

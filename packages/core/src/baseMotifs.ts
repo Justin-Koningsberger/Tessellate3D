@@ -3,7 +3,10 @@ import type { Point2D } from './tessellationEngine.ts';
 import {
   liveEditorState,
   compileSymmetricTile,
-  type ModularEditorState
+  type ModularEditorState,
+  type SquareEditorState,
+  type TriangularEditorState,
+  type HexagonalEditorState
 } from '@tessellate3d/frontend/src/tileSymmetry.ts';
 
 /**
@@ -39,7 +42,14 @@ export interface MotifContext {
   latticeType: 'triangular' | 'hexagonal' | 'square';
 }
 
-export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Point2D[]> = {
+type MotifFunction = (ctx: MotifContext) => Point2D[][] | Point2D[];
+
+type ConfigurableMotif = MotifFunction & {
+  latticeType: 'triangular' | 'hexagonal' | 'square';
+  symmetryGroup: 'p1' | 'p3' | 'p6';
+};
+
+const rawBaseMotifs: Record<string, any> = {
   customTileCompiler: (ctx: MotifContext): Point2D[][] => {
     if (!liveEditorState) {
       console.warn(`⚠️ [Motif Engine] No liveEditorState found. Falling back to default static ${ctx.latticeType} asset.`);
@@ -349,7 +359,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     return components;
   },
 
-    // Chevron base motif - Pre-Normalized to use dynamic width and height
+  // Chevron base motif
   chevron: (ctx: MotifContext): Point2D[] => {
     const w = ctx.cellHeight;
     const h = ctx.cellHeight;
@@ -363,7 +373,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     ];
   },
 
-  // Smooth Sine Wavelet - Pre-Normalized to use dynamic width and height
+  // Smooth Sine Wavelet
   sinewave: (ctx: MotifContext): Point2D[] => {
     const w = ctx.cellHeight;
     const h = ctx.cellHeight;
@@ -380,7 +390,7 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     ];
   },
 
-  // Castle Battlement / Square Wave Motif - Pre-Normalized to use dynamic width and height
+  // Castle Battlement / Square Wave Motif
   squarewave: (ctx: MotifContext): Point2D[] => {
     const w = ctx.cellHeight;
     const h = ctx.cellHeight;
@@ -400,253 +410,284 @@ export const baseMotifs: Record<string, (ctx: MotifContext) => Point2D[][] | Poi
     ];
   },
 
-  lizard: (ctx: MotifContext): Point2D[][] => {
-    const lizardState: ModularEditorState = {
-      latticeType: 'hexagonal',
-      v1: { x: 0, y: -1 },
-      v2: { x: 0.8660254037844386, y: -0.5 },
-      v3: { x: 0.8660254037844386, y: 0.5 },
-      v4: { x: 0, y: 1 },
-      v5: { x: -0.8660254037844386, y: 0.5 },
-      v6: { x: -0.8660254037844386, y: -0.5 },
-
-      edgeA: [
-        { x: 0.42009375000000004, y: -1.11815625 },
-        { x: 0.52809375, y: -1.0521562500000001 },
-        { x: 0.55209375, y: -0.71615625 },
-        { x: 0.29409375000000004, y: -0.53615625 },
-        { x: 0.38409375, y: -0.30215625 },
-        { x: 0.7140937500000001, y: -0.11615625 },
-        { x: 0.79809375, y: -0.31415625 },
-        { x: 0.75009375, y: -0.43415625 }
-      ],
-
-      edgeB: [
-        { x: 0.93009375, y: -0.35015625 },
-        { x: 1.07409375, y: -0.33215625000000004 },
-        { x: 0.9720937500000001, y: -0.12215625000000001 },
-        { x: 0.88809375, y: 0.15984375 },
-        { x: 0.39009375, y: 0.04584375 },
-        { x: 0.28809375000000004, y: 0.17784375000000002 },
-        { x: 0.27609375, y: 0.37584375000000003 },
-        { x: 0.54009375, y: 0.38184375000000004 }
-      ],
-
-      edgeC: [
-        { x: -0.39590625, y: 1.2938437500000002 },
-        { x: -0.67790625, y: 1.36584375 },
-        { x: -0.92390625, y: 1.31184375 },
-        { x: -0.61190625, y: 1.19184375 },
-        { x: -0.43190625000000005, y: 1.07784375 },
-        { x: -0.34790625000000003, y: 0.9278437500000001 },
-        { x: -0.29390625000000004, y: 0.70584375 },
-        { x: -0.51590625, y: 0.51984375 },
-        { x: -0.61190625, y: 0.23184375000000002 },
-        { x: -0.79190625, y: 0.15984375 }
-      ],
-
-      activeDetailStroke: []
-    };
-
-    const rawTile = compileSymmetricTile(lizardState);
-    return normalizeWorkspaceTile(rawTile, lizardState, ctx.cellHeight);
+    lizard: (ctx: MotifContext): Point2D[][] => {
+    const state = PRESET_STATES.lizard!();
+    const rawTile = compileSymmetricTile(state);
+    return normalizeWorkspaceTile(rawTile, state, ctx.cellHeight);
   },
 
   kochSnowflake: (ctx: MotifContext): Point2D[][] => {
-    const snowflakeState: ModularEditorState = {
-      latticeType: 'hexagonal',
-      v1: { x: 0, y: -1 },
-      v2: { x: 0.8660254037844386, y: -0.5 },
-      v3: { x: 0.8660254037844386, y: 0.5 },
-      v4: { x: 0, y: 1 },
-      v5: { x: -0.8660254037844386, y: 0.5 },
-      v6: { x: -0.8660254037844386, y: -0.5 },
-
-      edgeA: [
-        { x: 0.24009375000000002, y: -0.8430000000000001 },
-        { x: 0.3711524566473989, y: -0.9 },
-        { x: 0.35381141618497114, y: -1.0526011560693642 },
-        { x: 0.5133489884393064, y: -0.9693641618497111 },
-        { x: 0.64809375, y: -1.05 },
-        { x: 0.6520773121387283, y: -0.9 },
-        { x: 0.7873374277456648, y: -0.8028901734104047 },
-        { x: 0.6694183526011561, y: -0.7369942196531792 },
-        { x: 0.66609375, y: -0.609 }
-      ],
-
-      edgeB: [
-        { x: 0.87009375, y: -0.255 },
-        { x: 0.74409375, y: -0.192 },
-        { x: 0.55209375, y: -0.342 },
-        { x: 0.54009375, y: -0.12000000000000001 },
-        { x: 0.35409375000000004, y: 0 },
-        { x: 0.52809375, y: 0.10200000000000001 },
-        { x: 0.53409375, y: 0.306 },
-        { x: 0.7080937500000001, y: 0.18000000000000002 },
-        { x: 0.86409375, y: 0.23700000000000002 }
-      ],
-
-      edgeC: [
-        { x: -0.20390625, y: 0.8640000000000001 },
-        { x: -0.20990625000000002, y: 0.7260000000000001 },
-        { x: -0.02390625, y: 0.672 },
-        { x: -0.20390625, y: 0.5700000000000001 },
-        { x: -0.19790625, y: 0.39 },
-        { x: -0.34190625, y: 0.48600000000000004 },
-        { x: -0.52790625, y: 0.36600000000000005 },
-        { x: -0.49790625000000005, y: 0.5700000000000001 },
-        { x: -0.61790625, y: 0.657 }
-      ],
-
-      activeDetailStroke: []
-    };
-
-    const rawTile = compileSymmetricTile(snowflakeState);
-    return normalizeWorkspaceTile(rawTile, snowflakeState, ctx.cellHeight);
+    const state = PRESET_STATES.kochSnowflake!();
+    const rawTile = compileSymmetricTile(state);
+    return normalizeWorkspaceTile(rawTile, state, ctx.cellHeight);
   },
 
   cat: (ctx: MotifContext): Point2D[][] => {
-    const targetHeight = ctx.cellHeight;
-    const originalWorkspaceHeight = 2.0;
-    const scaleFactor = targetHeight / originalWorkspaceHeight;
+    const scale = ctx.cellHeight / 2.0;
 
-    const catState: ModularEditorState = {
-      latticeType: 'square',
-      v1: { x: 0.0, y: 0.0 },
-      v4: { x: 0.0, y: targetHeight },
+    const state = PRESET_STATES.cat!() as SquareEditorState & { activeDetailStroke: Point2D[][] };
+    state.v4.y = ctx.cellHeight;
 
-      edgeTop: [
-        { x: 0.13609374999999996 * scaleFactor, y: -0.02000000000000006 * scaleFactor },
-        { x: 0.38809374999999996 * scaleFactor, y: -0.026000000000000058 * scaleFactor },
-        { x: 0.73009375 * scaleFactor,          y: 0.045999999999999944 * scaleFactor },
-        { x: 0.88609375 * scaleFactor,          y: 0.20199999999999996 * scaleFactor },
-        { x: 1.07209375 * scaleFactor,          y: 0.27999999999999997 * scaleFactor },
-        { x: 1.25809375 * scaleFactor,          y: 0.21999999999999995 * scaleFactor },
-        { x: 1.3780937500000001 * scaleFactor,  y: 0.09399999999999994 * scaleFactor },
-        { x: 1.3780937500000001 * scaleFactor,  y: 0.712 * scaleFactor },
-        { x: 1.19809375 * scaleFactor,          y: 1.276 * scaleFactor },
-        { x: 1.11409375 * scaleFactor,          y: 1.366 * scaleFactor },
-        { x: 0.98209375 * scaleFactor,          y: 1.3840000000000001 * scaleFactor },
-        { x: 0.87409375 * scaleFactor,          y: 1.3780000000000001 * scaleFactor },
-        { x: 0.8020937499999999 * scaleFactor,  y: 1.3 * scaleFactor },
-        { x: 0.77809375 * scaleFactor,          y: 1.234 * scaleFactor },
-        { x: 0.83809375 * scaleFactor,          y: 1.18 * scaleFactor },
-        { x: 0.84409375 * scaleFactor,          y: 1.096 * scaleFactor },
-        { x: 0.75409375 * scaleFactor,          y: 0.982 * scaleFactor },
-        { x: 0.62209375 * scaleFactor,          y: 0.892 * scaleFactor },
-        { x: 0.47209375 * scaleFactor,          y: 0.85 * scaleFactor },
-        { x: 0.31009374999999995 * scaleFactor, y: 0.922 * scaleFactor },
-        { x: 0.22009374999999995 * scaleFactor, y: 1.03 * scaleFactor },
-        { x: 0.22609374999999995 * scaleFactor, y: 1.192 * scaleFactor },
-        { x: 0.33409374999999997 * scaleFactor, y: 1.342 * scaleFactor },
-        { x: 0.44209374999999995 * scaleFactor, y: 1.432 * scaleFactor },
-        { x: 0.5500937499999999 * scaleFactor,  y: 1.534 * scaleFactor },
-        { x: 0.70609375 * scaleFactor,          y: 1.6119999999999999 * scaleFactor },
-        { x: 0.93409375 * scaleFactor,          y: 1.666 * scaleFactor },
-        { x: 1.16209375 * scaleFactor,          y: 1.6239999999999999 * scaleFactor },
-        { x: 1.32409375 * scaleFactor,          y: 1.456 * scaleFactor },
-        { x: 1.46209375 * scaleFactor,          y: 1.252 * scaleFactor },
-        { x: 1.5700937499999998 * scaleFactor,  y: 1.006 * scaleFactor },
-        { x: 1.91809375 * scaleFactor,          y: 0.015999999999999945 * scaleFactor }
-      ],
+    state.edgeTop = state.edgeTop.map((p: Point2D) => ({ x: p.x * scale, y: p.y * scale }));
+    state.edgeLeft = state.edgeLeft.map((p: Point2D) => ({ x: p.x * scale, y: p.y * scale }));
 
-      edgeLeft: [
-        { x: -0.001906250000000057 * scaleFactor, y: 0.32799999999999996 * scaleFactor },
-        { x: 0.13609374999999996 * scaleFactor,   y: 0.292 * scaleFactor },
-        { x: 0.13009374999999995 * scaleFactor,   y: 0.18999999999999995 * scaleFactor },
-        { x: 0.17209374999999996 * scaleFactor,   y: 0.09399999999999994 * scaleFactor },
-        { x: 0.32809374999999996 * scaleFactor,   y: 0.11799999999999995 * scaleFactor },
-        { x: 0.46009374999999997 * scaleFactor,   y: 0.17799999999999996 * scaleFactor },
-        { x: 0.56809375 * scaleFactor,            y: 0.32199999999999995 * scaleFactor },
-        { x: 0.79009375 * scaleFactor,            y: 0.43 * scaleFactor },
-        { x: 0.57409375 * scaleFactor,            y: 0.514 * scaleFactor },
-        { x: 0.50809375 * scaleFactor,            y: 0.61 * scaleFactor },
-        { x: 0.41209375 * scaleFactor,            y: 0.6699999999999999 * scaleFactor },
-        { x: 0.29809374999999994 * scaleFactor,   y: 0.6699999999999999 * scaleFactor },
-        { x: 0.17809374999999994 * scaleFactor,   y: 0.634 * scaleFactor },
-        { x: 0.07609374999999995 * scaleFactor,   y: 0.706 * scaleFactor },
-        { x: -0.013906250000000057 * scaleFactor, y: 1.096 * scaleFactor },
-        { x: 0.21409374999999994 * scaleFactor,   y: 1.432 * scaleFactor },
-        { x: 0.27409374999999997 * scaleFactor,   y: 1.7439999999999998 * scaleFactor },
-        { x: 0.19009374999999995 * scaleFactor,   y: 1.882 * scaleFactor }
-      ],
-      activeDetailStroke: []
-    };
-
-    return compileSymmetricTile(catState);
+    const rawTile = compileSymmetricTile(state as any);
+    return normalizeWorkspaceTile(rawTile, state as any, ctx.cellHeight);
   },
 
-  // Custom Typographic Interlocking Motif
   letters: (ctx: MotifContext): Point2D[][] => {
-    const targetHeight = ctx.cellHeight;
-    const originalWorkspaceHeight = 2.0;
-    const scaleFactor = targetHeight / originalWorkspaceHeight;
+    const scale = ctx.cellHeight / 2.0;
 
-    const lettersState: ModularEditorState = {
-      latticeType: 'square',
-      v1: { x: 0.0, y: 0.0 },
-      v4: { x: 0.0, y: targetHeight },
+    const state = PRESET_STATES.letters!() as SquareEditorState & { activeDetailStroke: Point2D[][] };
+    state.v4.y = ctx.cellHeight;
 
-      edgeTop: [
-        { x: 0.25009374999999995 * scaleFactor, y: 0.027999999999999945 * scaleFactor },
-        { x: 0.44809374999999996 * scaleFactor, y: 0.09999999999999995 * scaleFactor },
-        { x: 0.6820937499999999 * scaleFactor,  y: 0.18999999999999995 * scaleFactor },
-        { x: 0.84409375 * scaleFactor,          y: 0.346 * scaleFactor },
-        { x: 0.94609375 * scaleFactor,          y: 0.514 * scaleFactor },
-        { x: 0.95209375 * scaleFactor,          y: 0.664 * scaleFactor },
-        { x: 0.91609375 * scaleFactor,          y: 0.796 * scaleFactor },
-        { x: 0.88009375 * scaleFactor,          y: 0.874 * scaleFactor },
-        { x: 0.79009375 * scaleFactor,          y: 0.928 * scaleFactor },
-        { x: 0.6820937499999999 * scaleFactor,  y: 1.0 * scaleFactor },
-        { x: 0.56809375 * scaleFactor,          y: 1.054 * scaleFactor },
-        { x: 0.72409375 * scaleFactor,          y: 1.144 * scaleFactor },
-        { x: 0.83809375 * scaleFactor,          y: 1.24 * scaleFactor },
-        { x: 0.88609375 * scaleFactor,          y: 1.366 * scaleFactor },
-        { x: 0.91609375 * scaleFactor,          y: 1.5459999999999998 * scaleFactor },
-        { x: 0.89809375 * scaleFactor,          y: 1.654 * scaleFactor },
-        { x: 0.82009375 * scaleFactor,          y: 1.7619999999999998 * scaleFactor },
-        { x: 0.7276312802663438 * scaleFactor,  y: 1.8680387409200967 * scaleFactor },
-        { x: 0.48792183716707016 * scaleFactor, y: 1.9443099273607747 * scaleFactor },
-        { x: 0.13198963377723966 * scaleFactor, y: 1.9878934624697335 * scaleFactor },
-        { x: 0.92809375 * scaleFactor,          y: 1.96 * scaleFactor },
-        { x: 1.31209375 * scaleFactor,          y: 1.8639999999999999 * scaleFactor },
-        { x: 1.51009375 * scaleFactor,          y: 1.7499999999999998 * scaleFactor },
-        { x: 1.70209375 * scaleFactor,          y: 1.6179999999999999 * scaleFactor },
-        { x: 1.8160937499999998 * scaleFactor,  y: 1.408 * scaleFactor },
-        { x: 1.94209375 * scaleFactor,          y: 1.078 * scaleFactor },
-        { x: 1.91209375 * scaleFactor,          y: 0.724 * scaleFactor },
-        { x: 1.8280937499999999 * scaleFactor,  y: 0.472 * scaleFactor },
-        { x: 1.66009375 * scaleFactor,          y: 0.25599999999999995 * scaleFactor },
-        { x: 1.33009375 * scaleFactor,          y: 0.11199999999999995 * scaleFactor },
-        { x: 1.03609375 * scaleFactor,          y: 0.009999999999999943 * scaleFactor },
-        { x: 1.01209375 * scaleFactor,          y: 1.984 * scaleFactor },
-        { x: 1.1260937500000001 * scaleFactor,  y: 1.984 * scaleFactor },
-        { x: 1.96009375 * scaleFactor,          y: 1.93 * scaleFactor }
-      ],
+    state.edgeTop = state.edgeTop.map((p: Point2D) => ({ x: p.x * scale, y: p.y * scale }));
+    state.edgeLeft = state.edgeLeft.map((p: Point2D) => ({ x: p.x * scale, y: p.y * scale }));
 
-      edgeLeft: [
-        { x: -0.001906250000000057 * scaleFactor, y: 0.25599999999999995 * scaleFactor },
-        { x: 0.22009374999999995 * scaleFactor,   y: 0.298 * scaleFactor },
-        { x: 0.46009374999999997 * scaleFactor,   y: 0.40599999999999997 * scaleFactor },
-        { x: 0.5560937499999999 * scaleFactor,    y: 0.49 * scaleFactor },
-        { x: 0.58609375 * scaleFactor,            y: 0.628 * scaleFactor },
-        { x: 0.50209375 * scaleFactor,            y: 0.73 * scaleFactor },
-        { x: 0.39409374999999996 * scaleFactor,   y: 0.79 * scaleFactor },
-        { x: 0.25009374999999995 * scaleFactor,   y: 0.904 * scaleFactor },
-        { x: 0.0 * scaleFactor,                   y: 1.0 * scaleFactor },
-        { x: 0.004093749999999944 * scaleFactor,  y: 1.15 * scaleFactor },
-        { x: 0.22009374999999995 * scaleFactor,   y: 1.21 * scaleFactor },
-        { x: 0.42409375 * scaleFactor,            y: 1.282 * scaleFactor },
-        { x: 0.52609375 * scaleFactor,            y: 1.3840000000000001 * scaleFactor },
-        { x: 0.56809375 * scaleFactor,            y: 1.498 * scaleFactor },
-        { x: 0.5320937499999999 * scaleFactor,    y: 1.6239999999999999 * scaleFactor },
-        { x: 0.38809374999999996 * scaleFactor,   y: 1.696 * scaleFactor },
-        { x: 0.19609374999999996 * scaleFactor,   y: 1.7619999999999998 * scaleFactor },
-        { x: 0.010093749999999943 * scaleFactor,  y: 1.7979999999999998 * scaleFactor }
-      ],
-      activeDetailStroke: []
-    };
-
-    return compileSymmetricTile(lettersState);
+    const rawTile = compileSymmetricTile(state as any);
+    return normalizeWorkspaceTile(rawTile, state as any, ctx.cellHeight);
   }
 };
+
+export const PRESET_STATES: Record<string, () => ModularEditorState> = {
+  lizard: (): ModularEditorState => ({
+    latticeType: 'hexagonal',
+    v1: { x: 0, y: -1 },
+    v2: { x: 0.8660254037844386, y: -0.5 },
+    v3: { x: 0.8660254037844386, y: 0.5 },
+    v4: { x: 0, y: 1 },
+    v5: { x: -0.8660254037844386, y: 0.5 },
+    v6: { x: -0.8660254037844386, y: -0.5 },
+    edgeA: [
+      { x: 0.42009375000000004, y: -1.11815625 },
+      { x: 0.52809375, y: -1.0521562500000001 },
+      { x: 0.55209375, y: -0.71615625 },
+      { x: 0.29409375000000004, y: -0.53615625 },
+      { x: 0.38409375, y: -0.30215625 },
+      { x: 0.7140937500000001, y: -0.11615625 },
+      { x: 0.79809375, y: -0.31415625 },
+      { x: 0.75009375, y: -0.43415625 }
+    ],
+    edgeB: [
+      { x: 0.93009375, y: -0.35015625 },
+      { x: 1.07409375, y: -0.33215625000000004 },
+      { x: 0.9720937500000001, y: -0.12215625000000001 },
+      { x: 0.88809375, y: 0.15984375 },
+      { x: 0.39009375, y: 0.04584375 },
+      { x: 0.28809375000000004, y: 0.17784375000000002 },
+      { x: 0.27609375, y: 0.37584375000000003 },
+      { x: 0.54009375, y: 0.38184375000000004 }
+    ],
+    edgeC: [
+      { x: -0.39590625, y: 1.2938437500000002 },
+      { x: -0.67790625, y: 1.36584375 },
+      { x: -0.92390625, y: 1.31184375 },
+      { x: -0.61190625, y: 1.19184375 },
+      { x: -0.43190625000000005, y: 1.07784375 },
+      { x: -0.34790625000000003, y: 0.9278437500000001 },
+      { x: -0.29390625000000004, y: 0.70584375 },
+      { x: -0.51590625, y: 0.51984375 },
+      { x: -0.61190625, y: 0.23184375000000002 },
+      { x: -0.79190625, y: 0.15984375 }
+    ],
+    activeDetailStroke: []
+  }),
+
+  kochSnowflake: (): ModularEditorState => ({
+    latticeType: 'hexagonal',
+    v1: { x: 0, y: -1 },
+    v2: { x: 0.8660254037844386, y: -0.5 },
+    v3: { x: 0.8660254037844386, y: 0.5 },
+    v4: { x: 0, y: 1 },
+    v5: { x: -0.8660254037844386, y: 0.5 },
+    v6: { x: -0.8660254037844386, y: -0.5 },
+    edgeA: [
+      { x: 0.24009375, y: -0.84300000 },
+      { x: 0.37115246, y: -0.90000000 },
+      { x: 0.35381142, y: -1.05260116 },
+      { x: 0.51334899, y: -0.96936416 },
+      { x: 0.64809375, y: -1.05000000 },
+      { x: 0.65207731, y: -0.90000000 },
+      { x: 0.78733743, y: -0.80289017 },
+      { x: 0.66941835, y: -0.73699422 },
+      { x: 0.66609375, y: -0.60900000 }
+    ],
+    edgeB: [
+      { x: 0.87009375, y: -0.25500000 },
+      { x: 0.74409375, y: -0.19200000 },
+      { x: 0.55209375, y: -0.34200000 },
+      { x: 0.54009375, y: -0.12000000 },
+      { x: 0.35409375, y: 0.00000000 },
+      { x: 0.52809375, y: 0.10200000 },
+      { x: 0.53409375, y: 0.30600000 },
+      { x: 0.70809375, y: 0.18000000 },
+      { x: 0.86409375, y: 0.23700000 }
+    ],
+    edgeC: [
+      { x: -0.20390625, y: 0.86400000 },
+      { x: -0.20990625, y: 0.72600000 },
+      { x: -0.02390625, y: 0.67200000 },
+      { x: -0.20390625, y: 0.57000000 },
+      { x: -0.19790625, y: 0.39000000 },
+      { x: -0.34190625, y: 0.48600000 },
+      { x: -0.52790625, y: 0.36600000 },
+      { x: -0.49790625, y: 0.57000000 },
+      { x: -0.61790625, y: 0.65700000 }
+    ],
+    activeDetailStroke: []
+  }),
+
+  cat: (): ModularEditorState => ({
+    latticeType: 'square',
+    v1: { x: 0.0, y: 0.0 },
+    v4: { x: 0.0, y: 2.0 },
+    edgeTop: [
+      { x: 0.13609375, y: -0.02000000 },
+      { x: 0.38809375, y: -0.02600000 },
+      { x: 0.73009375, y: 0.04600000 },
+      { x: 0.88609375, y: 0.20200000 },
+      { x: 1.07209375, y: 0.28000000 },
+      { x: 1.25809375, y: 0.22000000 },
+      { x: 1.37809375, y: 0.09400000 },
+      { x: 1.37809375, y: 0.71200000 },
+      { x: 1.19809375, y: 1.27600000 },
+      { x: 1.11409375, y: 1.36600000 },
+      { x: 0.98209375, y: 1.38400000 },
+      { x: 0.87409375, y: 1.37800000 },
+      { x: 0.80209375, y: 1.30000000 },
+      { x: 0.77809375, y: 1.23400000 },
+      { x: 0.83809375, y: 1.18000000 },
+      { x: 0.84409375, y: 1.09600000 },
+      { x: 0.75409375, y: 0.98200000 },
+      { x: 0.62209375, y: 0.89200000 },
+      { x: 0.47209375, y: 0.85000000 },
+      { x: 0.31009375, y: 0.92200000 },
+      { x: 0.22009375, y: 1.03000000 },
+      { x: 0.22609375, y: 1.19200000 },
+      { x: 0.33409375, y: 1.34200000 },
+      { x: 0.44209375, y: 1.43200000 },
+      { x: 0.55009375, y: 1.53400000 },
+      { x: 0.70609375, y: 1.61200000 },
+      { x: 0.93409375, y: 1.66600000 },
+      { x: 1.16209375, y: 1.62400000 },
+      { x: 1.32409375, y: 1.45600000 },
+      { x: 1.46209375, y: 1.25200000 },
+      { x: 1.57009375, y: 1.00600000 },
+      { x: 1.91809375, y: 0.01600000 }
+    ],
+    edgeLeft: [
+      { x: -0.00190625, y: 0.32800000 },
+      { x: 0.13609375,  y: 0.29200000 },
+      { x: 0.13009375,  y: 0.19000000 },
+      { x: 0.17209375,  y: 0.09400000 },
+      { x: 0.32809375,  y: 0.11800000 },
+      { x: 0.46009375,  y: 0.17800000 },
+      { x: 0.56809375,  y: 0.32200000 },
+      { x: 0.79009375,  y: 0.43000000 },
+      { x: 0.57409375,  y: 0.51400000 },
+      { x: 0.50809375,  y: 0.61000000 },
+      { x: 0.41209375,  y: 0.67000000 },
+      { x: 0.29809375,  y: 0.67000000 },
+      { x: 0.17809375,  y: 0.63400000 },
+      { x: 0.07609375,  y: 0.70600000 },
+      { x: -0.01390625, y: 1.09600000 },
+      { x: 0.21409375,  y: 1.43200000 },
+      { x: 0.27409375,  y: 1.74400000 },
+      { x: 0.19009375,  y: 1.88200000 }
+    ],
+    activeDetailStroke: []
+  }),
+
+  letters: (): ModularEditorState => ({
+    latticeType: 'square',
+    v1: { x: 0.0, y: 0.0 },
+    v4: { x: 0.0, y: 2.0 },
+    edgeTop: [
+      { x: 0.25009375, y: 0.02800000 },
+      { x: 0.44809375, y: 0.10000000 },
+      { x: 0.68209375, y: 0.19000000 },
+      { x: 0.84409375, y: 0.34600000 },
+      { x: 0.94609375, y: 0.51400000 },
+      { x: 0.95209375, y: 0.66400000 },
+      { x: 0.91609375, y: 0.79600000 },
+      { x: 0.88009375, y: 0.87400000 },
+      { x: 0.79009375, y: 0.92800000 },
+      { x: 0.68209375, y: 1.00000000 },
+      { x: 0.56809375, y: 1.05400000 },
+      { x: 0.72409375, y: 1.14400000 },
+      { x: 0.83809375, y: 1.24000000 },
+      { x: 0.88609375, y: 1.36600000 },
+      { x: 0.91609375, y: 1.54600000 },
+      { x: 0.89809375, y: 1.65400000 },
+      { x: 0.82009375, y: 1.76200000 },
+      { x: 0.72763128, y: 1.86803874 },
+      { x: 0.48792184, y: 1.94430993 },
+      { x: 0.13198963, y: 1.98789346 },
+      { x: 0.92809375, y: 1.96000000 },
+      { x: 1.31209375, y: 1.86400000 },
+      { x: 1.51009375, y: 1.75000000 },
+      { x: 1.70209375, y: 1.61800000 },
+      { x: 1.81609375, y: 1.40800000 },
+      { x: 1.94209375, y: 1.07800000 },
+      { x: 1.91209375, y: 0.72400000 },
+      { x: 1.82809375, y: 0.47200000 },
+      { x: 1.66009375, y: 0.25600000 },
+      { x: 1.33009375, y: 0.11200000 },
+      { x: 1.03609375, y: 0.01000000 },
+      { x: 1.01209375, y: 1.98400000 },
+      { x: 1.12609375, y: 1.98400000 },
+      { x: 1.96009375, y: 1.93000000 }
+    ],
+    edgeLeft: [
+      { x: -0.00190625, y: 0.25600000 },
+      { x: 0.22009375,  y: 0.29800000 },
+      { x: 0.46009375,  y: 0.40600000 },
+      { x: 0.55609375,  y: 0.49000000 },
+      { x: 0.58609375,  y: 0.62800000 },
+      { x: 0.50209375,  y: 0.73000000 },
+      { x: 0.39409375,  y: 0.79000000 },
+      { x: 0.25009375,  y: 0.90400000 },
+      { x: 0.00000000,  y: 1.00000000 },
+      { x: 0.00409375,  y: 1.15000000 },
+      { x: 0.22009375,  y: 1.21000000 },
+      { x: 0.42409375,  y: 1.28200000 },
+      { x: 0.52609375,  y: 1.38400000 },
+      { x: 0.56809375,  y: 1.49800000 },
+      { x: 0.53209375,  y: 1.62400000 },
+      { x: 0.38809375,  y: 1.69600000 },
+      { x: 0.19609375,  y: 1.76200000 },
+      { x: 0.01009375,  y: 1.79800000 }
+    ],
+    activeDetailStroke: []
+  }),
+};
+
+// =========================================================================
+// Attach layout metadata directly to raw keys
+// =========================================================================
+
+// Square Framework Layouts
+rawBaseMotifs.square.latticeType         = 'square';    rawBaseMotifs.square.symmetryGroup         = 'p1';
+rawBaseMotifs.detailedSquare.latticeType = 'square';    rawBaseMotifs.detailedSquare.symmetryGroup = 'p1';
+rawBaseMotifs.cat.latticeType            = 'square';    rawBaseMotifs.cat.symmetryGroup            = 'p1';
+rawBaseMotifs.letters.latticeType        = 'square';    rawBaseMotifs.letters.symmetryGroup        = 'p1';
+rawBaseMotifs.chevron.latticeType        = 'square';    rawBaseMotifs.chevron.symmetryGroup        = 'p1';
+rawBaseMotifs.sinewave.latticeType    = 'square';    rawBaseMotifs.sinewave.symmetryGroup    = 'p1';
+rawBaseMotifs.squarewave.latticeType     = 'square';    rawBaseMotifs.squarewave.symmetryGroup     = 'p1';
+
+// Triangular Framework Layouts
+rawBaseMotifs.triangle.latticeType         = 'triangular'; rawBaseMotifs.triangle.symmetryGroup         = 'p6';
+rawBaseMotifs.detailedTriangle.latticeType = 'triangular'; rawBaseMotifs.detailedTriangle.symmetryGroup = 'p6';
+
+// Hexagonal Framework Layouts
+rawBaseMotifs.hexagon.latticeType       = 'hexagonal';  rawBaseMotifs.hexagon.symmetryGroup       = 'p3';
+rawBaseMotifs.detailedHexagon.latticeType = 'hexagonal'; rawBaseMotifs.detailedHexagon.symmetryGroup = 'p3';
+rawBaseMotifs.hexPuzzle.latticeType       = 'hexagonal';  rawBaseMotifs.hexPuzzle.symmetryGroup       = 'p3';
+rawBaseMotifs.lizard.latticeType        = 'hexagonal';  rawBaseMotifs.lizard.symmetryGroup        = 'p3';
+rawBaseMotifs.kochSnowflake.latticeType = 'hexagonal';  rawBaseMotifs.kochSnowflake.symmetryGroup = 'p3';
+
+// Main Compiler Track Default Fallback
+rawBaseMotifs.customTileCompiler.latticeType = 'square'; rawBaseMotifs.customTileCompiler.symmetryGroup = 'p1';
+
+// Export with explicit intersection contract
+export const baseMotifs = rawBaseMotifs as Record<string, ConfigurableMotif>;

@@ -79,7 +79,7 @@ const rawBaseMotifs: Record<string, any> = {
     ctx.symmetryGroup = liveEditorState.latticeType === 'square' ? 'p1' : 'p3';
 
     // Used to add new base motifs
-    // console.log("👉 Live editor state:", JSON.stringify(liveEditorState, null, 2));
+    console.log("👉 Live editor state:", JSON.stringify(liveEditorState, null, 2));
 
     // 1. Compile the master interlocking outer edge path loops matrix
     const rawTile = compileSymmetricTile(liveEditorState);

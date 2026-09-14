@@ -27,7 +27,7 @@ I also see a deep structural link between 3D printing and classical relief print
 ### 2. This Engine's Vector-Based Method (Adaptive Forward-Conformal Mapping)
 * Loops through structural grid coordinates (Rings and Branches) on an infinite mathematical plane.
 * Evaluates path coordinates natively in flat continuous space, eliminating layout grid distortion before applying spatial transformations.
-* Processes raw vector shapes (**Base Motifs**) through a highly optimized, conformal warper matrix that scales straight outward from true geometric poles.
+* Processes raw vector shapes (**Base Motifs**) through a conformal warper matrix that scales straight outward from true geometric poles.
 * **Dynamic Resolution Engine:** Features an adaptive post-transformation subdivision engine that scales vertex density proportionally with spatial warping and decay. This seals micro-gaps near high-distortion vortex areas while reducing redundant vertex weights in flat zones.
 * **Result:** Outputs remarkably lightweight, individual vector paths (`<path d="..." />`) natively readable by Inkscape, Illustrator, and 3D slicers while preserving flawless edge-to-edge interlocking continuity.
 

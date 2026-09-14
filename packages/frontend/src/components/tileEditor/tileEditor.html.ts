@@ -142,6 +142,8 @@ export const tileEditorTemplate = `
                     <option value="kochSnowflake">Koch Snowflake (Hexagonal Framework)</option>
                     <option value="cat">Cat (Square Framework)</option>
                     <option value="letters">Letters (Square Framework)</option>
+                    <option value="polyhedrons">Polyhedrons (Square Framework)</option>
+                    <option value="dragon">Dragon Head (Triangular Framework)</option>
                   </select>
                 </div>
 

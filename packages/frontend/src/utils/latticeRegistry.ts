@@ -1,11 +1,12 @@
 import type { Point2D, EngineConfig } from '@tessellate3d/core/src/tessellationEngine.ts';
 import {
-  rotateAroundPivot,
   type ModularEditorState,
   type HexagonalEditorState,
   type SquareEditorState,
   type TriangularEditorState
 } from '../tileSymmetry.ts';
+import { rotateAroundPivot } from '@tessellate3d/core/src/helpers/math.ts';
+
 import type { CanvasProjection } from '../utils/canvasProjection.ts';
 
 export type LatticeType = EngineConfig['latticeType'];

@@ -95,7 +95,7 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     latticePhaseOffset: '-5.00',
     ringDistanceMultiplier: '0.27',
     ringIntersectionFactor: '0.54',
-    applyStroke: false
+    applyStroke: true
   },
   cyclone: {
     variantMode: 'loxodromic',
@@ -103,9 +103,9 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     latticeType: 'triangular',
     symmetryGroup: 'p6',
     useAutoAlignment: true,
-    totalBranches: '10',
-    maxRings: '6',
-    decayMultiplier: '1.00',
+    totalBranches: '20',
+    maxRings: '20',
+    decayMultiplier: '1.33',
     twistFactor: '-0.67',
     staggerFactor: '0.0',
     latticePhaseOffset: '-4.00',
@@ -113,14 +113,14 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     ringIntersectionFactor: '0.54',
     applyStroke: false
   },
-  mitosis: {
-    variantMode: 'multi-pole',
-    baseMotif: 'triangle',
+  dragons: {
+    variantMode: 'single-pole',
+    baseMotif: 'dragon',
     latticeType: 'triangular',
     symmetryGroup: 'p6',
     useAutoAlignment: true,
-    totalBranches: '20',
-    maxRings: '7',
+    totalBranches: '3',
+    maxRings: '3',
     decayMultiplier: '0.65',
     twistFactor: '0.00',
     staggerFactor: '0.0',
@@ -143,7 +143,7 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     latticePhaseOffset: '0.00',
     ringDistanceMultiplier: '0.27',
     ringIntersectionFactor: '0.54',
-    applyStroke: false
+    applyStroke: true
   },
   lizzards: {
     variantMode: 'loxodromic',
@@ -159,7 +159,7 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     latticePhaseOffset: '-3.50',
     ringDistanceMultiplier: '1.27',
     ringIntersectionFactor: '0.54',
-    applyStroke: true
+    applyStroke: false
   },
   hexPuzzle: {
     variantMode: 'logarithmic',
@@ -175,7 +175,7 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     latticePhaseOffset: '3.50',
     ringDistanceMultiplier: '1.3',
     ringIntersectionFactor: '1.21',
-    applyStroke: false
+    applyStroke: true
   }
 };
 

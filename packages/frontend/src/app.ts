@@ -163,15 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // TELEMETRY STACK LOGGING
-    console.log("⚙️ [Pipeline] Preparing math execution pass. Final scraped config parameters:", {
-      variantMode: currentConfig.variantMode,
-      baseMotif: currentConfig.baseMotif,
-      symmetryGroup: currentConfig.symmetryGroup,
-      latticeType: currentConfig.latticeType
-    });
+    // console.log("⚙️ [Pipeline] Preparing math execution pass. Final scraped config parameters:", {
+    //   variantMode: currentConfig.variantMode,
+    //   baseMotif: currentConfig.baseMotif,
+    //   symmetryGroup: currentConfig.symmetryGroup,
+    //   latticeType: currentConfig.latticeType
+    // });
 
     try {
-      console.log("⚙️ [Pipeline] Invoking core generateTessellation()...");
+      // console.log("⚙️ [Pipeline] Invoking core generateTessellation()...");
       // Execute pure transformation pass natively in-browser
       const svgString = generateTessellation(currentConfig);
 

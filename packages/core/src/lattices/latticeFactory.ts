@@ -1,8 +1,8 @@
-import { LatticeStrategy } from './types.ts';
+import type { LatticeStrategy } from './types.ts';
 import { TriangularLattice } from './triangularLattice.ts';
 import { SquareLattice } from './squareLattice.ts';
 import { HexagonalLattice } from './hexagonalLattice.ts';
-import { EngineConfig } from '../tessellationEngine.ts';
+import type { EngineConfig } from '../tessellationEngine.ts';
 
 export class LatticeFactory {
   static getStrategy(

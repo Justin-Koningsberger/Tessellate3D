@@ -1,4 +1,5 @@
 import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
+import { rotateAroundPivot } from '@tessellate3d/core/src/helpers/math';
 
 export interface BaseEditorState {
   v1: Point2D; // Base origin node anchor common across shapes
@@ -47,22 +48,6 @@ export let liveEditorState: ModularEditorState | null = null;
 
 export function updateLiveEditorState(newState: ModularEditorState): void {
   liveEditorState = newState;
-}
-
-/**
- * 2D Vector Rotation around an arbitrary anchor pivot point.
- */
-export function rotateAroundPivot(point: Point2D, pivot: Point2D, angleDegrees: number): Point2D {
-  const radians = (angleDegrees * Math.PI) / 180;
-  const cos = Math.cos(radians);
-  const sin = Math.sin(radians);
-  const dx = point.x - pivot.x;
-  const dy = point.y - pivot.y;
-
-  return {
-    x: dx * cos - dy * sin + pivot.x,
-    y: dx * sin + dy * cos + pivot.y
-  };
 }
 
 /**

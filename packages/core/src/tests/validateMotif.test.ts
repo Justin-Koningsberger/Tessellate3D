@@ -1,6 +1,11 @@
 import type { Point2D } from '../tessellationEngine.ts';
 import { baseMotifs, type MotifContext } from '../baseMotifs.ts';
 
+type MotifGeneratorFn = ((ctx: MotifContext) => Point2D[][] | Point2D[]) & {
+  latticeType?: 'square' | 'triangular' | 'hexagonal';
+  symmetryGroup?: 'p1' | 'p3' | 'p6';
+};
+
 /**
  * Validates a single design motif configuration against physical tile matching limits.
  * Third-person narrative tracking ensures boundary synchronization constraints are met.
@@ -8,13 +13,22 @@ import { baseMotifs, type MotifContext } from '../baseMotifs.ts';
 function validateMotif(name: string, func: (ctx: MotifContext) => Point2D[][] | Point2D[]): boolean {
   console.log(`Checking [${name}]...`);
   const simulatedBranches = 12;
-  const testHeight = (Math.PI * 2) / simulatedBranches; // Evaluates to ~0.5235
+  const testHeight = (Math.PI * 2) / simulatedBranches;
+
+  const latticeType = 'latticeType' in func ? (func as any).latticeType : null;
+  const symmetryGroup = 'symmetryGroup' in func ? (func as any).symmetryGroup : null;
+  const targetLatticeType = latticeType || (name.toLowerCase().includes('hex') ? 'hexagonal' : 'triangular');
+
+  let defaultSymmetry: 'p1' | 'p3' | 'p6' = 'p6';
+  if (targetLatticeType === 'hexagonal') defaultSymmetry = 'p3';
+  if (targetLatticeType === 'square') defaultSymmetry = 'p1';
+
+  const targetSymmetryGroup = symmetryGroup || defaultSymmetry;
 
   const mockCtx: MotifContext = {
     cellHeight: testHeight,
-    symmetryGroup: 'p1',
-    latticeType: name.toLowerCase().includes('hex') ? 'hexagonal' : 'triangular'
-    // TODO: add a latticeType property metadata to the motifs themselves
+    symmetryGroup: targetSymmetryGroup,
+    latticeType: targetLatticeType
   };
 
   const rawData = func(mockCtx);
@@ -53,24 +67,26 @@ function validateMotif(name: string, func: (ctx: MotifContext) => Point2D[][] | 
     return false;
   }
 
-  // Evaluate structural constraints based on layout geometry
-  // TODO: Add latticeType information directly to basemotif type to create a clean guard clause
-  const isHexagonAsset = name.toLowerCase().includes('hex') || name === 'lizard' || name === 'kochSnowflake';
-  if (isHexagonAsset) {
+  // Evaluate structural constraints based on actual active lattice type configuration
+  if (targetLatticeType === 'hexagonal') {
     if (bottomLeft.x !== 0.0 || bottomLeft.y !== 0.0) {
       console.error(`❌ Error: Hexagonal loops must close completely back at the origin axis {x: 0, y: 0}. Found:`, bottomLeft);
       return false;
     }
   } else {
-    if (bottomLeft.x !== 0.0 || Math.abs(bottomLeft.y - testHeight) > 0.001) {
-      console.error(`❌ Error: Square/Triangular paths must end uniformly at the base boundary link point {x: 0, y: cellHeight}. Found:`, bottomLeft);
+    // Old manually created basemotifs, or exported from live editor
+    const isStandardLink = bottomLeft.x === 0.0 && Math.abs(bottomLeft.y - testHeight) < 0.001;
+    const isClampedLink = bottomLeft.x === 0.0 && bottomLeft.y === 0.0;
+
+    if (!isStandardLink && !isClampedLink) {
+      console.error(`❌ Error: Square/Triangular paths must end uniformly at either {x: 0, y: cellHeight} or {x: 0, y: 0}. Found:`, bottomLeft);
       return false;
     }
   }
 
   console.log(`✅ ${name} passed boundary constraints! (${points.length} structural nodes verified)`);
   return true;
-  };
+}
 
 /**
  * Orchestrates verification passes over the entire active geometric profile suite.
@@ -81,7 +97,7 @@ function runBoundarySuite(): void {
 
   // Track individual profile outcomes over the typed module records
   Object.keys(baseMotifs).forEach(key => {
-    const targetGenerator = baseMotifs[key];
+    const targetGenerator = baseMotifs[key] as MotifGeneratorFn;
     if (!targetGenerator) return;
 
     const success = validateMotif(key, targetGenerator);

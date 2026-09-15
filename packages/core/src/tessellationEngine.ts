@@ -2,9 +2,9 @@ import * as fs from 'fs';
 import { baseMotifs } from './baseMotifs.ts';
 import { forward } from './transforms/forward.ts';
 import { normalizeSpiralLayout, generateSvgPath } from './helpers/svgPathUtils.ts';
-import { rotateAroundPivot } from '@tessellate3d/frontend/src/tileSymmetry.ts'
+import { rotateAroundPivot } from './helpers/math.ts'
 import { LatticeFactory } from './lattices/latticeFactory.ts';
-import { LatticeContext } from './lattices/types.ts';
+import type { LatticeContext } from './lattices/types.ts';
 import { applyWallpaperSymmetry } from './wallpaperSymmetry.ts'
 
 export interface Point2D {

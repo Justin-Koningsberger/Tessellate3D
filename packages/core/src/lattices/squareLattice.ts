@@ -1,4 +1,4 @@
-import { LatticeStrategy, Point2D, LatticeContext } from './types.ts';
+import type { LatticeStrategy, Point2D, LatticeContext } from './types.ts';
 
 export class SquareLattice implements LatticeStrategy {
   private symmetryGroup: string;

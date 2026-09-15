@@ -1,5 +1,5 @@
-import { EngineConfig, Point2D } from './tessellationEngine.ts';
-import { rotateAroundPivot } from '@tessellate3d/frontend/src/tileSymmetry.ts';
+import type { EngineConfig, Point2D } from './tessellationEngine.ts';
+import { rotateAroundPivot } from './helpers/math.ts';
 
 /**
  * Wallpaper Symmetry Engine.

@@ -3,9 +3,9 @@ import assert from 'node:assert';
 import {
   compileSymmetricTile,
   type ModularEditorState,
-  type HexagonalEditorState } from '@tessellate3d/frontend/src/tileSymmetry.ts';
-import { rotateAroundPivot } from '../helpers/math.ts';
-import type { Point2D } from '../tessellationEngine.ts';
+  type HexagonalEditorState } from '../tileSymmetry.ts';
+import { rotateAroundPivot } from '@tessellate3d/core/src/helpers/math';
+import type { Point2D } from '@tessellate3d/core/src/tessellationEngine.ts';
 
 // Helper function to handle floating point tolerance assertions
 function assertCloseTo(actual: number, expected: number, precision: number = 4) {
@@ -16,7 +16,6 @@ function assertCloseTo(actual: number, expected: number, precision: number = 4) 
   );
 }
 
-// TODO: move this file to the frontend package
 describe('Custom Symmetry Matrix Engine', () => {
   it('should accurately rotate 2D vector coordinates 120 degrees around a fixed vertex pivot', () => {
     const pivot: Point2D = { x: 0.0, y: 0.0 };

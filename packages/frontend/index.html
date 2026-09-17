@@ -189,9 +189,8 @@
             <option value="none">None</option>
             <option value="logarithmic">Logarithmic Spiral</option>
             <option value="loxodromic">Loxodromic Twist</option>
-            <option value="single-pole" selected>Single-Pole Decay</option>
-            <!-- FIX: default auto-align values need to be updated. Might be a good moment to add manual pole placement? -->
-            <!-- <option value="multi-pole">Multi-Pole Hyperbolic</option> -->
+            <option value="single-pole">Single-Pole Decay</option>
+            <option value="multi-pole" selected>Multi-Pole Hyperbolic</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Changes the layout style (no transform, spinning into a spiral or twisting around one or two core/s).">ⓘ</span>
         </div>
@@ -202,8 +201,8 @@
         <label for="baseMotif">Base Motif Geometry</label>
         <div class="input-row-with-icon">
           <select id="baseMotif" aria-describedby="motif-help-text">
-            <option value="customTileCompiler" selected>Custom Tile</option>
-            <option value="square">Square</option>
+            <option value="customTileCompiler">Custom Tile</option>
+            <option value="square" selected>Square</option>
             <option value="triangle">Triangle</option>
             <option value="hexagon">Hexagon</option>
             <option value="cat">Cat</option>
@@ -229,8 +228,8 @@
         <label for="latticeType">Symmetry Base Lattice</label>
         <div class="input-row-with-icon">
           <select id="latticeType" aria-describedby="lattice-help-text">
-            <option value="square">Square</option>
-            <option value="triangular" selected>Triangular</option>
+            <option value="square" selected>Square</option>
+            <option value="triangular">Triangular</option>
             <option value="hexagonal">Hexagonal</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Switches layout packing configurations between square, triangular, and hexagonal grids.">ⓘ</span>
@@ -242,9 +241,9 @@
         <label for="symmetryGroup">Wallpaper Symmetry Group</label>
         <div class="input-row-with-icon">
           <select id="symmetryGroup" aria-describedby="symmetry-help-text">
-            <option value="p1">p1 (Linear Translation)</option>
+            <option value="p1" selected>p1 (Linear Translation)</option>
             <option value="p3">p3 (3-Fold Rotations  )</option>
-            <option value="p6" selected>p6 (6-Fold Rotations)</option>
+            <option value="p6">p6 (6-Fold Rotations)</option>
           </select>
           <span class="info-icon" aria-hidden="true" title="Determines how the tile is replicated across space, either by sliding it in straight lines or rotating it around its corners.">ⓘ</span>
         </div>
@@ -253,7 +252,7 @@
 
       <!-- Only visible in dev mode -->
       <label class="row" id="debugging-grid-row">
-        <input type="checkbox" id="showDebugLabels" />
+        <input type="checkbox" id="showDebugLabels" checked />
         <span>Show branch and ring labels</span>
       </label>
 
@@ -304,9 +303,9 @@
       </label> -->
 
       <div class="form-group-accessible" id="decayContainer">
-        <label for="decayMultiplier" class="slider-label-row">Inward Scale Decay Multiplier: <span id="decayMultiplier-val" class="slider-value-highlight" aria-live="polite">0.85</span></label>
+        <label for="decayMultiplier" class="slider-label-row">Inward Scale Decay Multiplier: <span id="decayMultiplier-val" class="slider-value-highlight" aria-live="polite">0.60</span></label>
         <div class="input-row-with-icon">
-          <input type="range" id="decayMultiplier" min="0.1" max="2.0" step="0.01" value="0.85" aria-describedby="decay-help-text" />
+          <input type="range" id="decayMultiplier" min="0.1" max="2.0" step="0.01" value="0.60" aria-describedby="decay-help-text" />
           <span class="info-icon" aria-hidden="true" title="Sets how quickly shapes shrink as they aproach the center.">ⓘ</span>
         </div>
         <span id="decay-help-text" class="sr-only">Sets how quickly shapes shrink as they aproach the center.</span>

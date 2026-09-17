@@ -21,6 +21,10 @@ export const CONFIG: EngineConfig = {
     ringDistanceMultiplier: 1.0, // Adjusts the gap between the upright and inverted triangles within each ring
     ringIntersectionFactor: 1.0, // Adjusts the distance between rings with triangles.
     latticePhaseOffset: 1.0,  // Whole numbers make triangles snap edge to edge, half numbers make triangles overlap halfway
+    poleOffset: {
+      x: 0.15,
+      y: -0.10,
+    }
   },
 
   applyStroke: false,

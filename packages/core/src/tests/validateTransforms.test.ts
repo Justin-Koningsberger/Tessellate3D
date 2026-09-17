@@ -18,6 +18,7 @@ function assertCloseTo(actual: number, expected: number, message: string): void 
   }
 }
 
+// TODO: Update tests to include poleoffset after the implementation is stable
 function runTransformSuite(): void {
   console.log("====================================================");
   console.log(" RUNNING MASTER TRANSFORM VALIDATION SUITE");
@@ -33,7 +34,7 @@ function runTransformSuite(): void {
 
     // 2. SINGLE-POLE SPIRAL
     console.log("--> Testing: forwardSinglePoleSpiral...");
-    const singleResult = forward.singlePole({ x: 1.0, y: Math.PI / 2 }, MOCK_SCALE, MOCK_DECAY);
+    const singleResult = forward.singlePole({ x: 1.0, y: Math.PI / 2 }, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
     assertCloseTo(singleResult.x, 0.000, "SinglePole X Error");
      // Input (1, pi/2) yields r = 180 * e^1 = 489.291 -> x = 0, y = 489.291
     assertCloseTo(singleResult.y, 489.290, "SinglePole Y Error");
@@ -41,14 +42,14 @@ function runTransformSuite(): void {
 
     // 3. LOXODROMIC TWIST
     console.log("--> Testing: forwardLoxodromicSpiral...");
-    const loxResult = forward.loxodromic({ x: 1.0, y: 0.0 }, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY);
+    const loxResult = forward.loxodromic({ x: 1.0, y: 0.0 }, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, { x: 0.0, y: 0.0 });
     assertCloseTo(loxResult.x, 59.626, "Loxodromic X Error");
     assertCloseTo(loxResult.y, 28.803, "Loxodromic Y Error");
     console.log("    ✓ forwardLoxodromicSpiral passed validation.\n");
 
     // 4. MULTI-POLE HYPERBOLIC
     console.log("--> Testing: forwardMultiPoleHyperbolic...");
-    const multiResult = forward.multiPole({ x: 0.0, y: 0.0 }, MOCK_SCALE, MOCK_DECAY);
+    const multiResult = forward.multiPole({ x: 0.0, y: 0.0 }, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
     // Input (0,0) yields r=1, theta=0 -> cx=1, cy=0 -> sin(1)*cosh(0) = 0.84147 * 1 -> 0.84147 * 180 (scale) = 151.465
     assertCloseTo(multiResult.x, 151.465, "MultiPole X Error");
     assertCloseTo(multiResult.y, 0.000, "MultiPole Y Error");
@@ -76,11 +77,11 @@ function runTransformSuite(): void {
       let coordB: { x: number; y: number };
 
       if (variant === "single-pole") {
-        coordA = forward.singlePole(gridSpaceA, MOCK_SCALE, MOCK_DECAY);
-        coordB = forward.singlePole(gridSpaceB, MOCK_SCALE, MOCK_DECAY);
+        coordA = forward.singlePole(gridSpaceA, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
+        coordB = forward.singlePole(gridSpaceB, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
       } else {
-        coordA = forward.loxodromic(gridSpaceA, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY);
-        coordB = forward.loxodromic(gridSpaceB, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY);
+        coordA = forward.loxodromic(gridSpaceA, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, { x: 0.0, y: 0.0 });
+        coordB = forward.loxodromic(gridSpaceB, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, { x: 0.0, y: 0.0 });
       }
 
       // 3. ASSERTION: The distance between the seams must be zero

@@ -28,11 +28,14 @@ export const forward = {
    */
 
   // treating coordinates strictly after computing the log-radial coordinate.
-  singlePole: (point: Point2D, scale: number, decayMultiplier: number): Point2D => {
+  singlePole: (point: Point2D, scale: number, decayMultiplier: number, poleOffset: { x: number; y: number }): Point2D => {
+    // Shift the grid inputs before the transcendental projection runs
+    const targetX = point.x - poleOffset.x;
+    const targetY = point.y - poleOffset.y;
     // Determine exponential radial depth from center
-    const r = scale * Math.exp(point.x * decayMultiplier);
+    const r = scale * Math.exp(targetX * decayMultiplier);
 
-    return { x: r * Math.cos(point.y), y: r * Math.sin(point.y) };
+    return { x: r * Math.cos(targetY), y: r * Math.sin(targetY) };
   },
 
   /**
@@ -45,19 +48,23 @@ export const forward = {
    * COMPONENT-ISOLATED TRANSCENDENTAL MAP
    * Maps tile coordinates to complex sine space to prevent boundary tearing,
    */
-  multiPole: (point: Point2D, scale: number, decayMultiplier: number): Point2D => {
-    // 1. Establish structural base scale
-    const r = Math.exp(point.x * decayMultiplier);
+  multiPole: (point: Point2D, scale: number, decayMultiplier: number, poleOffset: { x: number; y: number }): Point2D => {
+    // 1. Shift the grid inputs
+    const targetX = point.x - poleOffset.x;
+    const targetY = point.y - poleOffset.y;
 
-    // 2. Map coordinates into complex numbers
-    const cx = r * Math.cos(point.y);
-    const cy = r * Math.sin(point.y);
+    // 2. Establish structural base scale using shifted space
+    const r = Math.exp(targetX * decayMultiplier);
 
-    // 3. Process through complex analytic sine transformation
+    // 3. Map shifted coordinates into complex number
+    const cx = r * Math.cos(targetY);
+    const cy = r * Math.sin(targetY);
+
+    // 4. Process through complex analytic sine transformation
     const baseUnitX = Math.sin(cx) * Math.cosh(cy);
     const baseUnitY = Math.cos(cx) * Math.sinh(cy);
 
-    // 4. Multiply by global scale
+    // 5. Multiply by global scale
     const finalX = scale * baseUnitX;
     const finalY = scale * baseUnitY;
 
@@ -69,16 +76,21 @@ export const forward = {
    * Couples the exponential decay directly with a rotational phase shift.
    * This curves the tile grids smoothly into interlocking whirlpool spirals.
    */
-  loxodromic: (point: Point2D, scale: number, twistFactor: number, decayMultiplier: number): Point2D => {
-    // 1. Core log-periodic scaling factor mapping grid depth
-    const factor = Math.exp(-point.x * decayMultiplier);
+  loxodromic: (point: Point2D, scale: number, twistFactor: number, decayMultiplier: number, poleOffset: { x: number; y: number }): Point2D => {
+    // 0. Apply pre-image grid offset shift
+    const targetX = point.x - poleOffset.x;
+    const targetY = point.y - poleOffset.y;
+
+    // 1. Log-periodic scaling factor
+    const factor = Math.exp(-targetX * decayMultiplier);
+
     const r = scale * factor;
 
     // 2. Section 3.3 Complex Rotation Injection:
     // We modify theta by adding a structural phase shift proportional to grid position.
     // This smoothly curls the paths without introducing destructive area shear.
-    // Twist is injected as a linear phase shift based on depth (point.x).
-    const theta = point.y + (point.x * twistFactor);
+    // Twist is injected as a linear phase shift based on depth (targetX).
+    const theta = targetY + (targetX * twistFactor);
 
     return {
       x: r * Math.cos(theta),

@@ -39,6 +39,10 @@ export interface EngineConfig {
     ringDistanceMultiplier: number;
     ringIntersectionFactor: number;
     latticePhaseOffset: number;
+    poleOffset: {
+      x: number;
+      y: number;
+    };
   };
   applyStroke: boolean;
   colorPalette: string[];
@@ -131,9 +135,14 @@ function getSmoothComponents(
 ): Point2D[][] {
   const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
     const adjustedPt = { ...pt };
-    if (adjustedConfig.latticeType === 'triangular') {
-      adjustedPt.x *= Math.sqrt(3) / 2;
+    // Normalize coordinate grid step scales linearly to match hexagon lattice density bounds
+    if (adjustedConfig.latticeType === 'square') {
+      adjustedPt.x *= 0.25;
+    } else if (adjustedConfig.latticeType === 'triangular') {
+      adjustedPt.x *= 0.50;
     }
+
+    const offsetFallback = adjustedConfig.layout.poleOffset ?? { x: 0.0, y: 0.0 };
 
     switch (adjustedConfig.variantMode) {
       case 'none':
@@ -141,12 +150,12 @@ function getSmoothComponents(
       case 'logarithmic':
         return forward.logarithmic(adjustedPt, globalScale);
       case 'single-pole':
-        return forward.singlePole(adjustedPt, globalScale, decayMultiplier);
+        return forward.singlePole(adjustedPt, globalScale, decayMultiplier, offsetFallback);
       case 'multi-pole':
-        return forward.multiPole(adjustedPt, globalScale, decayMultiplier);
+        return forward.multiPole(adjustedPt, globalScale, decayMultiplier, offsetFallback);
       case 'loxodromic':
       default:
-        return forward.loxodromic(adjustedPt, globalScale, twistFactor, decayMultiplier);
+        return forward.loxodromic(adjustedPt, globalScale, twistFactor, decayMultiplier, offsetFallback);
     }
   };
 
@@ -246,18 +255,34 @@ export function generateTessellation(config: EngineConfig): string {
               }
             };
 
-            // 4. Translate, scale, and adjust the finalized grid spaces inside the chosen strategy module
-            const gridSpace = strategy.finalizeGridSpace(symmetryMappedPoint, shearedPoint, orientation, ctx);
+            // 4. Translate, scale, and adjust the finalized grid space inside the chosen strategy
+            let gridSpace = strategy.finalizeGridSpace(symmetryMappedPoint, shearedPoint, orientation, ctx);
+
+            // Keep preprocessed smoothing paths and cell geometry perfectly synchronized
+            if (config.latticeType === 'square') {
+              gridSpace = { x: gridSpace.x * 0.25, y: gridSpace.y };
+            } else if (config.latticeType === 'triangular') {
+              gridSpace = { x: gridSpace.x * 0.50, y: gridSpace.y };
+            }
 
             // 5. Warp flat coordinates into non-Euclidean spaces using conformal mappings
             let finalPoint: Point2D;
+
+
+            // TODO: do we need the cath still?
+            const mainOffsetFallback = config.layout.poleOffset ?? { x: 0.0, y: 0.0 };
+
             switch (config.variantMode) {
               case "none": return gridSpace;
               case "logarithmic": finalPoint = forward.logarithmic(gridSpace, globalScale); break;
-              case "single-pole": finalPoint = forward.singlePole(gridSpace, globalScale, decayMultiplier); break;
-              case "multi-pole": finalPoint = forward.multiPole(gridSpace, globalScale, decayMultiplier); break;
+              case "single-pole": finalPoint = forward.singlePole(gridSpace, globalScale, decayMultiplier, mainOffsetFallback); break;
+              case "multi-pole":
+                finalPoint = forward.multiPole(gridSpace, globalScale, decayMultiplier, mainOffsetFallback);
+                break;
               case "loxodromic":
-              default: finalPoint = forward.loxodromic(gridSpace, globalScale, twistFactor, decayMultiplier); break;
+              default:
+                finalPoint = forward.loxodromic(gridSpace, globalScale, twistFactor, decayMultiplier, mainOffsetFallback);
+                break;
             }
 
             return finalPoint;

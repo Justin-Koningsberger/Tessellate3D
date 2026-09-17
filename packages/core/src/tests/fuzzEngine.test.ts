@@ -79,6 +79,8 @@ function evaluateVariantExtended(
       ringDistanceMultiplier: getRandom(0.1, 2.0),
       ringIntersectionFactor: getRandom(0.1, 2.0),
       latticePhaseOffset: getRandom(-5.0, 5.0),
+      // TODO: randomize values
+      poleOffset: { x: 0.0, y: 0.0 }
     },
     applyStroke: false,
   };
@@ -104,24 +106,24 @@ function evaluateVariantExtended(
         const gridA_sp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_sp = applyWallpaperSymmetry(pointB, -randomTestRing, randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_sp;
-        coordA = forward.singlePole(gridA_sp, scale, decay);
-        coordB = forward.singlePole(gridB_sp, scale, decay);
+        coordA = forward.singlePole(gridA_sp, scale, decay, { x: 0.0, y: 0.0 });
+        coordB = forward.singlePole(gridB_sp, scale, decay, { x: 0.0, y: 0.0 });
         break;
 
       case "loxodromic":
         const gridA_lox = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_lox = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_lox;
-        coordA = forward.loxodromic(gridA_lox, scale, twist, decay);
-        coordB = forward.loxodromic(gridB_lox, scale, twist, decay);
+        coordA = forward.loxodromic(gridA_lox, scale, twist, decay, { x: 0.0, y: 0.0 });
+        coordB = forward.loxodromic(gridB_lox, scale, twist, decay, { x: 0.0, y: 0.0 });
         break;
 
       case "multi-pole":
         const gridA_mp = applyWallpaperSymmetry(pointA, -(randomTestRing + 1), randomTestBranch, mockContext.layout.totalBranches, 0);
         const gridB_mp = applyWallpaperSymmetry(pointB, -randomTestRing,       randomTestBranch, mockContext.layout.totalBranches, 0);
         originalGridA = gridA_mp;
-        coordA = forward.multiPole(gridA_mp, scale, decay);
-        coordB = forward.multiPole(gridB_mp, scale, decay);
+        coordA = forward.multiPole(gridA_mp, scale, decay, { x: 0.0, y: 0.0 });
+        coordB = forward.multiPole(gridB_mp, scale, decay, { x: 0.0, y: 0.0 });
         break;
 
       default:
@@ -152,11 +154,11 @@ function evaluateVariantExtended(
       // 2. Project forward into canvas coordinate vectors
       let forwardInteriorPoint: Point2D;
       if (name === "single-pole") {
-        forwardInteriorPoint = forward.singlePole(pristineTilePoint, scale, decay);
+        forwardInteriorPoint = forward.singlePole(pristineTilePoint, scale, decay, { x: 0.0, y: 0.0 });
       } else if (name === "loxodromic") {
-        forwardInteriorPoint = forward.loxodromic(pristineTilePoint, scale, twist, decay);
+        forwardInteriorPoint = forward.loxodromic(pristineTilePoint, scale, twist, decay, { x: 0.0, y: 0.0 });
       } else {
-        forwardInteriorPoint = forward.multiPole(pristineTilePoint, scale, decay);
+        forwardInteriorPoint = forward.multiPole(pristineTilePoint, scale, decay, { x: 0.0, y: 0.0 });
       }
 
       // 3. Round-trip the canvas coordinate back through the inverse solver engine

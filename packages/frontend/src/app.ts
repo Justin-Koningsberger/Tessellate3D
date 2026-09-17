@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.applyStroke = els.applyStroke.checked;
 
     currentConfig.layout = {
+      // ...currentConfig.layout,
       totalBranches: parseInt(els.totalBranches.value, 10),
       maxRings: parseInt(els.maxRings.value, 10),
       globalScale: 1.0, // Hardcoded engine baseline value to satisfy strict configuration types

@@ -24,6 +24,9 @@ function runTransformSuite(): void {
   console.log(" RUNNING MASTER TRANSFORM VALIDATION SUITE");
   console.log("====================================================\n");
 
+  // Setup a strict non-zero offset profile to ensure offset drift safety
+  const testOffset = { x: 0.25, y: -0.15 };
+
   try {
     // 1. LOGARITHMIC SPIRAL
     console.log("--> Testing: forwardLogSpiral...");
@@ -32,33 +35,31 @@ function runTransformSuite(): void {
     assertCloseTo(logResult.y, 0.000, "LogSpiral Y Error");
     console.log("    ✓ forwardLogSpiral passed validation.\n");
 
-    // 2. SINGLE-POLE SPIRAL
-    console.log("--> Testing: forwardSinglePoleSpiral...");
-    const singleResult = forward.singlePole({ x: 1.0, y: Math.PI / 2 }, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
-    assertCloseTo(singleResult.x, 0.000, "SinglePole X Error");
-     // Input (1, pi/2) yields r = 180 * e^1 = 489.291 -> x = 0, y = 489.291
-    assertCloseTo(singleResult.y, 489.290, "SinglePole Y Error");
-    console.log("    ✓ forwardSinglePoleSpiral passed validation.\n");
+    // 2. SINGLE-POLE SPIRAL (WITH SHIFT)
+    console.log("--> Testing: forwardSinglePoleSpiral (Shifted)...");
+    const singleResult = forward.singlePole({ x: 1.0, y: Math.PI / 2 }, MOCK_SCALE, MOCK_DECAY, testOffset);
+    assertCloseTo(singleResult.x, -56.945, "Shifted SinglePole X Error");
+    assertCloseTo(singleResult.y, 376.781, "Shifted SinglePole Y Error");
+    console.log("    ✓ forwardSinglePoleSpiral (Shifted) passed validation.\n");
 
-    // 3. LOXODROMIC TWIST
-    console.log("--> Testing: forwardLoxodromicSpiral...");
-    const loxResult = forward.loxodromic({ x: 1.0, y: 0.0 }, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, { x: 0.0, y: 0.0 });
-    assertCloseTo(loxResult.x, 59.626, "Loxodromic X Error");
-    assertCloseTo(loxResult.y, 28.803, "Loxodromic Y Error");
-    console.log("    ✓ forwardLoxodromicSpiral passed validation.\n");
+    // 3. LOXODROMIC TWIST (WITH SHIFT)
+    console.log("--> Testing: forwardLoxodromicSpiral (Shifted)...");
+    const loxResult = forward.loxodromic({ x: 1.0, y: 0.0 }, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, testOffset);
+    assertCloseTo(loxResult.x, 75.121, "Shifted Loxodromic X Error");
+    assertCloseTo(loxResult.y, 39.828, "Shifted Loxodromic Y Error");
+    console.log("    ✓ forwardLoxodromicSpiral (Shifted) passed validation.\n");
 
-    // 4. MULTI-POLE HYPERBOLIC
-    console.log("--> Testing: forwardMultiPoleHyperbolic...");
-    const multiResult = forward.multiPole({ x: 0.0, y: 0.0 }, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
-    // Input (0,0) yields r=1, theta=0 -> cx=1, cy=0 -> sin(1)*cosh(0) = 0.84147 * 1 -> 0.84147 * 180 (scale) = 151.465
-    assertCloseTo(multiResult.x, 151.465, "MultiPole X Error");
-    assertCloseTo(multiResult.y, 0.000, "MultiPole Y Error");
-    console.log("    ✓ forwardMultiPoleHyperbolic passed validation.\n");
+    // 4. MULTI-POLE HYPERBOLIC (WITH SHIFT)
+    console.log("--> Testing: forwardMultiPoleHyperbolic (Shifted)...");
+    const multiResult = forward.multiPole({ x: 0.0, y: 0.0 }, MOCK_SCALE, MOCK_DECAY, testOffset);
+    assertCloseTo(multiResult.x, 124.078, "Shifted MultiPole X Error");
+    assertCloseTo(multiResult.y, 19.829, "Shifted MultiPole Y Error");
+    console.log("    ✓ forwardMultiPoleHyperbolic (Shifted) passed validation.\n");
 
     // =======================================================================
     // REGRESSION SUITE: CONFORMAL SEAM BOUNDARY VALIDATION
     // =======================================================================
-    console.log("--> Testing: Conformal Seam Boundary Interlocking...");
+    console.log("--> Testing: Conformal Seam Boundary Interlocking (Shifted Matrix)...");
 
     // Mocking two adjacent points that must lock together edge-to-edge
     // Point A is the right edge of Tile 0. Point B is the left edge of Tile 1.
@@ -77,11 +78,11 @@ function runTransformSuite(): void {
       let coordB: { x: number; y: number };
 
       if (variant === "single-pole") {
-        coordA = forward.singlePole(gridSpaceA, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
-        coordB = forward.singlePole(gridSpaceB, MOCK_SCALE, MOCK_DECAY, { x: 0.0, y: 0.0 });
+        coordA = forward.singlePole(gridSpaceA, MOCK_SCALE, MOCK_DECAY, testOffset);
+        coordB = forward.singlePole(gridSpaceB, MOCK_SCALE, MOCK_DECAY, testOffset);
       } else {
-        coordA = forward.loxodromic(gridSpaceA, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, { x: 0.0, y: 0.0 });
-        coordB = forward.loxodromic(gridSpaceB, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, { x: 0.0, y: 0.0 });
+        coordA = forward.loxodromic(gridSpaceA, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, testOffset);
+        coordB = forward.loxodromic(gridSpaceB, MOCK_SCALE, MOCK_TWIST, MOCK_DECAY, testOffset);
       }
 
       // 3. ASSERTION: The distance between the seams must be zero

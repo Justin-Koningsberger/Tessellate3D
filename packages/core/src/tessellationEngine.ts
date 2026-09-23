@@ -135,14 +135,18 @@ function getSmoothComponents(
 ): Point2D[][] {
   const activeWarpProjection: WarpProjectionFn = (pt: Point2D): Point2D => {
     const adjustedPt = { ...pt };
-    // Normalize coordinate grid step scales linearly to match hexagon lattice density bounds
-    if (adjustedConfig.latticeType === 'square') {
-      adjustedPt.x *= 0.25;
-    } else if (adjustedConfig.latticeType === 'triangular') {
-      adjustedPt.x *= 0.50;
+
+    // TODO: Add adjustable width input
+    if (adjustedConfig.variantMode !== 'none') {
+      // Normalize coordinate grid step scales linearly to match hexagon lattice density
+      if (adjustedConfig.latticeType === 'square') {
+        adjustedPt.x *= 0.25;
+      } else if (adjustedConfig.latticeType === 'triangular') {
+        adjustedPt.x *= 0.50;
+      }
     }
 
-    const offsetFallback = adjustedConfig.layout.poleOffset ?? { x: 0.0, y: 0.0 };
+    const offsetFallback = adjustedConfig.layout.poleOffset;
 
     switch (adjustedConfig.variantMode) {
       case 'none':
@@ -259,18 +263,17 @@ export function generateTessellation(config: EngineConfig): string {
             let gridSpace = strategy.finalizeGridSpace(symmetryMappedPoint, shearedPoint, orientation, ctx);
 
             // Keep preprocessed smoothing paths and cell geometry perfectly synchronized
-            if (config.latticeType === 'square') {
-              gridSpace = { x: gridSpace.x * 0.25, y: gridSpace.y };
-            } else if (config.latticeType === 'triangular') {
-              gridSpace = { x: gridSpace.x * 0.50, y: gridSpace.y };
+            if (config.variantMode !== 'none') {
+              if (config.latticeType === 'square') {
+                gridSpace = { x: gridSpace.x * 0.25, y: gridSpace.y };
+              } else if (config.latticeType === 'triangular') {
+                gridSpace = { x: gridSpace.x * 0.50, y: gridSpace.y };
+              }
             }
 
             // 5. Warp flat coordinates into non-Euclidean spaces using conformal mappings
             let finalPoint: Point2D;
-
-
-            // TODO: do we need the cath still?
-            const mainOffsetFallback = config.layout.poleOffset ?? { x: 0.0, y: 0.0 };
+            const mainOffsetFallback = config.layout.poleOffset;
 
             switch (config.variantMode) {
               case "none": return gridSpace;

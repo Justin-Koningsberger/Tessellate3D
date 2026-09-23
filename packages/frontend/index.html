@@ -252,7 +252,7 @@
 
       <!-- Only visible in dev mode -->
       <label class="row" id="debugging-grid-row">
-        <input type="checkbox" id="showDebugLabels" checked />
+        <input type="checkbox" id="showDebugLabels" />
         <span>Show branch and ring labels</span>
       </label>
 
@@ -320,6 +320,23 @@
         <span id="twist-help-text" class="sr-only">Adjusts the direction and intensity of the geometry twist.</span>
       </div>
 
+      <div class="form-group-accessible" id="poleOffsetXContainer">
+        <label for="poleOffsetX" class="slider-label-row">Pole Horizontal Offset (X): <span id="poleOffsetX-val" class="slider-value-highlight" aria-live="polite">0.0</span></label>
+        <div class="input-row-with-icon">
+          <input type="range" id="poleOffsetX" min="-2.0" max="2.0" step="0.01" value="0.0" aria-describedby="pole-x-help-text" />
+          <span class="info-icon" aria-hidden="true" title="Shifts the non-Euclidean transformation poles horizontally.">ⓘ</span>
+        </div>
+        <span id="pole-x-help-text" class="sr-only">Shifts the non-Euclidean transformation poles horizontally.</span>
+      </div>
+
+      <div class="form-group-accessible" id="poleOffsetYContainer">
+        <label for="poleOffsetY" class="slider-label-row">Pole Vertical Offset (Y): <span id="poleOffsetY-val" class="slider-value-highlight" aria-live="polite">0.0</span></label>
+        <div class="input-row-with-icon">
+          <input type="range" id="poleOffsetY" min="-2.0" max="2.0" step="0.01" value="0.0" aria-describedby="pole-y-help-text" />
+          <span class="info-icon" aria-hidden="true" title="Shifts the non-Euclidean transformation poles vertically.">ⓘ</span>
+        </div>
+        <span id="pole-y-help-text" class="sr-only">Shifts the non-Euclidean transformation poles vertically.</span>
+      </div>
       <div class="form-group-accessible" id="staggerContainer">
         <label for="staggerFactor" class="slider-label-row">Concentric Stagger Factor: <span id="staggerFactor-val" class="slider-value-highlight" aria-live="polite">0.0</span></label>
         <div class="input-row-with-icon">
@@ -397,6 +414,7 @@
         <button id="btn-download-master" class="btn-export btn-export-master" type="button">🖼️ Export Master SVG</button>
         <button id="btn-download-separated" class="btn-export btn-export-separated" type="button">🎨 Export Separated Colors</button>
         <button id="btn-download-3d-stl" class="btn-export btn-export-stl" type="button">🧱 Export Multi-Material STLs</button>
+        <!-- TODO: Add a download tile as STL function -->
       </div>
     </section>
   </main>

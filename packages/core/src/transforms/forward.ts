@@ -49,22 +49,19 @@ export const forward = {
    * Maps tile coordinates to complex sine space to prevent boundary tearing,
    */
   multiPole: (point: Point2D, scale: number, decayMultiplier: number, poleOffset: { x: number; y: number }): Point2D => {
-    // 1. Shift the grid inputs
-    const targetX = point.x - poleOffset.x;
-    const targetY = point.y - poleOffset.y;
+    // 1. Establish structural base scale using standard grid spaces
+    const r = Math.exp(point.x * decayMultiplier);
 
-    // 2. Establish structural base scale using shifted space
-    const r = Math.exp(targetX * decayMultiplier);
+    // 2. Map coordinates into complex numbers, adding poleOffset translation directly
+    // to the flat plane coordinates before the complex sine operation transforms the space.
+    const cx = (r * Math.cos(point.y)) - poleOffset.x;
+    const cy = (r * Math.sin(point.y)) - poleOffset.y;
 
-    // 3. Map shifted coordinates into complex number
-    const cx = r * Math.cos(targetY);
-    const cy = r * Math.sin(targetY);
-
-    // 4. Process through complex analytic sine transformation
+    // 3. Process through complex analytic sine transformation
     const baseUnitX = Math.sin(cx) * Math.cosh(cy);
     const baseUnitY = Math.cos(cx) * Math.sinh(cy);
 
-    // 5. Multiply by global scale
+    // 4. Multiply by global scale
     const finalX = scale * baseUnitX;
     const finalY = scale * baseUnitY;
 

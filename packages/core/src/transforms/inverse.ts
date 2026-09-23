@@ -9,6 +9,7 @@ export function inverseSinglePole(
   screenPoint: Point2D,
   scale: number,
   decayMultiplier: number,
+  poleOffset: { x: number; y: number },
 ): Point2D {
   if (scale === 0) return { x: 0, y: 0 };
 
@@ -28,8 +29,8 @@ export function inverseSinglePole(
   // 4. Extract flat radial distance from the clean logScale base
   const flatX = logScale / decayMultiplier;
   return {
-    x: flatX,
-    y: flatY
+    x: flatX + poleOffset.x,
+    y: flatY + poleOffset.y
   };
 }
 
@@ -42,6 +43,7 @@ export function inverseMultiPoleHyperbolic(
   screenPoint: Point2D,
   scale: number,
   decayMultiplier: number,
+  poleOffset: { x: number; y: number },
 ): Point2D {
   // Prevent division by zero if scale is unconfigured
   if (scale === 0) return { x: 0, y: 0 };
@@ -73,10 +75,15 @@ export function inverseMultiPoleHyperbolic(
 
   // 5. Map the final variables cleanly back to the base domain
   const flatX = Math.log(r) / decayMultiplier;
+  const shiftedArgX = argX + poleOffset.x;
+  const shiftedArgY = argY + poleOffset.y;
+  const correctedR = Math.hypot(shiftedArgX, shiftedArgY);
+  let correctedY = Math.atan2(shiftedArgY, shiftedArgX);
+  while (correctedY < 0) correctedY += Math.PI * 2;
 
   return {
-    x: flatX,
-    y: flatY
+    x: Math.log(correctedR) / decayMultiplier,
+    y: correctedY
   };
 }
 
@@ -89,7 +96,8 @@ export function inverseLoxodromic(
   screenPoint: Point2D,
   scale: number,
   twistFactor: number,
-  decayMultiplier: number
+  decayMultiplier: number,
+  poleOffset: { x: number; y: number },
 ): Point2D {
   if (scale === 0) return { x: 0, y: 0 };
 
@@ -114,8 +122,8 @@ export function inverseLoxodromic(
   if (flatY > Math.PI) flatY -= anglePeriod;
 
   return {
-    x: flatX,
-    y: flatY
+    x: flatX + poleOffset.x,
+    y: flatY + poleOffset.y
   };
 }
 
@@ -127,14 +135,15 @@ export function inverseWarp(screenPoint: Point2D, config: EngineConfig, totalBra
   const scale = config.layout.globalScale;
   const decayMultiplier = config.layout.decayMultiplier;
   const twistFactor = config.layout.twistFactor;
+  const poleOffset = config.layout.poleOffset ?? { x: 0.0, y: 0.0 };
 
   switch (config.variantMode) {
     case "single-pole":
-      return inverseSinglePole(screenPoint, scale, decayMultiplier);
+      return inverseSinglePole(screenPoint, scale, decayMultiplier, poleOffset);
     case "multi-pole":
-      return inverseMultiPoleHyperbolic(screenPoint, scale, decayMultiplier);
+      return inverseMultiPoleHyperbolic(screenPoint, scale, decayMultiplier, poleOffset);
     case "loxodromic":
-      return inverseLoxodromic(screenPoint, scale, twistFactor, decayMultiplier);
+      return inverseLoxodromic(screenPoint, scale, twistFactor, decayMultiplier, poleOffset);
     default:
       // Fallback safe state
       return { x: 0, y: 0 };

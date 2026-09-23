@@ -69,6 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
     intersectionContainer: document.getElementById('intersectionContainer') as HTMLLabelElement,
     ringIntersectionFactor: document.getElementById('ringIntersectionFactor') as HTMLInputElement,
     ringIntersectionFactorVal: document.getElementById('ringIntersectionFactor-val') as HTMLSpanElement,
+    poleOffsetX: document.getElementById('poleOffsetX') as HTMLInputElement,
+    poleOffsetXVal: document.getElementById('poleOffsetX-val') as HTMLSpanElement,
+    poleOffsetY: document.getElementById('poleOffsetY') as HTMLInputElement,
+    poleOffsetYVal: document.getElementById('poleOffsetY-val') as HTMLSpanElement,
+    poleOffsetXContainer: document.getElementById('poleOffsetXContainer') as HTMLDivElement,
+    poleOffsetYContainer: document.getElementById('poleOffsetYContainer') as HTMLDivElement,
 
     debuggingGridRow: document.getElementById('debugging-grid-row') as HTMLLabelElement,
 
@@ -110,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentConfig.applyStroke = els.applyStroke.checked;
 
     currentConfig.layout = {
+      ...currentConfig.layout,
       totalBranches: parseInt(els.totalBranches.value, 10),
       maxRings: parseInt(els.maxRings.value, 10),
       globalScale: 1.0, // Hardcoded engine baseline value to satisfy strict configuration types
@@ -119,7 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
       staggerFactor: parseFloat(els.staggerFactor.value),
       latticePhaseOffset: parseFloat(els.latticePhaseOffset.value),
       ringDistanceMultiplier: parseFloat(els.ringDistanceMultiplier.value),
-      ringIntersectionFactor: parseFloat(els.ringIntersectionFactor.value)
+      ringIntersectionFactor: parseFloat(els.ringIntersectionFactor.value),
+      poleOffset: {
+        x: parseFloat(els.poleOffsetX.value),
+        y: parseFloat(els.poleOffsetY.value)
+      }
     };
 
     // Update real-time label values next to sliders
@@ -131,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
     els.latticePhaseOffsetVal.textContent = currentConfig.layout.latticePhaseOffset.toFixed(2);
     els.ringDistanceMultiplierVal.textContent = currentConfig.layout.ringDistanceMultiplier.toFixed(2);
     els.ringIntersectionFactorVal.textContent = currentConfig.layout.ringIntersectionFactor.toFixed(2);
+    els.poleOffsetXVal.textContent = currentConfig.layout.poleOffset.x.toFixed(2);
+    els.poleOffsetYVal.textContent = currentConfig.layout.poleOffset.y.toFixed(2);
 
     // Dynamically manage control panel visibility based on active variant mode mechanics
     const mode = currentConfig.variantMode;
@@ -139,6 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (els.twistContainer) {
       els.twistContainer.style.display = mode === 'loxodromic' ? 'flex' : 'none';
+    }
+
+    if (els.poleOffsetXContainer && els.poleOffsetYContainer) {
+      const hasActivePoles = mode !== 'none' && mode !== 'logarithmic';
+      els.poleOffsetXContainer.style.display = hasActivePoles ? 'flex' : 'none';
+      els.poleOffsetYContainer.style.display = hasActivePoles ? 'flex' : 'none';
     }
 
     if (els.staggerContainer) {

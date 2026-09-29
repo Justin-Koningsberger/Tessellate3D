@@ -42,6 +42,10 @@
     }
 
     /* --- 1. BASE ELEMENTS & GLOBAL RESETS --- */
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+    }
     body { margin: 0; padding: 0; background: #111116; color: #fff; font-family: system-ui, sans-serif; }
     h2 { margin: 0 0 8px 0; font-size: 18px; color: #38bdf8; }
     label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #cbd5e1; }
@@ -57,7 +61,10 @@
     .studio-container { display: grid; grid-template-columns: minmax(280px, 22vw) 1fr; height: 100vh; }
     .controls-panel {
       background: #191921; padding: 16px; border-right: 1px solid #2d2d3a;
-      overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      height: 100%;
+      box-sizing: border-box;
+      overflow-y: auto;
     }
     .canvas-viewport {
       background: #09090b;
@@ -68,6 +75,9 @@
       justify-content: center;
       padding: 20px;
       position: relative;
+      min-width: 0;  /* Override implicit 'auto' minimum expansion size */
+      min-height: 0;
+      overflow: hidden;
     }
     .github-link {
       position: absolute; top: 16px; right: 16px; z-index: 10; display: flex;
@@ -82,10 +92,26 @@
       background: #22222d;
     }
     #svg-injection-target {
-      width: 100%; max-width: 750px; background: #fff;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.5); border-radius: 12px; overflow: hidden;
+      width: 100%;
+      flex: 1;
+      max-width: 750px;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #fff;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      border-radius: 12px;
+      overflow: hidden;
     }
-    #svg-injection-target svg { width: 100%; height: auto; display: block; }
+    #svg-injection-target svg {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      display: block;
+    }
+
 
     /* --- 3. INTERACTIVE COMPONENT CLASSES --- */
     .info-icon {

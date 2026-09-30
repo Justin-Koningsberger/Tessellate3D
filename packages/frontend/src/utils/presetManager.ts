@@ -114,13 +114,13 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     applyStroke: false
   },
   dragons: {
-    variantMode: 'single-pole',
+    variantMode: 'none',
     baseMotif: 'dragon',
     latticeType: 'triangular',
     symmetryGroup: 'p6',
     useAutoAlignment: true,
-    totalBranches: '3',
-    maxRings: '3',
+    totalBranches: '2',
+    maxRings: '1',
     decayMultiplier: '0.65',
     twistFactor: '0.00',
     staggerFactor: '0.0',

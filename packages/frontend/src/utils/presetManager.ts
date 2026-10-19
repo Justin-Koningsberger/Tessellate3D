@@ -166,7 +166,7 @@ export const VISUAL_PRESETS: Record<string, PresetConfig> = {
     baseMotif: 'hexPuzzle',
     latticeType: 'hexagonal',
     symmetryGroup: 'p3',
-    useAutoAlignment: false,
+    useAutoAlignment: true,
     totalBranches: '10',
     maxRings: '14',
     decayMultiplier: '1.00',

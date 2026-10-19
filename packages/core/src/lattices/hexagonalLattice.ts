@@ -30,7 +30,7 @@ export class HexagonalLattice implements LatticeStrategy {
         ringDistanceMultiplier = isNone ? 1.0 : 1.298;
         phaseOffset = isNone ? 1.0 : 1.50;
       } else if (this.symmetryGroup === 'p3') {
-        ringIntersection = isNone ? 1.0 : 1.0 + (2.10 / ctx.totalBranches);
+        ringIntersection = isNone ? 1.0 : 1.0 + (2.091 / ctx.totalBranches);
         ringDistanceMultiplier = isNone ? 1.0 : 1.30;
         phaseOffset = isNone ? 1.00 : 3.50;
       }

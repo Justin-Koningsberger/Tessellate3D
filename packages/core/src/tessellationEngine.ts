@@ -222,6 +222,17 @@ export function generateTessellation(config: EngineConfig): string {
 
         orientations.forEach((orientation) => {
           const warpedPoints = componentPoints.map(p => {
+            // // --- FLIP ORIENTATION INTERCEPT ---
+            // let basePoint = { x: p.x, y: p.y };
+            
+            // if (config.layout.invertMotifOrientation) {
+            //   // Flips the coordinate matrix horizontally across the central symmetry line of the cell
+            //   basePoint.y = cellHeight - basePoint.y;
+            // }
+
+            // // 1. Orient the motif variant according to local tile symmetry requirements
+            // const orientedPoint = strategy.transformLocal(basePoint, orientation, cellHeight);
+
             // 1. Orient the motif variant according to local tile symmetry requirements
             const orientedPoint = strategy.transformLocal({ x: p.x, y: p.y }, orientation, cellHeight);
 
@@ -265,6 +276,7 @@ export function generateTessellation(config: EngineConfig): string {
             // Keep preprocessed smoothing paths and cell geometry perfectly synchronized
             if (config.variantMode !== 'none') {
               if (config.latticeType === 'square') {
+                //TODO: add sliders for gridsizing
                 gridSpace = { x: gridSpace.x * 0.25, y: gridSpace.y };
               } else if (config.latticeType === 'triangular') {
                 gridSpace = { x: gridSpace.x * 0.50, y: gridSpace.y };
